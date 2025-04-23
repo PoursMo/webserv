@@ -7,7 +7,6 @@
 
 namespace ft_json
 {
-
 	class Value
 	{
 	public:
@@ -172,6 +171,8 @@ namespace ft_json
 		std::string str;
 		while (*it != '"')
 		{
+			if (!(*it))
+				throw std::runtime_error("Expected \" to close string");
 			str += *it;
 			it++;
 		}
@@ -199,15 +200,22 @@ namespace ft_json
 	Value parse_object(std::string::iterator &it)
 	{
 		std::map<std::string, Value> obj;
+		bool value_expected = true;
 		while (1)
 		{
 			skip_whitespaces(it);
 			if (*it == '}')
 			{
+				if (value_expected)
+					throw std::runtime_error("Expected value in object");
 				it++;
 				break;
 			}
+			if (*it != '"')
+				throw std::runtime_error("Expected string key in object");
 			std::string key = parse_string(++it).asString();
+			if (obj.count(key))
+				throw std::runtime_error("Duplicate key in object");
 			skip_whitespaces(it);
 			if (*it != ':')
 				throw std::runtime_error("Expected ':' after key");
@@ -215,9 +223,16 @@ namespace ft_json
 			obj[key] = value;
 			skip_whitespaces(it);
 			if (*it == ',')
+			{
 				it++;
-			else if (*it != '}')
-				throw std::runtime_error("Expected ',' or '}' in object");
+				value_expected = true;
+			}
+			else
+			{
+				value_expected = false;
+				if (*it != '}')
+					throw std::runtime_error("Expected ',' or '}' in object");
+			}
 		}
 		return Value(obj);
 	}
@@ -225,20 +240,30 @@ namespace ft_json
 	Value parse_array(std::string::iterator &it)
 	{
 		std::vector<Value> arr;
+		bool value_expected = true;
 		while (1)
 		{
 			skip_whitespaces(it);
 			if (*it == ']')
 			{
+				if (value_expected)
+					throw std::runtime_error("Expected value in array");
 				it++;
 				break;
 			}
 			arr.push_back(parse_value(it));
 			skip_whitespaces(it);
 			if (*it == ',')
+			{
 				it++;
-			else if (*it != ']')
-				throw std::runtime_error("Expected ',' or ']' in array");
+				value_expected = true;
+			}
+			else
+			{
+				value_expected = false;
+				if (*it != ']')
+					throw std::runtime_error("Expected ',' or ']' in array");
+			}
 		}
 		return Value(arr);
 	}
@@ -274,6 +299,16 @@ namespace ft_json
 		if (std::isalpha(*it))
 			return parse_keyword(it);
 		throw std::runtime_error("Unexpected character");
+	}
+
+	Value parse(std::string input)
+	{
+		std::string::iterator iterator = input.begin();
+		Value parsed = parse_value(iterator);
+		skip_whitespaces(iterator);
+		if (*iterator)
+			throw std::runtime_error("Trailing characters in JSON file");
+		return parsed;
 	}
 }
 
@@ -343,9 +378,14 @@ int main(int argc, char **argv)
 	}
 
 	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-	std::string::iterator iterator = content.begin();
-	ft_json::Value parsed = ft_json::parse_value(iterator);
-
-	print_value(parsed);
-	std::cout << std::endl;
+	try
+	{
+		ft_json::Value parsed = ft_json::parse(content);
+		print_value(parsed);
+		std::cout << std::endl;
+	}
+	catch (const std::exception &e)
+	{
+		std::cerr << e.what() << '\n';
+	}
 }
