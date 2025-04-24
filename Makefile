@@ -1,28 +1,30 @@
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98
+CFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR)
+
+INCDIR = headers
+SRCDIR = srcs
+OBJDIR = objs
 
 NAME = webserv
 
-# all: $(NAME)
+SRCS = $(wildcard $(SRCDIR)/**/*.cpp) $(wildcard $(SRCDIR)/*.cpp)
+OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))
 
-# $(NAME): $(OBJ)
-# 	$(CC) $(CFLAGS) -o $@ $^
+all: $(NAME)
 
-# $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
-# 	$(CC) $(CFLAGS) -I$(INCDIR) -c $< -o $@
+$(NAME): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
 
-# $(OBJDIR):
-# 	mkdir -p $(OBJDIR)
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# clean:
-# 	rm -rf $(OBJDIR)
+clean:
+	rm -rf $(OBJDIR)
 
-# fclean: clean
-# 	rm -f $(NAME)
+fclean: clean
+	rm -rf $(NAME)
 
-# re: fclean all
+re: fclean all
 
-test:
-	$(CC) $(CFLAGS) json/json.cpp -o test
-
-.PHONY: all clean fclean re test
+.PHONY: all clean fclean re
