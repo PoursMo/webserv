@@ -104,7 +104,7 @@ ft_json::JsonValue::~JsonValue()
 }
 
 // Accessors
-ft_json::JsonValue::Type ft_json::JsonValue::getType() const { return type; }
+ft_json::Type ft_json::JsonValue::getType() const { return type; }
 const std::string &ft_json::JsonValue::asString() const
 {
 	if (type != STRING)
@@ -159,7 +159,7 @@ static ft_json::JsonValue parse_string(std::string::iterator &it)
 	while (*it != '"')
 	{
 		if (!(*it))
-			throw std::runtime_error("Expected \" to close string");
+			throw std::runtime_error("Expected \" to close string: " + str);
 		str += *it;
 		it++;
 	}
@@ -201,10 +201,10 @@ static ft_json::JsonValue parse_object(std::string::iterator &it)
 			throw std::runtime_error("Expected string key in object");
 		std::string key = parse_string(++it).asString();
 		if (obj.count(key))
-			throw std::runtime_error("Duplicate key in object");
+			throw std::runtime_error("Duplicate key in object: " + key);
 		skip_whitespaces(it);
 		if (*it != ':')
-			throw std::runtime_error("Expected ':' after key");
+			throw std::runtime_error("Expected ':' after key: " + key);
 		ft_json::JsonValue value = parse_value(++it);
 		obj[key] = value;
 		skip_whitespaces(it);
@@ -268,7 +268,7 @@ static ft_json::JsonValue parse_keyword(std::string::iterator &it)
 		return ft_json::JsonValue(false);
 	if (keyword == "null")
 		return ft_json::JsonValue();
-	throw std::runtime_error("Unknown keyword");
+	throw std::runtime_error("Unknown keyword: " + keyword);
 }
 
 static ft_json::JsonValue parse_value(std::string::iterator &it)
@@ -284,7 +284,7 @@ static ft_json::JsonValue parse_value(std::string::iterator &it)
 		return parse_array(++it);
 	if (std::isalpha(*it))
 		return parse_keyword(it);
-	throw std::runtime_error("Unexpected character");
+	throw std::runtime_error("Unexpected character: " + *it);
 }
 
 ft_json::JsonValue ft_json::parse_json(std::string file_content)

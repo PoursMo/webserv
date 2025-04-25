@@ -8,22 +8,23 @@
 #include <stdexcept>
 #include <stdint.h>
 #include <stdlib.h>
+#include <iostream>
 
 namespace ft_json
 {
+	enum Type
+	{
+		STRING,
+		NUMBER,
+		OBJECT,
+		ARRAY,
+		BOOLEAN,
+		NULLTYPE
+	};
+
 	class JsonValue
 	{
 	public:
-		enum Type
-		{
-			STRING,
-			NUMBER,
-			OBJECT,
-			ARRAY,
-			BOOLEAN,
-			NULLTYPE
-		};
-
 		// Constructors
 		JsonValue();
 		JsonValue(const std::string &str);
@@ -60,6 +61,9 @@ namespace ft_json
 		};
 		Type type;
 	};
+
+	typedef const std::map<std::string, JsonValue> JsonObject;
+	typedef const std::vector<JsonValue> JsonArray;
 
 	JsonValue parse_json(std::string file_content);
 	JsonValue parse_json(std::ifstream &file);

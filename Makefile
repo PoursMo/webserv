@@ -7,7 +7,10 @@ OBJDIR = objs
 
 NAME = webserv
 
-SRCS = $(wildcard $(SRCDIR)/**/*.cpp) $(wildcard $(SRCDIR)/*.cpp)
+SRCS = $(SRCDIR)/main.cpp \
+$(SRCDIR)/json/ft_json.cpp \
+$(SRCDIR)/config/config.cpp \
+
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))
 
 all: $(NAME)

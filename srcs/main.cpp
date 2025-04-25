@@ -1,4 +1,3 @@
-#include <iostream>
 #include "ft_json.hpp"
 
 // Debug function for json
@@ -6,13 +5,13 @@ void print_json_value(const ft_json::JsonValue &value)
 {
 	switch (value.getType())
 	{
-	case ft_json::JsonValue::STRING:
+	case ft_json::STRING:
 		std::cout << "\"" << value.asString() << "\"";
 		break;
-	case ft_json::JsonValue::NUMBER:
+	case ft_json::NUMBER:
 		std::cout << value.asNumber();
 		break;
-	case ft_json::JsonValue::OBJECT:
+	case ft_json::OBJECT:
 	{
 		std::cout << "{";
 		const std::map<std::string, ft_json::JsonValue> &obj = value.asObject();
@@ -26,7 +25,7 @@ void print_json_value(const ft_json::JsonValue &value)
 		std::cout << "}";
 		break;
 	}
-	case ft_json::JsonValue::ARRAY:
+	case ft_json::ARRAY:
 	{
 		std::cout << "[";
 		const std::vector<ft_json::JsonValue> &arr = value.asArray();
@@ -39,14 +38,17 @@ void print_json_value(const ft_json::JsonValue &value)
 		std::cout << "]";
 		break;
 	}
-	case ft_json::JsonValue::BOOLEAN:
+	case ft_json::BOOLEAN:
 		std::cout << (value.asBoolean() ? "true" : "false");
 		break;
-	case ft_json::JsonValue::NULLTYPE:
+	case ft_json::NULLTYPE:
 		std::cout << "null";
 		break;
 	}
 }
+
+void func(ft_json::JsonValue json);
+
 
 int main(int argc, char **argv)
 {
@@ -65,7 +67,8 @@ int main(int argc, char **argv)
 	{
 		ft_json::JsonValue parsed = ft_json::parse_json(file);
 		print_json_value(parsed);
-		std::cout << std::endl;
+		std::cout << std::endl << std::endl;
+		func(parsed);
 	}
 	catch (const std::exception &e)
 	{
