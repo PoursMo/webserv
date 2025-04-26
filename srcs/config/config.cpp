@@ -1,6 +1,24 @@
 #include "Server.hpp"
 
 // ********************************************************************
+// Utils
+// ********************************************************************
+
+static int extract_status_code(const std::string &s)
+{
+	for (std::string::const_iterator i = s.begin(); i != s.end(); i++)
+	{
+		if (!std::isdigit(*i))
+			throw std::runtime_error("Invalid status code.");
+	}
+	char *end;
+	unsigned long code = std::strtoul(s.c_str(), &end, 10);
+	if (*end != '\0' || code < 300 || code > 599)
+		throw std::runtime_error("Invalid status code.");
+	return code;
+}
+
+// ********************************************************************
 // LocationData
 // ********************************************************************
 
@@ -12,51 +30,54 @@ LocationData::LocationData(const ft_json::JsonObject &json_directives)
 	{
 		const std::string &s = (*json_directive).first;
 		const ft_json::JsonValue &v = (*json_directive).second;
-		if (!s.compare("path"))
-			continue;
-		else if (!s.compare("method"))
-			setMethods(v.asArray());
-		else if (!s.compare("return"))
-			setReturnPair(v.asObject());
-		else if (!s.compare("root"))
-			setRoot(v.asString());
-		else if (!s.compare("autoindex"))
-			setAutoIndex(v.asBoolean());
-		else if (!s.compare("index"))
-			setIndexes(v.asArray());
-		else if (!s.compare("upload_store"))
-			setUploadStore(v.asString());
-		// cgi
-		else
-			throw std::runtime_error("Unknown directive: " + s);
+		try
+		{
+			if (!s.compare("path"))
+				continue;
+			else if (!s.compare("method"))
+				setMethods(v.asArray());
+			else if (!s.compare("return"))
+				setReturnPair(v.asObject());
+			else if (!s.compare("root"))
+				setRoot(v.asString());
+			else if (!s.compare("autoindex"))
+				setAutoIndex(v.asBoolean());
+			else if (!s.compare("index"))
+				setIndexes(v.asArray());
+			else if (!s.compare("upload_store"))
+				setUploadStore(v.asString());
+			// cgi
+			else
+				throw std::runtime_error("Unknown directive.");
+		}
+		catch (const std::exception &e)
+		{
+			throw std::runtime_error(s + ": " + e.what());
+		}
 	}
 }
 
 void LocationData::setMethods(const ft_json::JsonArray &input)
 {
-	for (ft_json::JsonArray::const_iterator it = input.begin(); it != input.end(); it++)
+	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
-		const std::string &s = (*it).asString();
-		Method m;
+		const std::string &s = (*i).asString();
 		if (s.compare("GET"))
-			m = GET;
+			methods.push_back(GET);
 		else if (s.compare("POST"))
-			m = POST;
+			methods.push_back(POST);
 		else if (s.compare("DELETE"))
-			m = DELETE;
+			methods.push_back(DELETE);
 		else
 			throw std::runtime_error("Unknown method: " + s);
-		methods.push_back(m);
 	}
 }
 
-// nginx checks that number is only digits (no minus), and isnt above long max
-// code must be between 300 and 599
 void LocationData::setReturnPair(const ft_json::JsonObject &input)
 {
 	if (input.size() != 1)
 		throw std::runtime_error("Multiple returns detected for a location.");
-	returnPair.first = std::atoi((*input.begin()).first.c_str());
+	returnPair.first = extract_status_code((*input.begin()).first.c_str());
 	returnPair.second = (*input.begin()).second.asString();
 }
 
@@ -72,9 +93,9 @@ void LocationData::setAutoIndex(bool input)
 
 void LocationData::setIndexes(const ft_json::JsonArray &input)
 {
-	for (ft_json::JsonArray::const_iterator it = input.begin(); it != input.end(); it++)
+	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
-		indexes.push_back((*it).asString());
+		indexes.push_back((*i).asString());
 	}
 }
 
@@ -119,11 +140,24 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 {
 	os << "    Methods: [";
 	const std::vector<Method> &methods = locationData.getMethods();
-	for (std::vector<Method>::const_iterator it = methods.begin(); it != methods.end(); ++it)
+	for (std::vector<Method>::const_iterator i = methods.begin(); i != methods.end(); ++i)
 	{
-		if (it != methods.begin())
+		if (i != methods.begin())
 			os << ", ";
-		os << *it;
+		switch (*i)
+		{
+		case GET:
+			os << "GET";
+			break;
+		case POST:
+			os << "POST";
+			break;
+		case DELETE:
+			os << "DELETE";
+			break;
+		default:
+			break;
+		}
 	}
 	os << "]" << std::endl;
 	os << "    ReturnPair: (" << locationData.getReturnPair().first << ", \"" << locationData.getReturnPair().second << "\")" << std::endl;
@@ -131,11 +165,11 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 	os << "    AutoIndex: " << (locationData.getAutoIndex() ? "true" : "false") << std::endl;
 	os << "    Indexes: [";
 	const std::vector<std::string> &indexes = locationData.getIndexes();
-	for (std::vector<std::string>::const_iterator it = indexes.begin(); it != indexes.end(); ++it)
+	for (std::vector<std::string>::const_iterator i = indexes.begin(); i != indexes.end(); ++i)
 	{
-		if (it != indexes.begin())
+		if (i != indexes.begin())
 			os << ", ";
-		os << "\"" << *it << "\"";
+		os << "\"" << *i << "\"";
 	}
 	os << "]" << std::endl;
 	os << "    UploadStore: \"" << locationData.getUploadStore() << "\"" << std::endl;
@@ -152,63 +186,62 @@ Server::Server(const ft_json::JsonObject &json_directives)
 	{
 		const std::string &s = (*json_directive).first;
 		const ft_json::JsonValue &v = (*json_directive).second;
-		if (!s.compare("listen"))
-			setListen(v.asString());
-		else if (!s.compare("server_name"))
-			setServerNames(v.asArray());
-		else if (!s.compare("error_page"))
-			setErrorPages(v.asObject());
-		else if (!s.compare("client_max_body_size"))
-			setClientMaxBodySize(v.asNumber());
-		else if (!s.compare("locations"))
-			setLocations(v.asArray());
-		else
-			throw std::runtime_error("Unknown directive: " + s);
+		try
+		{
+			if (!s.compare("address"))
+				setAddress(v.asString());
+			else if (!s.compare("port"))
+				setPort(v.asNumber());
+			else if (!s.compare("server_name"))
+				setServerNames(v.asArray());
+			else if (!s.compare("error_page"))
+				setErrorPages(v.asObject());
+			else if (!s.compare("client_max_body_size"))
+				setClientMaxBodySize(v.asNumber());
+			else if (!s.compare("locations"))
+				setLocations(v.asArray());
+			else
+				throw std::runtime_error("Unknown directive.");
+		}
+		catch (const std::exception &e)
+		{
+			throw std::runtime_error(s + ": " + e.what());
+		}
 	}
 }
 
-void Server::setListen(const std::string &input)
+void Server::setAddress(const std::string &input)
 {
-	std::string portStr;
-	std::string addressStr;
-	size_t colonPos = input.find(':');
-	addressStr = input.substr(0, colonPos);
-	if (colonPos != std::string::npos)
-	{
-		portStr = input.substr(colonPos + 1);
-		if (portStr.empty())
-			throw std::runtime_error("Invalid listen directive format. Expected \"host:port\" or \"host\" or \":port\".");
-	}
-	else
-	{
-		if (addressStr.empty())
-			throw std::runtime_error("Invalid listen directive format. Expected \"host:port\" or \"host\" or \":port\".");
-	}
-	listenAddress = addressStr;
-	port = static_cast<in_port_t>(std::atoi(portStr.c_str()));
+	address = input;
+}
+
+void Server::setPort(int64_t input)
+{
+	if (input < 1 || input > 65535)
+		throw std::runtime_error("Invalid port.");
+	port = static_cast<uint16_t>(input);
 }
 
 void Server::setServerNames(const ft_json::JsonArray &input)
 {
-	for (ft_json::JsonArray::const_iterator it = input.begin(); it != input.end(); it++)
+	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
-		serverNames.push_back((*it).asString());
+		serverNames.push_back((*i).asString());
 	}
 }
 
-// nginx checks that number is only digits (no minus), and isnt above long max
-// code must be between 300 and 599
 void Server::setErrorPages(const ft_json::JsonObject &input)
 {
-	for (ft_json::JsonObject::const_iterator it = input.begin(); it != input.end(); it++)
+	for (ft_json::JsonObject::const_iterator i = input.begin(); i != input.end(); i++)
 	{
-		errorPages[std::atoi((*it).first.c_str())] = (*it).second.asString();
+		errorPages[extract_status_code((*i).first.c_str())] = (*i).second.asString();
 	}
 }
 
-// check for < 0 || > 65536 ?
 void Server::setClientMaxBodySize(int64_t input)
 {
+	if (input < 1 || input > 65536)
+		throw std::runtime_error("Invalid client_max_body_size.");
 	clientMaxBodySize = static_cast<uint16_t>(input);
 }
 
@@ -231,9 +264,9 @@ void Server::setLocations(const ft_json::JsonArray &input)
 }
 
 // Getters
-const std::string &Server::getListenAddress() const
+const std::string &Server::getAddress() const
 {
-	return listenAddress;
+	return address;
 }
 
 in_port_t Server::getPort() const
@@ -265,27 +298,30 @@ const std::map<std::string, LocationData> &Server::getLocations() const
 std::ostream &operator<<(std::ostream &os, const Server &server)
 {
 	os << "Server:" << std::endl;
-	os << "  Listen Address: " << server.getListenAddress() << std::endl;
+	os << "  Address: " << server.getAddress() << std::endl;
 	os << "  Port: " << server.getPort() << std::endl;
 	os << "  Server Names: ";
-	for (std::vector<std::string>::const_iterator it = server.getServerNames().begin(); it != server.getServerNames().end(); ++it)
+	for (std::vector<std::string>::const_iterator i = server.getServerNames().begin(); i != server.getServerNames().end(); ++i)
 	{
-		if (it != server.getServerNames().begin())
+		if (i != server.getServerNames().begin())
 			os << ", ";
-		os << *it;
+		os << *i;
 	}
 	os << std::endl;
 	os << "  Error Pages: ";
-	for (std::map<int, std::string>::const_iterator it = server.getErrorPages().begin(); it != server.getErrorPages().end(); ++it)
+	for (std::map<int, std::string>::const_iterator i = server.getErrorPages().begin(); i != server.getErrorPages().end(); ++i)
 	{
-		os << "[" << it->first << ": " << it->second << "] ";
+		os << "[" << i->first << ": " << i->second << "] ";
 	}
 	os << std::endl;
 	os << "  Client Max Body Size: " << server.getClientMaxBodySize() << std::endl;
 	os << "  Locations:";
-	for (std::map<std::string, LocationData>::const_iterator it = server.getLocations().begin(); it != server.getLocations().end(); ++it)
+	for (std::map<std::string, LocationData>::const_iterator i = server.getLocations().begin(); i != server.getLocations().end(); ++i)
 	{
-		os << std::endl << "[" << std::endl << "    Path: " << it->first << std::endl << it->second << "]";
+		os << std::endl
+		   << "[" << std::endl
+		   << "    Path: " << i->first << std::endl
+		   << i->second << "]";
 	}
 	return os;
 }
@@ -305,14 +341,23 @@ std::vector<Server> create_servers(const ft_json::JsonValue &json)
 	}
 	catch (...)
 	{
-		throw std::runtime_error("Root level must be a single \"servers\" object with an array of objects as it value.");
+		throw std::runtime_error("Root level must be a single \"servers\" object with an array of objects as i value.");
 	}
 
+	int count = 1;
 	const ft_json::JsonArray &json_servers = root.at("servers").asArray();
 	for (ft_json::JsonArray::const_iterator json_server = json_servers.begin(); json_server != json_servers.end(); json_server++)
 	{
-		Server server((*json_server).asObject());
-		servers.push_back(server);
+		try
+		{
+			Server server((*json_server).asObject());
+			servers.push_back(server);
+		}
+		catch (const std::exception &e)
+		{
+			throw std::runtime_error("server " + int_to_str(count) + ": " + e.what());
+		}
+		count++;
 	}
 	return servers;
 }

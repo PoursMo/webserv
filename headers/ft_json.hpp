@@ -1,6 +1,8 @@
 #ifndef FT_JSON_HPP
 #define FT_JSON_HPP
 
+#include "utils.hpp"
+
 #include <fstream>
 #include <string>
 #include <map>
@@ -67,8 +69,8 @@ namespace ft_json
 
 	JsonValue parse_json(std::string file_content);
 	JsonValue parse_json(std::ifstream &file);
-}
 
-void print_json_value(const ft_json::JsonValue &value);
+	void print_json_value(const ft_json::JsonValue &value);
+}
 
 #endif

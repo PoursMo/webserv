@@ -1,7 +1,8 @@
 {
 	"servers": [
 		{
-			"listen": "127.0.0.1:8080",
+			"address": "127.0.0.1",
+			"port": 8080,
 			"server_name": [
 				"test.com",
 				"www.test.com"
@@ -20,19 +21,23 @@
 					],
 					"root": "/var/www/html",
 					"autoindex": false,
-					"index": [ "index.html" ],
+					"index": [
+						"index.html"
+					],
 					"upload_store": "/uploads"
 				},
 				{
 					"path": "/test",
 					"method": [
-						"GET"
+						"DELETE"
 					],
 					"return": {
 						"404": ""
 					},
 					"autoindex": true,
-					"index": [ "index.html" ]
+					"index": [
+						"index.html"
+					]
 				}
 			]
 		}

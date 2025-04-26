@@ -144,127 +144,135 @@ bool ft_json::JsonValue::asBoolean() const
 // Json parsing
 // ********************************************************************
 
+static int line = 1;
+
 static bool is_whitespace(const char &c)
 {
 	return c == ' ' || c == '\n' || c == '\r' || c == '\t';
 }
 
-static void skip_whitespaces(std::string::iterator &it)
+static void skip_whitespaces(std::string::iterator &i)
 {
-	while (is_whitespace(*it))
-		it++;
+	while (is_whitespace(*i))
+	{
+		if (*i == '\n')
+			line++;
+		i++;
+	}
 }
 
-static ft_json::JsonValue parse_value(std::string::iterator &it);
+static ft_json::JsonValue parse_value(std::string::iterator &i);
 
-static ft_json::JsonValue parse_string(std::string::iterator &it)
+static ft_json::JsonValue parse_string(std::string::iterator &i)
 {
 	std::string str;
-	while (*it != '"')
+	while (*i != '"')
 	{
-		if (!(*it))
-			throw std::runtime_error("Expected \" to close string: " + str);
-		str += *it;
-		it++;
+		if ((*i) == '\n')
+			throw std::runtime_error("Unexpected newline in string");
+		if (!(*i))
+			throw std::runtime_error("Expected \" to close string");
+		str += *i;
+		i++;
 	}
-	it++;
+	i++;
 	return ft_json::JsonValue(str);
 }
 
-static ft_json::JsonValue parse_number(std::string::iterator &it)
+static ft_json::JsonValue parse_number(std::string::iterator &i)
 {
 	std::string num_str;
-	if (*it == '-')
+	if (*i == '-')
 	{
-		num_str += *it;
-		it++;
+		num_str += *i;
+		i++;
 	}
-	while (std::isdigit(*it))
+	while (std::isdigit(*i))
 	{
-		num_str += *it;
-		it++;
+		num_str += *i;
+		i++;
 	}
 	return ft_json::JsonValue(std::atol(num_str.c_str()));
 }
 
-static ft_json::JsonValue parse_object(std::string::iterator &it)
+static ft_json::JsonValue parse_object(std::string::iterator &i)
 {
 	std::map<std::string, ft_json::JsonValue> obj;
 	bool value_expected = true;
 	while (1)
 	{
-		skip_whitespaces(it);
-		if (*it == '}')
+		skip_whitespaces(i);
+		if (*i == '}')
 		{
 			if (value_expected)
 				throw std::runtime_error("Expected value in object");
-			it++;
+			i++;
 			break;
 		}
-		if (*it != '"')
+		if (*i != '"')
 			throw std::runtime_error("Expected string key in object");
-		std::string key = parse_string(++it).asString();
+		std::string key = parse_string(++i).asString();
 		if (obj.count(key))
-			throw std::runtime_error("Duplicate key in object: " + key);
-		skip_whitespaces(it);
-		if (*it != ':')
-			throw std::runtime_error("Expected ':' after key: " + key);
-		ft_json::JsonValue value = parse_value(++it);
+			throw std::runtime_error("Duplicate key in object");
+		skip_whitespaces(i);
+		if (*i != ':')
+			throw std::runtime_error("Expected ':' after key");
+		ft_json::JsonValue value = parse_value(++i);
 		obj[key] = value;
-		skip_whitespaces(it);
-		if (*it == ',')
+		skip_whitespaces(i);
+		if (*i == ',')
 		{
-			it++;
+			i++;
 			value_expected = true;
 		}
 		else
 		{
 			value_expected = false;
-			if (*it != '}')
+			if (*i != '}')
 				throw std::runtime_error("Expected ',' or '}' in object");
 		}
 	}
 	return ft_json::JsonValue(obj);
 }
 
-static ft_json::JsonValue parse_array(std::string::iterator &it)
+static ft_json::JsonValue parse_array(std::string::iterator &i)
 {
 	std::vector<ft_json::JsonValue> arr;
 	bool value_expected = true;
 	while (1)
 	{
-		skip_whitespaces(it);
-		if (*it == ']')
+		skip_whitespaces(i);
+		if (*i == ']')
 		{
 			if (value_expected)
 				throw std::runtime_error("Expected value in array");
-			it++;
+			i++;
 			break;
 		}
-		arr.push_back(parse_value(it));
-		skip_whitespaces(it);
-		if (*it == ',')
+		arr.push_back(parse_value(i));
+		skip_whitespaces(i);
+		if (*i == ',')
 		{
-			it++;
+			i++;
 			value_expected = true;
 		}
 		else
 		{
 			value_expected = false;
-			if (*it != ']')
+			if (*i != ']')
 				throw std::runtime_error("Expected ',' or ']' in array");
 		}
 	}
 	return ft_json::JsonValue(arr);
 }
 
-static ft_json::JsonValue parse_keyword(std::string::iterator &it)
+static ft_json::JsonValue parse_keyword(std::string::iterator &i)
 {
 	std::string keyword;
-	while (std::isalpha(*it))
+	while (std::isalpha(*i))
 	{
-		keyword += *it;
-		it++;
+		keyword += *i;
+		i++;
 	}
 	if (keyword == "true")
 		return ft_json::JsonValue(true);
@@ -275,30 +283,37 @@ static ft_json::JsonValue parse_keyword(std::string::iterator &it)
 	throw std::runtime_error("Unknown keyword: " + keyword);
 }
 
-static ft_json::JsonValue parse_value(std::string::iterator &it)
+static ft_json::JsonValue parse_value(std::string::iterator &i)
 {
-	skip_whitespaces(it);
-	if (*it == '"')
-		return parse_string(++it);
-	if (*it == '-' || std::isdigit(*it))
-		return parse_number(it);
-	if (*it == '{')
-		return parse_object(++it);
-	if (*it == '[')
-		return parse_array(++it);
-	if (std::isalpha(*it))
-		return parse_keyword(it);
-	throw std::runtime_error("Unexpected character: " + *it);
+	skip_whitespaces(i);
+	if (*i == '"')
+		return parse_string(++i);
+	if (*i == '-' || std::isdigit(*i))
+		return parse_number(i);
+	if (*i == '{')
+		return parse_object(++i);
+	if (*i == '[')
+		return parse_array(++i);
+	if (std::isalpha(*i))
+		return parse_keyword(i);
+	throw std::runtime_error("Unexpected character: " + std::string(1, *i));
 }
 
 ft_json::JsonValue ft_json::parse_json(std::string file_content)
 {
-	std::string::iterator iterator = file_content.begin();
-	ft_json::JsonValue parsed = parse_value(iterator);
-	skip_whitespaces(iterator);
-	if (*iterator)
-		throw std::runtime_error("Trailing characters in file");
-	return parsed;
+	try
+	{
+		std::string::iterator iterator = file_content.begin();
+		ft_json::JsonValue parsed = parse_value(iterator);
+		skip_whitespaces(iterator);
+		if (*iterator)
+			throw std::runtime_error("Trailing characters in file");
+		return parsed;
+	}
+	catch (const std::exception &e)
+	{
+		throw std::runtime_error("line " + int_to_str(line) + ": " + e.what());
+	}
 }
 
 ft_json::JsonValue ft_json::parse_json(std::ifstream &file)
@@ -312,7 +327,7 @@ ft_json::JsonValue ft_json::parse_json(std::ifstream &file)
 // ********************************************************************
 
 // Debug function for json
-void print_json_value(const ft_json::JsonValue &value)
+void ft_json::print_json_value(const ft_json::JsonValue &value)
 {
 	switch (value.getType())
 	{
@@ -326,12 +341,12 @@ void print_json_value(const ft_json::JsonValue &value)
 	{
 		std::cout << "{";
 		const std::map<std::string, ft_json::JsonValue> &obj = value.asObject();
-		for (std::map<std::string, ft_json::JsonValue>::const_iterator it = obj.begin(); it != obj.end(); ++it)
+		for (std::map<std::string, ft_json::JsonValue>::const_iterator i = obj.begin(); i != obj.end(); ++i)
 		{
-			if (it != obj.begin())
+			if (i != obj.begin())
 				std::cout << ", ";
-			std::cout << "\"" << it->first << "\": ";
-			print_json_value(it->second);
+			std::cout << "\"" << i->first << "\": ";
+			print_json_value(i->second);
 		}
 		std::cout << "}";
 		break;

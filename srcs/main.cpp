@@ -6,7 +6,7 @@ int main(int argc, char **argv)
 	if (argc > 1)
 		config_path = argv[1];
 	else
-		config_path = "default"; // create a default config file
+		config_path = "conf/conf.json"; // create
 	std::ifstream file(config_path);
 	if (!file)
 	{
@@ -16,10 +16,9 @@ int main(int argc, char **argv)
 	try
 	{
 		ft_json::JsonValue parsed = ft_json::parse_json(file);
-		// print_json_value(parsed);
+		// ft_json::print_json_value(parsed);
 		std::vector<Server> servers = create_servers(parsed);
 		std::cout << servers[0] << std::endl;
-		
 	}
 	catch (const std::exception &e)
 	{
