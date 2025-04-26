@@ -192,7 +192,7 @@ static ft_json::JsonValue parse_number(std::string::iterator &i)
 		num_str += *i;
 		i++;
 	}
-	return ft_json::JsonValue(std::atol(num_str.c_str()));
+	return ft_json::JsonValue(std::strtol(num_str.c_str(), 0, 10));
 }
 
 static ft_json::JsonValue parse_object(std::string::iterator &i)

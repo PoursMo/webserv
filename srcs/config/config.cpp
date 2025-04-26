@@ -62,11 +62,11 @@ void LocationData::setMethods(const ft_json::JsonArray &input)
 	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
 		const std::string &s = (*i).asString();
-		if (s.compare("GET"))
+		if (!s.compare("GET"))
 			methods.push_back(GET);
-		else if (s.compare("POST"))
+		else if (!s.compare("POST"))
 			methods.push_back(POST);
-		else if (s.compare("DELETE"))
+		else if (!s.compare("DELETE"))
 			methods.push_back(DELETE);
 		else
 			throw std::runtime_error("Unknown method: " + s);
@@ -210,6 +210,7 @@ Server::Server(const ft_json::JsonObject &json_directives)
 	}
 }
 
+// perform checks
 void Server::setAddress(const std::string &input)
 {
 	address = input;
@@ -217,6 +218,7 @@ void Server::setAddress(const std::string &input)
 
 void Server::setPort(int64_t input)
 {
+	std::cout << input << std::endl;
 	if (input < 1 || input > 65535)
 		throw std::runtime_error("Invalid port.");
 	port = static_cast<uint16_t>(input);
