@@ -1,7 +1,6 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "utils.hpp"
 #include "ft_json.hpp"
 #include "LocationData.hpp"
 
@@ -43,7 +42,5 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, const Server &server);
-
-std::vector<Server> create_servers(const ft_json::JsonValue &json);
 
 #endif

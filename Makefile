@@ -10,6 +10,8 @@ NAME = webserv
 SRCS = $(SRCDIR)/main.cpp \
 $(SRCDIR)/json/ft_json.cpp \
 $(SRCDIR)/config/config.cpp \
+$(SRCDIR)/config/Server.cpp \
+$(SRCDIR)/config/LocationData.cpp \
 $(SRCDIR)/utils/utils.cpp \
 
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))

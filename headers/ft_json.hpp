@@ -1,16 +1,10 @@
 #ifndef FT_JSON_HPP
 #define FT_JSON_HPP
 
-#include "utils.hpp"
-
-#include <fstream>
-#include <string>
 #include <map>
 #include <vector>
-#include <stdexcept>
+#include <string>
 #include <stdint.h>
-#include <stdlib.h>
-#include <iostream>
 
 namespace ft_json
 {

@@ -1,5 +1,7 @@
 #include "utils.hpp"
 
+#include <algorithm>
+
 std::string int_to_str(int num)
 {
 	bool isNegative = (num < 0);
