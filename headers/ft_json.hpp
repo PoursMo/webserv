@@ -62,11 +62,13 @@ namespace ft_json
 		Type type;
 	};
 
-	typedef const std::map<std::string, JsonValue> JsonObject;
-	typedef const std::vector<JsonValue> JsonArray;
+	typedef std::map<std::string, JsonValue> JsonObject;
+	typedef std::vector<JsonValue> JsonArray;
 
 	JsonValue parse_json(std::string file_content);
 	JsonValue parse_json(std::ifstream &file);
 }
+
+void print_json_value(const ft_json::JsonValue &value);
 
 #endif

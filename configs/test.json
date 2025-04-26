@@ -10,31 +10,7 @@
 				"403": "/forbidden.html",
 				"404": "/not_found.html"
 			},
-			"client_max_body_size": 4096,
-			"locations": [
-				{
-					"path": "/",
-					"methods": [
-						"GET",
-						"POST"
-					],
-					"root": "/var/www/html",
-					"autoindex": false,
-					"index": "index.html",
-					"upload_store": "/uploads"
-				},
-				{
-					"path": "/test",
-					"methods": [
-						"GET"
-					],
-					"return": {
-						"404": null
-					},
-					"autoindex": "on",
-					"index": "index.html"
-				}
-			]
+			"client_max_body_size": 4096
 		}
 	]
 }

@@ -14,25 +14,25 @@
 			"locations": [
 				{
 					"path": "/",
-					"methods": [
+					"method": [
 						"GET",
 						"POST"
 					],
 					"root": "/var/www/html",
 					"autoindex": false,
-					"index": "index.html",
+					"index": [ "index.html" ],
 					"upload_store": "/uploads"
 				},
 				{
 					"path": "/test",
-					"methods": [
+					"method": [
 						"GET"
 					],
 					"return": {
-						"404": null
+						"404": ""
 					},
-					"autoindex": "on",
-					"index": "index.html"
+					"autoindex": true,
+					"index": [ "index.html" ]
 				}
 			]
 		}
