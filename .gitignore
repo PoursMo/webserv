@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Log and tests
+log/*
+tests/json/*.json
