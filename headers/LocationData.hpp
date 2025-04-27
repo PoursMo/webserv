@@ -21,7 +21,6 @@ private:
 	std::string uploadStore;
 	// cgi
 
-
 	void setMethods(const ft_json::JsonArray &input);
 	void setReturnPair(const ft_json::JsonObject &input);
 	void setRoot(const std::string &input);
@@ -31,7 +30,6 @@ private:
 	// setCgi
 
 public:
-	// default constructor with everything default then delete when calling set function ?
 	LocationData(const ft_json::JsonObject &json_directives);
 	LocationData();
 
