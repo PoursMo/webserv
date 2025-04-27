@@ -204,7 +204,7 @@ static ft_json::JsonValue parse_number(std::string::iterator &i)
 static ft_json::JsonValue parse_object(std::string::iterator &i)
 {
 	std::map<std::string, ft_json::JsonValue> obj;
-	bool value_expected = true;
+	bool value_expected = false;
 	while (1)
 	{
 		skip_whitespaces(i);
@@ -244,7 +244,7 @@ static ft_json::JsonValue parse_object(std::string::iterator &i)
 static ft_json::JsonValue parse_array(std::string::iterator &i)
 {
 	std::vector<ft_json::JsonValue> arr;
-	bool value_expected = true;
+	bool value_expected = false;
 	while (1)
 	{
 		skip_whitespaces(i);
