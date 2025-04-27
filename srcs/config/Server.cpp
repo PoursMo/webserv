@@ -9,6 +9,12 @@
 
 Server::Server(const ft_json::JsonObject &json_directives)
 {
+	// Default values
+	address = "0.0.0.0";
+	port = 8000;
+	clientMaxBodySize = 1024;
+	// each error code is empty = use default string, or make html file for each error
+
 	for (ft_json::JsonObject::const_iterator json_directive = json_directives.begin(); json_directive != json_directives.end(); json_directive++)
 	{
 		const std::string &s = (*json_directive).first;
@@ -66,7 +72,6 @@ void Server::setAddress(const std::string &input)
 
 void Server::setPort(int64_t input)
 {
-	std::cout << input << std::endl;
 	if (input < 1 || input > 65535)
 		throw std::runtime_error("Invalid port.");
 	port = static_cast<uint16_t>(input);

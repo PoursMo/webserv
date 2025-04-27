@@ -328,53 +328,50 @@ ft_json::JsonValue ft_json::parse_json(std::ifstream &file)
 	return parse_json(content);
 }
 
-// ********************************************************************
-// Debug
-// ********************************************************************
-
-// Debug function for json
-void ft_json::print_json_value(const ft_json::JsonValue &value)
+// for debugging purpose
+std::ostream &ft_json::operator<<(std::ostream &os, const ft_json::JsonValue &value)
 {
 	switch (value.getType())
 	{
 	case ft_json::STRING:
-		std::cout << "\"" << value.asString() << "\"";
+		os << "\"" << value.asString() << "\"";
 		break;
 	case ft_json::NUMBER:
-		std::cout << value.asNumber();
+		os << value.asNumber();
 		break;
 	case ft_json::OBJECT:
 	{
-		std::cout << "{";
+		os << "{";
 		const std::map<std::string, ft_json::JsonValue> &obj = value.asObject();
 		for (std::map<std::string, ft_json::JsonValue>::const_iterator i = obj.begin(); i != obj.end(); ++i)
 		{
 			if (i != obj.begin())
-				std::cout << ", ";
-			std::cout << "\"" << i->first << "\": ";
-			print_json_value(i->second);
+				os << ", ";
+			os << "\"" << i->first << "\": ";
+			os << i->second;
 		}
-		std::cout << "}";
+		os << "}";
 		break;
 	}
 	case ft_json::ARRAY:
 	{
-		std::cout << "[";
+		os << "[";
 		const std::vector<ft_json::JsonValue> &arr = value.asArray();
 		for (size_t i = 0; i < arr.size(); ++i)
 		{
 			if (i > 0)
-				std::cout << ", ";
-			print_json_value(arr[i]);
+				os << ", ";
+			os << arr[i];
 		}
-		std::cout << "]";
+		os << "]";
 		break;
 	}
 	case ft_json::BOOLEAN:
-		std::cout << (value.asBoolean() ? "true" : "false");
+		os << (value.asBoolean() ? "true" : "false");
 		break;
 	case ft_json::NULLTYPE:
-		std::cout << "null";
+		os << "null";
 		break;
 	}
+	return os;
 }

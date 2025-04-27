@@ -20,9 +20,9 @@ int main(int argc, char **argv)
 	try
 	{
 		ft_json::JsonValue parsed = ft_json::parse_json(file);
-		// ft_json::print_json_value(parsed);
+		std::cout << "\033[1m\033[31mjson:\n\033[0m" << parsed << std::endl;
 		std::vector<Server> servers = create_servers(parsed);
-		std::cout << servers[0] << std::endl;
+		std::cout << "\033[1m\033[31mservers:\n\033[0m" << servers[0] << std::endl;
 	}
 	catch (const std::exception &e)
 	{

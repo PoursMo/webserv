@@ -21,6 +21,7 @@ private:
 	std::string uploadStore;
 	// cgi
 
+
 	void setMethods(const ft_json::JsonArray &input);
 	void setReturnPair(const ft_json::JsonObject &input);
 	void setRoot(const std::string &input);

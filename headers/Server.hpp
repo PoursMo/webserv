@@ -22,6 +22,7 @@ private:
 	uint16_t clientMaxBodySize;
 	std::map<std::string, LocationData> locations;
 
+
 	void setAddress(const std::string &input);
 	void setPort(int64_t input);
 	void setServerNames(const ft_json::JsonArray &input);

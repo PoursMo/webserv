@@ -8,6 +8,13 @@ LocationData::LocationData() {}
 
 LocationData::LocationData(const ft_json::JsonObject &json_directives)
 {
+	methods.push_back(GET);
+	methods.push_back(POST);
+	methods.push_back(DELETE);
+	root = "/var/www/html";
+	autoIndex = false;
+	indexes.push_back("index.html");
+
 	for (ft_json::JsonObject::const_iterator json_directive = json_directives.begin(); json_directive != json_directives.end(); json_directive++)
 	{
 		const std::string &s = (*json_directive).first;
@@ -41,6 +48,7 @@ LocationData::LocationData(const ft_json::JsonObject &json_directives)
 
 void LocationData::setMethods(const ft_json::JsonArray &input)
 {
+	methods.clear();
 	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
 		const std::string &s = (*i).asString();
@@ -77,7 +85,8 @@ void LocationData::setIndexes(const ft_json::JsonArray &input)
 {
 	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
-		indexes.push_back((*i).asString());
+		if ((*i).asString().compare("index.html") != 0)
+			indexes.push_back((*i).asString());
 	}
 }
 

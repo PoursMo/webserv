@@ -58,6 +58,8 @@ namespace ft_json
 		Type type;
 	};
 
+	std::ostream &operator<<(std::ostream &os, const ft_json::JsonValue &value);
+
 	typedef std::map<std::string, JsonValue> JsonObject;
 	typedef std::vector<JsonValue> JsonArray;
 

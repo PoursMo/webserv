@@ -55,5 +55,7 @@ std::vector<Server> create_servers(const ft_json::JsonValue &json)
 		}
 		count++;
 	}
+	if (count == 1)
+		throw std::runtime_error("Atleast 1 server is required.");
 	return servers;
 }
