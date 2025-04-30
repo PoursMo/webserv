@@ -13,7 +13,6 @@ class Server
 {
 private:
 	int socketFd;
-
 	std::string address;
 	in_port_t port;
 	std::vector<std::string> serverNames;

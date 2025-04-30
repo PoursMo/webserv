@@ -1,7 +1,7 @@
 {
 	"servers": [
 		{
-			"address": "0.0.0.0",
+			"address": "127.0.0.2",
 			"port": 8080,
 			"server_name": [
 				"test.com",
@@ -38,8 +38,45 @@
 			]
 		},
 		{
-			"address": "0.0.0.0",
-			"port": 8081,
+			"address": "127.0.0.2",
+			"port": 8080,
+			"server_name": [
+				"test.com",
+				"www.test.com"
+			],
+			"error_page": {
+				"403": "/forbidden.html",
+				"404": "/not_found.html"
+			},
+			"client_max_body_size": 4096,
+			"locations": [
+				{
+					"path": "/",
+					"root": "/var/www/html",
+					"autoindex": false,
+					"index": [
+						"index.html"
+					],
+					"upload_store": "/uploads"
+				},
+				{
+					"path": "/test",
+					"method": [
+						"GET"
+					],
+					"return": {
+						"404": ""
+					},
+					"autoindex": true,
+					"index": [
+						"index.html"
+					]
+				}
+			]
+		},
+				{
+			"address": "127.0.0.3",
+			"port": 8080,
 			"server_name": [
 				"test.com",
 				"www.test.com"

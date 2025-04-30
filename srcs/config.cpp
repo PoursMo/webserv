@@ -3,28 +3,17 @@
 #include "utils.hpp"
 
 #include <stdexcept>
+#include <iostream>
 
-// ********************************************************************
-// Utils
-// ********************************************************************
-
-int extract_status_code(const std::string &s)
+static bool is_duplicate(const std::vector<Server *> &servers, const Server *new_server)
 {
-	for (std::string::const_iterator i = s.begin(); i != s.end(); i++)
+	for (std::vector<Server *>::const_iterator i = servers.begin(); i != servers.end(); i++)
 	{
-		if (!std::isdigit(*i))
-			throw std::runtime_error("Invalid status code.");
+		if ((*i)->getAddress() == new_server->getAddress() && (*i)->getPort() == new_server->getPort())
+			return true;
 	}
-	char *end;
-	unsigned long code = std::strtoul(s.c_str(), &end, 10);
-	if (*end != '\0' || code < 300 || code > 599)
-		throw std::runtime_error("Invalid status code.");
-	return code;
+	return false;
 }
-
-// ********************************************************************
-//
-// ********************************************************************
 
 std::vector<Server *> create_servers(const ft_json::JsonValue &json)
 {
@@ -37,7 +26,7 @@ std::vector<Server *> create_servers(const ft_json::JsonValue &json)
 	}
 	catch (...)
 	{
-		throw std::runtime_error("Root level must be a single \"servers\" object with an array of objects as i value.");
+		throw std::runtime_error("Root level must be a single \"servers\" object with an array of objects as it's value.");
 	}
 
 	int count = 1;
@@ -47,6 +36,12 @@ std::vector<Server *> create_servers(const ft_json::JsonValue &json)
 		try
 		{
 			Server *server = new Server((*json_server).asObject());
+			if (is_duplicate(servers, server))
+			{
+				std::cout << "warning: duplicate host:port detected on " << server->getAddress() << ":" << server->getPort() << ", any duplicate will be ignored" << std::endl;
+				delete server;
+				continue;
+			}
 			servers.push_back(server);
 		}
 		catch (const std::exception &e)

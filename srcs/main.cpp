@@ -99,22 +99,13 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	ft_json::JsonValue json;
-	try
-	{
-		std::cout << "\033[1m\033[31m" << "json:" << "\033[0m" << std::endl;
-		json = ft_json::parse_json(file);
-		std::cout << json << std::endl
-				  << std::endl;
-	}
-	catch (const std::exception &e)
-	{
-		std::cerr << e.what() << '\n';
-	}
-
 	std::vector<Server *> servers;
 	try
 	{
+		std::cout << "\033[1m\033[31m" << "json:" << "\033[0m" << std::endl;
+		ft_json::JsonValue json = ft_json::parse_json(file);
+		std::cout << json << std::endl
+				  << std::endl;
 		std::cout << "\033[1m\033[31m" << "servers:" << "\033[0m" << std::endl;
 		servers = create_servers(json);
 		for (std::vector<Server *>::iterator i = servers.begin(); i != servers.end(); i++)
@@ -122,13 +113,20 @@ int main(int argc, char **argv)
 			std::cout << *(*i);
 		}
 		std::cout << std::endl;
+		for (std::vector<Server *>::iterator i = servers.begin(); i != servers.end(); i++)
+		{
+			(*i)->initializeSocket();
+		}
 	}
 	catch (const std::exception &e)
 	{
 		std::cerr << e.what() << '\n';
+		return 1;
 	}
 
-	// poll loop
+	// while (1)
+	// {
+	// }
 
 	for (std::vector<Server *>::iterator i = servers.begin(); i != servers.end(); i++)
 	{

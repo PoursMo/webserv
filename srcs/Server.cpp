@@ -50,7 +50,9 @@ Server::Server(const ft_json::JsonObject &json_directives)
 			throw std::runtime_error(s + ": " + e.what());
 		}
 	}
-	initializeSocket();
+	socketFd = socket(AF_INET, SOCK_STREAM, 0); // SOCK_NONBLOCK ? it has no effect on epoll
+	if (socketFd == -1)
+		throw std::runtime_error("socket: " + std::string(strerror(errno)));
 }
 
 Server::~Server()
@@ -195,10 +197,6 @@ in_addr_t Server::getAddressAsNum() const
 
 void Server::initializeSocket()
 {
-	socketFd = socket(AF_INET, SOCK_STREAM, 0); // SOCK_NONBLOCK ? it has no effect on epoll
-	if (socketFd == -1)
-		throw std::runtime_error("socket: " + std::string(strerror(errno)));
-
 	// Reuse of local addresses is supported
 	int opt = 1;
 	if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)

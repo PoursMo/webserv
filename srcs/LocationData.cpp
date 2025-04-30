@@ -1,5 +1,6 @@
 #include "LocationData.hpp"
 #include "config.hpp"
+#include "utils.hpp"
 
 #include <stdexcept>
 #include <iostream>
@@ -158,8 +159,8 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 		}
 	}
 	os << "]" << std::endl;
-	os << "    ReturnPair: (" << locationData.getReturnPair().first << ", \"" << locationData.getReturnPair().second << "\")" << std::endl;
-	os << "    Root: \"" << locationData.getRoot() << "\"" << std::endl;
+	os << "    ReturnPair: (" << locationData.getReturnPair().first << ", " << locationData.getReturnPair().second << ")" << std::endl;
+	os << "    Root: " << locationData.getRoot() << std::endl;
 	os << "    AutoIndex: " << (locationData.getAutoIndex() ? "true" : "false") << std::endl;
 	os << "    Indexes: [";
 	const std::vector<std::string> &indexes = locationData.getIndexes();
@@ -167,9 +168,9 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 	{
 		if (i != indexes.begin())
 			os << ", ";
-		os << "\"" << *i << "\"";
+		os << *i;
 	}
 	os << "]" << std::endl;
-	os << "    UploadStore: \"" << locationData.getUploadStore() << "\"" << std::endl;
+	os << "    UploadStore: " << locationData.getUploadStore() << std::endl;
 	return os;
 }
