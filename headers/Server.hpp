@@ -7,14 +7,13 @@
 #include <algorithm>
 #include <functional>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
 #include <netdb.h>
 
 class Server
 {
 private:
+	int socketFd;
+
 	std::string address;
 	in_port_t port;
 	std::vector<std::string> serverNames;
@@ -31,14 +30,19 @@ private:
 
 public:
 	Server(const ft_json::JsonObject &json_directives);
+	~Server();
 
 	// Getters
+	int getSocketFd() const;
 	const std::string &getAddress() const;
+	in_addr_t getAddressAsNum() const;
 	in_port_t getPort() const;
 	const std::vector<std::string> &getServerNames() const;
 	const std::map<int, std::string> &getErrorPages() const;
 	uint16_t getClientMaxBodySize() const;
 	const std::map<std::string, LocationData> &getLocations() const;
+
+	void initializeSocket();
 };
 
 std::ostream &operator<<(std::ostream &os, const Server &server);
