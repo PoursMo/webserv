@@ -1,8 +1,9 @@
 #include "config.hpp"
-#include "Server.hpp"
+#include "VirtualServer.hpp"
 
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 // void temp()
 // {
@@ -85,6 +86,22 @@
 // 	std::cout << "Server initialized and listening on " << address << ":" << port << std::endl;
 // }
 
+VirtualServer *find_virtual_server_with_host_name(const std::map<int, std::vector<VirtualServer *> > &m, const std::string &name)
+{
+	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = m.begin(); i != m.end(); i++)
+	{
+		for (std::vector<VirtualServer *>::const_iterator j = (*i).second.begin(); j != (*i).second.end(); j++)
+		{
+			for (std::vector<std::string>::const_iterator k = (*j)->getServerNames().begin(); k != (*j)->getServerNames().end(); k++)
+			{
+				if (*k == name)
+					return *j;
+			}
+		}
+	}
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	const char *config_path;
@@ -98,8 +115,7 @@ int main(int argc, char **argv)
 		std::cerr << config_path << ": Could not open file " << std::endl;
 		return 1;
 	}
-
-	std::vector<Server *> servers;
+	std::map<int, std::vector<VirtualServer *> > servers; // const VirtualServer * const ?
 	try
 	{
 		std::cout << "\033[1m\033[31m" << "json:" << "\033[0m" << std::endl;
@@ -108,15 +124,15 @@ int main(int argc, char **argv)
 				  << std::endl;
 		std::cout << "\033[1m\033[31m" << "servers:" << "\033[0m" << std::endl;
 		servers = create_servers(json);
-		for (std::vector<Server *>::iterator i = servers.begin(); i != servers.end(); i++)
+		for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
 		{
-			std::cout << *(*i);
+			std::cout << "Socket: " << (*i).first << std::endl;
+			for (std::vector<VirtualServer *>::const_iterator j = (*i).second.begin(); j != (*i).second.end(); j++)
+			{
+				std::cout << *(*j);
+			}
 		}
 		std::cout << std::endl;
-		for (std::vector<Server *>::iterator i = servers.begin(); i != servers.end(); i++)
-		{
-			(*i)->initializeSocket();
-		}
 	}
 	catch (const std::exception &e)
 	{
@@ -128,8 +144,11 @@ int main(int argc, char **argv)
 	// {
 	// }
 
-	for (std::vector<Server *>::iterator i = servers.begin(); i != servers.end(); i++)
+	for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
 	{
-		delete *i;
+		for (std::vector<VirtualServer *>::const_iterator j = (*i).second.begin(); j != (*i).second.end(); j++)
+		{
+			delete (*j);
+		}
 	}
 }

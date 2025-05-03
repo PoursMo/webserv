@@ -1,5 +1,5 @@
-#ifndef SERVER_HPP
-#define SERVER_HPP
+#ifndef VIRTUALSERVER_HPP
+#define VIRTUALSERVER_HPP
 
 #include "ft_json.hpp"
 #include "LocationData.hpp"
@@ -9,10 +9,9 @@
 
 #include <netdb.h>
 
-class Server
+class VirtualServer
 {
 private:
-	int socketFd;
 	std::string address;
 	in_port_t port;
 	std::vector<std::string> serverNames;
@@ -28,11 +27,9 @@ private:
 	void setLocations(const ft_json::JsonArray &input);
 
 public:
-	Server(const ft_json::JsonObject &json_directives);
-	~Server();
+	VirtualServer(const ft_json::JsonObject &json_directives);
 
 	// Getters
-	int getSocketFd() const;
 	const std::string &getAddress() const;
 	in_addr_t getAddressAsNum() const;
 	in_port_t getPort() const;
@@ -40,10 +37,8 @@ public:
 	const std::map<int, std::string> &getErrorPages() const;
 	uint16_t getClientMaxBodySize() const;
 	const std::map<std::string, LocationData> &getLocations() const;
-
-	void initializeSocket();
 };
 
-std::ostream &operator<<(std::ostream &os, const Server &server);
+std::ostream &operator<<(std::ostream &os, const VirtualServer &server);
 
 #endif

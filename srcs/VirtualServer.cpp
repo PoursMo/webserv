@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "VirtualServer.hpp"
 #include "utils.hpp"
 #include "ft_json.hpp"
 #include "config.hpp"
@@ -6,18 +6,8 @@
 
 #include <stdexcept>
 #include <iostream>
-#include <unistd.h>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-
-#include <sys/epoll.h>
-
-#include <string.h>
-#include <errno.h>
-
-Server::Server(const ft_json::JsonObject &json_directives)
+VirtualServer::VirtualServer(const ft_json::JsonObject &json_directives)
 {
 	// Default values
 	address = "0.0.0.0";
@@ -50,21 +40,13 @@ Server::Server(const ft_json::JsonObject &json_directives)
 			throw std::runtime_error(s + ": " + e.what());
 		}
 	}
-	socketFd = socket(AF_INET, SOCK_STREAM, 0); // SOCK_NONBLOCK ? it has no effect on epoll
-	if (socketFd == -1)
-		throw std::runtime_error("socket: " + std::string(strerror(errno)));
-}
-
-Server::~Server()
-{
-	close(socketFd);
 }
 
 // ********************************************************************
 // Setters using JsonValue
 // ********************************************************************
 
-void Server::setAddress(const std::string &input)
+void VirtualServer::setAddress(const std::string &input)
 {
 	int dot_count = 0;
 	std::size_t left = 0;
@@ -91,14 +73,14 @@ void Server::setAddress(const std::string &input)
 	address = input;
 }
 
-void Server::setPort(int64_t input)
+void VirtualServer::setPort(int64_t input)
 {
 	if (input < 1 || input > 65535)
 		throw std::runtime_error("Invalid port.");
 	port = static_cast<uint16_t>(input);
 }
 
-void Server::setServerNames(const ft_json::JsonArray &input)
+void VirtualServer::setServerNames(const ft_json::JsonArray &input)
 {
 	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
@@ -106,7 +88,7 @@ void Server::setServerNames(const ft_json::JsonArray &input)
 	}
 }
 
-void Server::setErrorPages(const ft_json::JsonObject &input)
+void VirtualServer::setErrorPages(const ft_json::JsonObject &input)
 {
 	for (ft_json::JsonObject::const_iterator i = input.begin(); i != input.end(); i++)
 	{
@@ -114,14 +96,14 @@ void Server::setErrorPages(const ft_json::JsonObject &input)
 	}
 }
 
-void Server::setClientMaxBodySize(int64_t input)
+void VirtualServer::setClientMaxBodySize(int64_t input)
 {
 	if (input < 1 || input > 65536)
 		throw std::runtime_error("Invalid client_max_body_size.");
 	clientMaxBodySize = static_cast<uint16_t>(input);
 }
 
-void Server::setLocations(const ft_json::JsonArray &input)
+void VirtualServer::setLocations(const ft_json::JsonArray &input)
 {
 	for (ft_json::JsonArray::const_iterator location = input.begin(); location != input.end(); location++)
 	{
@@ -143,42 +125,37 @@ void Server::setLocations(const ft_json::JsonArray &input)
 // Getters
 // ********************************************************************
 
-int Server::getSocketFd() const
-{
-	return socketFd;
-}
-
-const std::string &Server::getAddress() const
+const std::string &VirtualServer::getAddress() const
 {
 	return address;
 }
 
-in_port_t Server::getPort() const
+in_port_t VirtualServer::getPort() const
 {
 	return port;
 }
 
-const std::vector<std::string> &Server::getServerNames() const
+const std::vector<std::string> &VirtualServer::getServerNames() const
 {
 	return serverNames;
 }
 
-const std::map<int, std::string> &Server::getErrorPages() const
+const std::map<int, std::string> &VirtualServer::getErrorPages() const
 {
 	return errorPages;
 }
 
-uint16_t Server::getClientMaxBodySize() const
+uint16_t VirtualServer::getClientMaxBodySize() const
 {
 	return clientMaxBodySize;
 }
 
-const std::map<std::string, LocationData> &Server::getLocations() const
+const std::map<std::string, LocationData> &VirtualServer::getLocations() const
 {
 	return locations;
 }
 
-in_addr_t Server::getAddressAsNum() const
+in_addr_t VirtualServer::getAddressAsNum() const
 {
 	in_addr_t num = 0;
 	size_t dot_pos = 0;
@@ -192,54 +169,15 @@ in_addr_t Server::getAddressAsNum() const
 }
 
 // ********************************************************************
-//
-// ********************************************************************
-
-void Server::initializeSocket()
-{
-	// Reuse of local addresses is supported
-	int opt = 1;
-	if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
-	{
-		close(socketFd);
-		throw std::runtime_error("setsockopt: " + std::string(strerror(errno)));
-	}
-	// Receive buffer size
-	int maxRequestSize = clientMaxBodySize;
-	if (setsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, &maxRequestSize, sizeof(maxRequestSize)) == -1)
-	{
-		close(socketFd);
-		throw std::runtime_error("setsockopt: " + std::string(strerror(errno)));
-	}
-
-	struct sockaddr_in serverAddr;
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(port);
-	serverAddr.sin_addr.s_addr = getAddressAsNum();
-	if (bind(socketFd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) // check for permission error ? errno is EACCES
-	{
-		close(socketFd);
-		throw std::runtime_error("bind: " + std::string(strerror(errno)));
-	}
-
-	if (listen(socketFd, SOMAXCONN) == -1) // change backlog size ?
-	{
-		close(socketFd);
-		throw std::runtime_error("listen: " + std::string(strerror(errno)));
-	}
-}
-
-// ********************************************************************
 // Debug
 // ********************************************************************
 
-std::ostream &operator<<(std::ostream &os, const Server &server)
+std::ostream &operator<<(std::ostream &os, const VirtualServer &server)
 {
-	os << "Server:" << std::endl;
-	os << "  Socket: " << server.getSocketFd() << std::endl;
-	os << "  Address: " << server.getAddress() << std::endl;
-	os << "  Port: " << server.getPort() << std::endl;
-	os << "  Server Names: ";
+	os << "  VirtualServer:" << std::endl;
+	os << "    Address: " << server.getAddress() << std::endl;
+	os << "    Port: " << server.getPort() << std::endl;
+	os << "    VirtualServer Names: ";
 	for (std::vector<std::string>::const_iterator i = server.getServerNames().begin(); i != server.getServerNames().end(); ++i)
 	{
 		if (i != server.getServerNames().begin())
@@ -247,20 +185,20 @@ std::ostream &operator<<(std::ostream &os, const Server &server)
 		os << *i;
 	}
 	os << std::endl;
-	os << "  Error Pages: ";
+	os << "    Error Pages: ";
 	for (std::map<int, std::string>::const_iterator i = server.getErrorPages().begin(); i != server.getErrorPages().end(); ++i)
 	{
 		os << "[" << i->first << ": " << i->second << "] ";
 	}
 	os << std::endl;
-	os << "  Client Max Body Size: " << server.getClientMaxBodySize() << std::endl;
-	os << "  Locations:";
+	os << "    Client Max Body Size: " << server.getClientMaxBodySize() << std::endl;
+	os << "    Locations:";
 	for (std::map<std::string, LocationData>::const_iterator i = server.getLocations().begin(); i != server.getLocations().end(); ++i)
 	{
 		os << std::endl
-		   << "  [" << std::endl
-		   << "    Path: " << i->first << std::endl
-		   << i->second << "  ]";
+		   << "    [" << std::endl
+		   << "      Path: " << i->first << std::endl
+		   << i->second << "    ]";
 	}
 	os << std::endl;
 	return os;

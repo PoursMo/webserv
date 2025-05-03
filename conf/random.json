@@ -42,11 +42,12 @@
 			"port": 8080,
 			"server_name": [
 				"test.com",
-				"www.test.com"
+				"www.test.com",
+				"ouioui.com"
 			],
 			"error_page": {
-				"403": "/forbidden.html",
-				"404": "/not_found.html"
+				"403": "/neddibrof.html",
+				"404": "/dnuof_ton.html"
 			},
 			"client_max_body_size": 4096,
 			"locations": [

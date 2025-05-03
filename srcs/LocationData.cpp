@@ -137,7 +137,7 @@ const std::string &LocationData::getUploadStore() const
 
 std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 {
-	os << "    Methods: [";
+	os << "      Methods: [";
 	const std::vector<Method> &methods = locationData.getMethods();
 	for (std::vector<Method>::const_iterator i = methods.begin(); i != methods.end(); ++i)
 	{
@@ -159,10 +159,10 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 		}
 	}
 	os << "]" << std::endl;
-	os << "    ReturnPair: (" << locationData.getReturnPair().first << ", " << locationData.getReturnPair().second << ")" << std::endl;
-	os << "    Root: " << locationData.getRoot() << std::endl;
-	os << "    AutoIndex: " << (locationData.getAutoIndex() ? "true" : "false") << std::endl;
-	os << "    Indexes: [";
+	os << "      ReturnPair: (" << locationData.getReturnPair().first << ", " << locationData.getReturnPair().second << ")" << std::endl;
+	os << "      Root: " << locationData.getRoot() << std::endl;
+	os << "      AutoIndex: " << (locationData.getAutoIndex() ? "true" : "false") << std::endl;
+	os << "      Indexes: [";
 	const std::vector<std::string> &indexes = locationData.getIndexes();
 	for (std::vector<std::string>::const_iterator i = indexes.begin(); i != indexes.end(); ++i)
 	{
@@ -171,6 +171,6 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 		os << *i;
 	}
 	os << "]" << std::endl;
-	os << "    UploadStore: " << locationData.getUploadStore() << std::endl;
+	os << "      UploadStore: " << locationData.getUploadStore() << std::endl;
 	return os;
 }

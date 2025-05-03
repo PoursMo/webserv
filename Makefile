@@ -10,7 +10,7 @@ NAME = webserv
 SRCS = $(SRCDIR)/main.cpp \
 $(SRCDIR)/ft_json.cpp \
 $(SRCDIR)/config.cpp \
-$(SRCDIR)/Server.cpp \
+$(SRCDIR)/VirtualServer.cpp \
 $(SRCDIR)/LocationData.cpp \
 $(SRCDIR)/utils.cpp \
 

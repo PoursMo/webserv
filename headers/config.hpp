@@ -3,8 +3,8 @@
 
 #include "ft_json.hpp"
 
-class Server;
+class VirtualServer;
 
-std::vector<Server *> create_servers(const ft_json::JsonValue &json);
+std::map<int, std::vector<VirtualServer *> > create_servers(const ft_json::JsonValue &json);
 
 #endif
