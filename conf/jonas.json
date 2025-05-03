@@ -1,0 +1,20 @@
+{
+  "$schema": "./webserv-schema.json",
+  "servers": [
+    {
+      "path": "/",
+      "address": "127.0.0.1",
+      "error_page": { "404": "42" },
+      "method": ["GET", "POST"],
+      "return": {
+        "302": "/redirect.html"
+      }
+    },
+    {
+      "path": "/yolo",
+      "return": {
+        "411": ""
+      }
+    }
+  ]
+}
