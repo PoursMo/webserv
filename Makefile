@@ -1,4 +1,3 @@
-CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR)
 
 INCDIR = headers
@@ -7,29 +6,32 @@ OBJDIR = objs
 
 NAME = webserv
 
-SRCS = $(SRCDIR)/main.cpp \
-$(SRCDIR)/ft_json.cpp \
-$(SRCDIR)/config.cpp \
-$(SRCDIR)/VirtualServer.cpp \
-$(SRCDIR)/LocationData.cpp \
-$(SRCDIR)/utils.cpp \
+SRCS = $(SRCDIR)/ft_json.cpp \
+	$(SRCDIR)/config.cpp \
+	$(SRCDIR)/VirtualServer.cpp \
+	$(SRCDIR)/LocationData.cpp \
+	$(SRCDIR)/utils.cpp \
 
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))
 
 all: $(NAME)
 
-$(NAME): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+$(NAME): $(OBJS) $(OBJDIR)/main.o
+	$(CXX) $(CFLAGS) -o $@ $^
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CFLAGS) -c $< -o $@
+
+tests/%.test: tests/%.cpp $(OBJS)
+	$(CXX) $(CFLAGS) -o $@ $^
 
 clean:
 	rm -rf $(OBJDIR)
 
 fclean: clean
 	rm -rf $(NAME)
+	rm -f tests/**/*.test
 
 re: fclean all
 
