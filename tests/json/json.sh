@@ -5,8 +5,16 @@ source ../utils.sh
 
 test_json() {
 	json_files_generate
+
 	each_json_file jq . > res_jq.log
 	each_json_file ./json.test > res_parser.log
+
+	$VALGRIND ./json.test 058.json &> /dev/null
+	check_leaks json_good
+
+	$VALGRIND ./json.test 037.json &> /dev/null
+	check_leaks json_bad
+
 	rm -f *.json
 	get_diff json res_jq.log res_parser.log
 	return $?

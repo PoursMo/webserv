@@ -2,13 +2,13 @@
 
 SRC_DIR="./srcs"
 
-LEAKS_CMD="valgrind"
-LEAKS_CMD+=" --leak-check=full"
-LEAKS_CMD+=" --track-fds=yes"
-LEAKS_CMD+=" --show-leak-kinds=all"
-LEAKS_CMD+=" --track-origins=yes"
-LEAKS_CMD+=" --log-file=leaks.log"
-#LEAKS_CMD+=" --trace-children=yes"
+VALGRIND="valgrind"
+VALGRIND+=" --leak-check=full"
+VALGRIND+=" --track-fds=yes"
+VALGRIND+=" --show-leak-kinds=all"
+VALGRIND+=" --track-origins=yes"
+VALGRIND+=" --log-file=leaks.log"
+#VALGRIND+=" --trace-children=yes"
 
 sync_sources() {
 	SOURCES=$(ls $SRC_DIR/*.c $SRC_DIR/**/*.c | sed "s;$SRC_DIR/;;g" | tr '\n' ' ')
@@ -21,11 +21,14 @@ sync_sources() {
 }
 
 check_leaks() {
+	NAME=$1
 	LEAKS_DETECTED=$(cat ./leaks.log | grep "ERROR SUMMARY" | awk '{printf "%s", $4}' | tr -d "0")
+	LEAKS_FILE="$1_leaks.log"
+	mv ./leaks.log "$LEAKS_FILE"
 	if [[ $LEAKS_DETECTED == "" ]] ; then
-		success "LEAKS\t\tOK"
+		success "LEAKS [$NAME]\tOK"
 	else
-		error "LEAKS\t\tERROR\t./leaks.log"
+		error "LEAKS [$NAME]\tERROR\t$LEAKS_FILE"
 	fi
 }
 
