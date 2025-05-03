@@ -2,19 +2,20 @@
   "$schema": "./webserv-schema.json",
   "servers": [
     {
-      "path": "/",
       "address": "127.0.0.1",
-      "error_page": { "404": "42" },
-      "methods": ["GET", "POST"],
-      "return": {
-        "302": "/redirect.html"
-      }
-    },
-    {
-      "path": "/yolo",
-      "return": {
-        "411": ""
-      }
+      "error_page": { "404": "/my-404-page.html" },
+      "locations": [
+        {
+          "path": "/",
+          "method": ["DELETE"]
+        },
+        {
+          "path": "/yolo",
+          "return": {
+            "404": ""
+          }
+        }
+      ]
     }
   ]
 }

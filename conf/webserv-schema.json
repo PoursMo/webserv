@@ -10,7 +10,6 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path"],
         "properties": {
           "address": {
             "title": "Address ipv4",
@@ -50,47 +49,58 @@
             "type": "number",
             "default": 1024
           },
-          "path": {
-            "title": "The URL path prefix to match",
-            "type": "string"
-          },
-          "methods": {
-            "title": "Allowed HTTP methods",
-            "description": "If omitted, all methods are allowed.",
+          "locations": {
+            "title": "Route configuration",
             "type": "array",
             "items": {
-              "enum": ["GET", "POST", "DELETE"]
+              "type": "object",
+              "required": ["path"],
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "title": "The URL path prefix to match",
+                  "type": "string"
+                },
+                "method": {
+                  "title": "Allowed HTTP methods",
+                  "description": "If omitted, all methods are allowed.",
+                  "type": "array",
+                  "items": {
+                    "enum": ["GET", "POST", "DELETE"]
+                  }
+                },
+                "return": {
+                  "title": "Controls redirection or custom responses",
+                  "description": "Code refers to a HTTP status code (e.g., 301, 404).\nurl is only used for redirect codes (301, 302, 303, 307).",
+                  "examples": [{ "404": "" }, { "302": "/redirect.html" }],
+                  "type": "object",
+                  "patternProperties": {
+                    "^[1-5][0-9][0-9]$": { "type": "string" }
+                  },
+                  "additionalProperties": false
+                },
+                "root": {
+                  "title": "Base directory for serving static files",
+                  "type": "string",
+                  "default": "/var/www/html"
+                },
+                "autoindex": {
+                  "title": "Directory listing behavior",
+                  "description": "true: Shows directory contents when no index file exists.\nfalse: Returns 403 Forbidden (default).",
+                  "type": "boolean",
+                  "default": false
+                },
+                "index": {
+                  "title": "Default files to serve for directory requests.",
+                  "description": "If omitted, serves index.html",
+                  "type": "string"
+                },
+                "upload_store": {
+                  "title": "Enables file uploads and specifies storage directory.",
+                  "type": "string"
+                }
+              }
             }
-          },
-          "return": {
-            "title": "Controls redirection or custom responses",
-            "description": "Code refers to a HTTP status code (e.g., 301, 404).\nurl is only used for redirect codes (301, 302, 303, 307).",
-            "examples": [{ "404": "" }, { "302": "/redirect.html" }],
-            "type": "object",
-            "patternProperties": {
-              "^[1-5][0-9][0-9]$": { "type": "string" }
-            },
-            "additionalProperties": false
-          },
-          "root": {
-            "title": "Base directory for serving static files",
-            "type": "string",
-            "default": "/var/www/html"
-          },
-          "autoindex": {
-            "title": "Directory listing behavior",
-            "description": "true: Shows directory contents when no index file exists.\nfalse: Returns 403 Forbidden (default).",
-            "type": "boolean",
-            "default": false
-          },
-          "index": {
-            "title": "Default files to serve for directory requests.",
-            "description": "If omitted, serves index.html",
-            "type": "string"
-          },
-          "upload_store": {
-            "title": "Enables file uploads and specifies storage directory.",
-            "type": "string"
           }
         }
       }
