@@ -5,7 +5,7 @@
       "path": "/",
       "address": "127.0.0.1",
       "error_page": { "404": "42" },
-      "method": ["GET", "POST"],
+      "methods": ["GET", "POST"],
       "return": {
         "302": "/redirect.html"
       }

@@ -54,7 +54,7 @@
             "title": "The URL path prefix to match",
             "type": "string"
           },
-          "method": {
+          "methods": {
             "title": "Allowed HTTP methods",
             "description": "If omitted, all methods are allowed.",
             "type": "array",
