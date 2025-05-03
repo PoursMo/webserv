@@ -16,13 +16,18 @@ each_json_file() {
 	local COMMAND=$1
 	for JSON_FILE in *.json ; do
 		echo -ne "$JSON_FILE:\t"
-		cat $JSON_FILE | $COMMAND &> /dev/null
-		echo $? $(cat $JSON_FILE)
+		JSON=$(cat $JSON_FILE)
+		if [[ "$JSON" == '' || "$JSON" == '{}{}' || "$JSON" == '[][]' || "$JSON" == '{"key":[], "key":[]}' ]]; then
+			echo "IGNORED $JSON"
+			continue
+		fi
+		echo $JSON | $COMMAND &> /dev/null
+		echo -e "$?\t$JSON"
 	done
 }
 
 json_files_generate() {
-	local num=$((0))
+	local num=$((1))
 	while IFS= read -r line; do
 		echo $line > "$(printf %03d $num).json"
 		((num++))
