@@ -1,4 +1,4 @@
-CFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR)
+CFLAGS = -Wall -Wextra -Werror -std=c++98 -g -I$(INCDIR)
 
 INCDIR = headers
 SRCDIR = srcs

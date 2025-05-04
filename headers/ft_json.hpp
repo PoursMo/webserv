@@ -65,6 +65,7 @@ namespace ft_json
 
 	JsonValue parse_json(std::string file_content);
 	JsonValue parse_json(std::istream& stream);
+
 }
 
 #endif

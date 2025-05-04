@@ -98,6 +98,15 @@
                 "upload_store": {
                   "title": "Enables file uploads and specifies storage directory.",
                   "type": "string"
+                },
+                "cgi": {
+                  "type": "object",
+                  "title": "Map of extension and binary",
+                  "examples": [{ ".php": "/usr/bin/php-cgi84" }],
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^\\..+": { "type": "string" }
+                  }
                 }
               }
             }

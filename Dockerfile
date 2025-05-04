@@ -12,6 +12,7 @@ RUN apk add --no-cache libc-dev
 RUN apk add --no-cache libbsd-dev
 RUN apk add --no-cache php84-cgi
 RUN apk add --no-cache jq
+RUN apk add --no-cache nginx
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 WORKDIR /app
 ENTRYPOINT [ "/bin/zsh" ]

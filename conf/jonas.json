@@ -13,6 +13,9 @@
           "path": "/yolo",
           "return": {
             "404": ""
+          },
+          "cgi": {
+            ".php": "/usr/bin/php-cgi84"
           }
         }
       ]

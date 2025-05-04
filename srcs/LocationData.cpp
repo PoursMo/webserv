@@ -37,7 +37,8 @@ LocationData::LocationData(const ft_json::JsonObject &json_directives)
 				setIndexes(v.asArray());
 			else if (!s.compare("upload_store"))
 				setUploadStore(v.asString());
-			// cgi
+			else if (!s.compare("cgi"))
+				setCgiConfig(v.asObject());
 			else
 				throw std::runtime_error("Unknown directive.");
 		}
@@ -92,6 +93,19 @@ void LocationData::setIndexes(const ft_json::JsonArray &input)
 	}
 }
 
+void LocationData::setCgiConfig(const ft_json::JsonObject &input)
+{
+	ft_json::JsonObject::const_iterator it = input.begin();
+	ft_json::JsonObject::const_iterator end = input.end();
+	while (it != end)
+	{
+		const std::string &key = it->first;
+		const ft_json::JsonValue &value = it->second;
+		this->cgiConfig[key] = value.asString();
+		it++;
+	}
+}
+
 void LocationData::setUploadStore(const std::string &input)
 {
 	uploadStore = input;
@@ -131,13 +145,39 @@ const std::string &LocationData::getUploadStore() const
 	return uploadStore;
 }
 
+const std::map<std::string,std::string>& LocationData::getCgiConfig() const
+{
+	return this->cgiConfig;
+}
+
 // ********************************************************************
 // Debug
 // ********************************************************************
 
+static void printTabs(std::ostream &os, int tabs)
+{
+	for (int i = 0; i < tabs; i++)
+		os << "\t";
+}
+
+static void printStringMap(std::ostream &os, std::map<std::string, std::string> map, int tabs = 0)
+{
+	std::map<std::string, std::string>::const_iterator it = map.begin();
+	std::map<std::string, std::string>::const_iterator end = map.end();
+	os << "{\n";
+	while (it != end)
+	{
+		printTabs(os, tabs + 1);
+		os << it->first << ": " << it->second << ",\n";
+		it++;
+	}
+	printTabs(os, tabs);
+	os << "}" << std::endl;
+}
+
 std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 {
-	os << "      Methods: [";
+	os << "\tMethods: [";
 	const std::vector<Method> &methods = locationData.getMethods();
 	for (std::vector<Method>::const_iterator i = methods.begin(); i != methods.end(); ++i)
 	{
@@ -159,10 +199,10 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 		}
 	}
 	os << "]" << std::endl;
-	os << "      ReturnPair: (" << locationData.getReturnPair().first << ", " << locationData.getReturnPair().second << ")" << std::endl;
-	os << "      Root: " << locationData.getRoot() << std::endl;
-	os << "      AutoIndex: " << (locationData.getAutoIndex() ? "true" : "false") << std::endl;
-	os << "      Indexes: [";
+	os << "\tReturnPair: (" << locationData.getReturnPair().first << ", " << locationData.getReturnPair().second << ")" << std::endl;
+	os << "\tRoot: " << locationData.getRoot() << std::endl;
+	os << "\tAutoIndex: " << (locationData.getAutoIndex() ? "true" : "false") << std::endl;
+	os << "\tIndexes: [";
 	const std::vector<std::string> &indexes = locationData.getIndexes();
 	for (std::vector<std::string>::const_iterator i = indexes.begin(); i != indexes.end(); ++i)
 	{
@@ -170,7 +210,9 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 			os << ", ";
 		os << *i;
 	}
-	os << "]" << std::endl;
-	os << "      UploadStore: " << locationData.getUploadStore() << std::endl;
+	os << "]" << "\n";
+	os << "\tUploadStore: " << locationData.getUploadStore() << "\n";
+	os << "\tCgiConfig: ";
+	printStringMap(os, locationData.getCgiConfig(), 1);
 	return os;
 }

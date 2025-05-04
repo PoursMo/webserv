@@ -19,7 +19,7 @@ private:
 	bool autoIndex;
 	std::vector<std::string> indexes;
 	std::string uploadStore;
-	// cgi
+	std::map<std::string, std::string> cgiConfig;
 
 	void setMethods(const ft_json::JsonArray &input);
 	void setReturnPair(const ft_json::JsonObject &input);
@@ -27,7 +27,7 @@ private:
 	void setAutoIndex(bool input);
 	void setIndexes(const ft_json::JsonArray &input);
 	void setUploadStore(const std::string &input);
-	// setCgi
+	void setCgiConfig(const ft_json::JsonObject &input);
 
 public:
 	LocationData(const ft_json::JsonObject &json_directives);
@@ -40,7 +40,7 @@ public:
 	bool getAutoIndex() const;
 	const std::vector<std::string> getIndexes() const;
 	const std::string &getUploadStore() const;
-	// getcgi
+	const std::map<std::string, std::string> &getCgiConfig() const;
 };
 
 std::ostream &operator<<(std::ostream &os, const LocationData &locationData);
