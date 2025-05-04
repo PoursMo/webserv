@@ -319,9 +319,9 @@ ft_json::JsonValue ft_json::parse_json(std::string file_content)
 	}
 }
 
-ft_json::JsonValue ft_json::parse_json(std::ifstream &file)
+ft_json::JsonValue ft_json::parse_json(std::istream &stream)
 {
-	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	std::string content((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
 	return parse_json(content);
 }
 

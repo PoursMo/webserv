@@ -2,6 +2,7 @@
 *.d
 
 # Compiled Object files
+webserv
 *.slo
 *.lo
 *.o
@@ -31,6 +32,9 @@
 *.out
 *.app
 
-# Log and tests
-log/*
+# Dev, Log and tests
+*.log
+*.test
+*.diff
+.vscode
 tests/json/*.json

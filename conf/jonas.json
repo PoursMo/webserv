@@ -1,0 +1,21 @@
+{
+  "$schema": "./webserv-schema.json",
+  "servers": [
+    {
+      "address": "127.0.0.1",
+      "error_page": { "404": "/my-404-page.html" },
+      "locations": [
+        {
+          "path": "/",
+          "method": ["DELETE"]
+        },
+        {
+          "path": "/yolo",
+          "return": {
+            "404": ""
+          }
+        }
+      ]
+    }
+  ]
+}
