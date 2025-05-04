@@ -14,7 +14,7 @@
 
 static int initializeSocket(in_port_t port, in_addr_t vserver_addr)
 {
-	int socket_fd = socket(AF_INET, SOCK_STREAM, 0); // SOCK_NONBLOCK ? it has no effect on epoll
+	int socket_fd = socket(PF_INET, SOCK_STREAM, 0); // SOCK_NONBLOCK ? it has no effect on epoll
 	if (socket_fd == -1)
 		throw std::runtime_error("socket: " + std::string(strerror(errno)));
 
@@ -37,6 +37,7 @@ static int initializeSocket(in_port_t port, in_addr_t vserver_addr)
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
 	server_addr.sin_addr.s_addr = vserver_addr;
+	memset(server_addr.sin_zero, 0, sizeof(server_addr.sin_zero));
 	if (bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) // check for permission error ? errno is EACCES
 	{
 		close(socket_fd);
