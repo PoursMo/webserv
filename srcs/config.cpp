@@ -44,7 +44,7 @@ static int initializeSocket(in_port_t port, in_addr_t vserver_addr)
 		throw std::runtime_error("bind: " + std::string(strerror(errno)));
 	}
 
-	if (listen(socket_fd, SOMAXCONN) == -1) // change backlog size ?
+	if (listen(socket_fd, 511) == -1) // change backlog size ?
 	{
 		close(socket_fd);
 		throw std::runtime_error("listen: " + std::string(strerror(errno)));
@@ -69,10 +69,8 @@ std::map<int, std::vector<VirtualServer *> > create_servers(const ft_json::JsonV
 {
 	std::map<int, std::vector<VirtualServer *> > servers;
 	const ft_json::JsonObject &root = json.asObject();
-
 	if (root.count("servers") != 1 || root.at("servers").getType() != ft_json::ARRAY)
 		throw std::runtime_error("Root level must have a \"servers\" array of objects as it's value.");
-
 	int count = 1;
 	const ft_json::JsonArray &json_servers = root.at("servers").asArray();
 	for (ft_json::JsonArray::const_iterator json_server = json_servers.begin(); json_server != json_servers.end(); json_server++)
