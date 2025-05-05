@@ -12,6 +12,7 @@ SRCS = $(SRCDIR)/ft_json.cpp \
 	$(SRCDIR)/LocationData.cpp \
 	$(SRCDIR)/utils.cpp \
 	$(SRCDIR)/Poller.cpp \
+	$(SRCDIR)/http_error.cpp \
 
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))
 

@@ -1,15 +1,10 @@
 #include "Poller.hpp"
-
+#include "http_error.hpp"
 #include <unistd.h>
-#include <sys/epoll.h>
 
-// #include <iostream>
-// #include <vector>
 #include <stdexcept>
 #include <string.h>
 #include <errno.h>
-// #include <sys/socket.h>
-// #include <netinet/in.h>
 
 /*
 edge-trigerred mode: Continue to receive events until the underlying file descriptor is no longer in a ready state
