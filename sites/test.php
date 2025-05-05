@@ -13,7 +13,6 @@
 
 	<?php
 		header('Prout: http://www.example.com/');
-		echo $_GET['query'];
 		echo "HOHO"
 
 	?>
