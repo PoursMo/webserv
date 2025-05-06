@@ -84,7 +84,7 @@ void VirtualServer::setServerNames(const ft_json::JsonArray &input)
 {
 	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
-		serverNames.push_back((*i).asString());
+		serverNames.push_back(i->asString());
 	}
 }
 
@@ -92,7 +92,7 @@ void VirtualServer::setErrorPages(const ft_json::JsonObject &input)
 {
 	for (ft_json::JsonObject::const_iterator i = input.begin(); i != input.end(); i++)
 	{
-		errorPages[extract_status_code((*i).first.c_str())] = (*i).second.asString();
+		errorPages[extract_status_code(i->first.c_str())] = i->second.asString();
 	}
 }
 
@@ -165,7 +165,7 @@ in_addr_t VirtualServer::getAddressAsNum() const
 		num += value << (8 * i);
 		dot_pos = address.find('.', dot_pos) + 1;
 	}
-	return htonl(num);
+	return num;
 }
 
 // ********************************************************************

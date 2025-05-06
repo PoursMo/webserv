@@ -8,7 +8,7 @@
 
 /*
 edge-trigerred mode: Continue to receive events until the underlying file descriptor is no longer in a ready state
-level-triggered mode: Only receive events when the state of the watched file descriptors change
+level-triggered mode (default): Only receive events when the state of the watched file descriptors change
 */
 
 Poller::Poller(size_t nb_events)
@@ -30,20 +30,20 @@ void Poller::add(int fd, uint32_t events) // edge trigerred ?
 	event.events = events;
 	event.data.fd = fd;
 	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &event) == -1)
-		throw std::runtime_error(strerror(errno)); // other error ?
+		throw std::runtime_error(strerror(errno)); // other error ? 5xx
 }
 
 void Poller::del(int fd)
 {
 	if (epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0) == -1)
-		throw std::runtime_error(strerror(errno)); // other error ?
+		throw std::runtime_error(strerror(errno)); // other error ? 5xx
 }
 
 int Poller::poll()
 {
 	int nready = epoll_wait(epollFd, events.data(), events.size(), -1);
 	if (nready == -1)
-		throw std::runtime_error(strerror(errno)); // other error ?
+		throw std::runtime_error(strerror(errno)); // other error ? 5xx
 	return nready;
 }
 

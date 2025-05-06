@@ -1,7 +1,7 @@
 {
 	"servers": [
 		{
-			"address": "127.0.0.2",
+			"address": "127.0.0.1",
 			"port": 8080,
 			"server_name": [
 				"test.com",
@@ -38,7 +38,7 @@
 			]
 		},
 		{
-			"address": "127.0.0.2",
+			"address": "127.0.0.1",
 			"port": 8080,
 			"server_name": [
 				"test.com",
@@ -76,7 +76,7 @@
 			]
 		},
 				{
-			"address": "127.0.0.3",
+			"address": "172.17.0.1",
 			"port": 8080,
 			"server_name": [
 				"test.com",

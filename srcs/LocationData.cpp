@@ -53,7 +53,7 @@ void LocationData::setMethods(const ft_json::JsonArray &input)
 	methods.clear();
 	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
-		const std::string &s = (*i).asString();
+		const std::string &s = i->asString();
 		if (!s.compare("GET"))
 			methods.push_back(GET);
 		else if (!s.compare("POST"))
@@ -87,8 +87,8 @@ void LocationData::setIndexes(const ft_json::JsonArray &input)
 {
 	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
-		if ((*i).asString().compare("index.html") != 0)
-			indexes.push_back((*i).asString());
+		if (i->asString().compare("index.html") != 0)
+			indexes.push_back(i->asString());
 	}
 }
 

@@ -36,15 +36,15 @@ static int initializeSocket(in_port_t port, in_addr_t vserver_addr)
 	struct sockaddr_in server_addr;
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
-	server_addr.sin_addr.s_addr = vserver_addr;
+	server_addr.sin_addr.s_addr = htonl(vserver_addr);
 	memset(server_addr.sin_zero, 0, sizeof(server_addr.sin_zero));
-	if (bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) // check for permission error ? errno is EACCES
+	if (bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
 	{
 		close(socket_fd);
 		throw std::runtime_error("bind: " + std::string(strerror(errno)));
 	}
 
-	if (listen(socket_fd, 511) == -1) // change backlog size ?
+	if (listen(socket_fd, 511) == -1)
 	{
 		close(socket_fd);
 		throw std::runtime_error("listen: " + std::string(strerror(errno)));
@@ -56,10 +56,10 @@ static int check_duplicate_fd(const std::map<int, std::vector<VirtualServer *> >
 {
 	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = m.begin(); i != m.end(); i++)
 	{
-		for (std::vector<VirtualServer *>::const_iterator j = (*i).second.begin(); j != (*i).second.end(); j++)
+		for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
 		{
 			if ((*j)->getAddress() == server->getAddress() && (*j)->getPort() == server->getPort())
-				return (*i).first;
+				return i->first;
 		}
 	}
 	return -1;
@@ -88,7 +88,7 @@ std::map<int, std::vector<VirtualServer *> > create_servers(const ft_json::JsonV
 		{
 			for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
 			{
-				for (std::vector<VirtualServer *>::const_iterator j = (*i).second.begin(); j != (*i).second.end(); j++)
+				for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
 				{
 					delete (*j);
 				}

@@ -12,7 +12,7 @@ VirtualServer *find_virtual_server_with_host_name(const std::map<int, std::vecto
 {
 	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = m.begin(); i != m.end(); i++)
 	{
-		for (std::vector<VirtualServer *>::const_iterator j = (*i).second.begin(); j != (*i).second.end(); j++)
+		for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
 		{
 			for (std::vector<std::string>::const_iterator k = (*j)->getServerNames().begin(); k != (*j)->getServerNames().end(); k++)
 			{
@@ -28,7 +28,7 @@ bool is_server_fd(int fd, const std::map<int, std::vector<VirtualServer *> > &se
 {
 	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = servers.begin(); i != servers.end(); i++)
 	{
-		if (fd == (*i).first)
+		if (fd == i->first)
 			return true;
 	}
 	return false;
@@ -67,7 +67,7 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 	Poller poller;
 	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = servers.begin(); i != servers.end(); i++)
 	{
-		poller.add((*i).first);
+		poller.add(i->first);
 	}
 	while (1)
 	{
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 	if (argc > 1)
 		config_path = argv[1];
 	else
-		config_path = "conf/conf.json"; // create
+		config_path = "conf/default.json"; // create
 	std::ifstream file(config_path);
 	if (!file)
 	{
@@ -131,8 +131,8 @@ int main(int argc, char **argv)
 		servers = create_servers(json);
 		for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
 		{
-			std::cout << "Socket: " << (*i).first << std::endl;
-			for (std::vector<VirtualServer *>::const_iterator j = (*i).second.begin(); j != (*i).second.end(); j++)
+			std::cout << "Socket: " << i->first << std::endl;
+			for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
 			{
 				std::cout << *(*j);
 			}
@@ -151,7 +151,7 @@ int main(int argc, char **argv)
 	// this is never reached
 	for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
 	{
-		for (std::vector<VirtualServer *>::const_iterator j = (*i).second.begin(); j != (*i).second.end(); j++)
+		for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
 		{
 			delete (*j);
 		}
