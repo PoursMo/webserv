@@ -1,4 +1,5 @@
 {
+	"$schema": "./webserv-schema.json",
 	"servers": [
 		{
 			"address": "127.0.0.1",
@@ -95,7 +96,8 @@
 					"index": [
 						"index.html"
 					],
-					"upload_store": "/uploads"
+					"upload_store": "/uploads",
+					"method": ["GET", "POST"]
 				},
 				{
 					"path": "/test",

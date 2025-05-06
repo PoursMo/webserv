@@ -8,8 +8,11 @@
 class Request
 {
     private:
-        std::map<std::string, std::string> headers;
         Method method;
+        std::string resource;
+        std::map<std::string, std::string> headers;
+        void handleRequestLine(std::istream http);
+        void handleHeaders(std::istream http);
     public:
         Request(std::istream http);
         ~Request();

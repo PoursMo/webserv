@@ -93,7 +93,10 @@
                 "index": {
                   "title": "Default files to serve for directory requests.",
                   "description": "If omitted, serves index.html",
-                  "type": "string"
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 "upload_store": {
                   "title": "Enables file uploads and specifies storage directory.",

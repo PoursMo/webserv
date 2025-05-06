@@ -2,6 +2,7 @@
   "$schema": "./webserv-schema.json",
   "servers": [
     {
+      "server_name": [""],
       "address": "127.0.0.1",
       "error_page": { "404": "/my-404-page.html" },
       "locations": [
