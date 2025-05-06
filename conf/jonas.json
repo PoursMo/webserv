@@ -7,8 +7,9 @@
       "error_page": { "404": "/my-404-page.html" },
       "locations": [
         {
-          "path": "/",
-          "method": ["DELETE"]
+          "path": "/dir",
+          "index": ["prou.html", "toto.html"],
+          "autoindex": true
         },
         {
           "path": "/yolo",
