@@ -22,3 +22,9 @@ sleep 1
 
 ##start tests
 docker exec request_response_test bash /app/scripts/request_response_test.sh
+
+container_id=$(docker ps -a -qf "name=^request_response_test$")
+
+docker cp request_response_test:/app/test_logs.txt ./test_logs.txt
+docker stop "$container_id"
+docker container rm "$container_id"
