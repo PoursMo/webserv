@@ -7,12 +7,14 @@
 #include <stdexcept>
 #include <iostream>
 
+#define WS_MAX_CLIENT_MAX_BODY_SIZE 104857600
+
 VirtualServer::VirtualServer(const ft_json::JsonObject &json_directives)
 {
 	// Default values
 	address = "0.0.0.0";
 	port = 8000;
-	clientMaxBodySize = 1024;
+	clientMaxBodySize = 1048576; // 1 Mo
 
 	for (ft_json::JsonObject::const_iterator json_directive = json_directives.begin(); json_directive != json_directives.end(); json_directive++)
 	{
@@ -98,9 +100,9 @@ void VirtualServer::setErrorPages(const ft_json::JsonObject &input)
 
 void VirtualServer::setClientMaxBodySize(int64_t input)
 {
-	if (input < 1 || input > 65536)
+	if (input < 1 || input > WS_MAX_CLIENT_MAX_BODY_SIZE)
 		throw std::runtime_error("Invalid client_max_body_size.");
-	clientMaxBodySize = static_cast<uint16_t>(input);
+	clientMaxBodySize = input;
 }
 
 void VirtualServer::setLocations(const ft_json::JsonArray &input)
@@ -145,7 +147,7 @@ const std::map<int, std::string> &VirtualServer::getErrorPages() const
 	return errorPages;
 }
 
-uint16_t VirtualServer::getClientMaxBodySize() const
+int32_t VirtualServer::getClientMaxBodySize() const
 {
 	return clientMaxBodySize;
 }

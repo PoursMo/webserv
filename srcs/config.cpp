@@ -12,6 +12,8 @@
 #include <errno.h>
 #include <unistd.h>
 
+#define WS_BACKLOG 511
+
 static int initializeSocket(in_port_t port, in_addr_t vserver_addr)
 {
 	int socket_fd = socket(PF_INET, SOCK_STREAM, 0); // SOCK_NONBLOCK ? it has no effect on epoll
@@ -25,13 +27,6 @@ static int initializeSocket(in_port_t port, in_addr_t vserver_addr)
 		close(socket_fd);
 		throw std::runtime_error("setsockopt: " + std::string(strerror(errno)));
 	}
-	// // Receive buffer size
-	// int maxRequestSize = clientMaxBodySize;
-	// if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVBUF, &maxRequestSize, sizeof(maxRequestSize)) == -1)
-	// {
-	// 	close(socket_fd);
-	// 	throw std::runtime_error("setsockopt: " + std::string(strerror(errno)));
-	// }
 
 	struct sockaddr_in server_addr;
 	server_addr.sin_family = AF_INET;
@@ -44,7 +39,7 @@ static int initializeSocket(in_port_t port, in_addr_t vserver_addr)
 		throw std::runtime_error("bind: " + std::string(strerror(errno)));
 	}
 
-	if (listen(socket_fd, 511) == -1)
+	if (listen(socket_fd, WS_BACKLOG) == -1)
 	{
 		close(socket_fd);
 		throw std::runtime_error("listen: " + std::string(strerror(errno)));

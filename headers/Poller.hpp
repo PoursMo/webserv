@@ -11,11 +11,12 @@ private:
 	std::vector<struct epoll_event> events;
 
 public:
-	Poller(size_t nb_events = 512);
+	Poller();
 	~Poller();
 
-	void add(int fd, uint32_t events = EPOLLIN); // edge trigerred ?
+	void add(int fd, uint32_t events);
 	void del(int fd);
+	void mod(int fd, uint32_t events);
 	int poll();
 	const struct epoll_event &getEvent(size_t index) const;
 };

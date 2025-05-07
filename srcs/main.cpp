@@ -8,6 +8,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#define WS_CLIENT_HEADER_BUFFER_SIZE 1024
+#define WS_CLIENT_LARGE_HEADER_BUFFER_SIZE 8192
+#define WS_CLIENT_BODY_BUFFER_SIZE 16384
+
 VirtualServer *find_virtual_server_with_host_name(const std::map<int, std::vector<VirtualServer *> > &m, const std::string &name)
 {
 	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = m.begin(); i != m.end(); i++)
@@ -67,41 +71,50 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 	Poller poller;
 	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = servers.begin(); i != servers.end(); i++)
 	{
-		poller.add(i->first);
+		poller.add(i->first, EPOLLIN);
 	}
 	while (1)
 	{
 		int nb_ready = poller.poll();
 		for (int i = 0; i < nb_ready; i++)
 		{
-			int fd = poller.getEvent(i).data.fd;
-			if (is_server_fd(fd, servers))
+			struct epoll_event event = poller.getEvent(i);
+			if (is_server_fd(event.data.fd, servers))
 			{
 				struct sockaddr_in client_addr;
 				int addrlen = sizeof(client_addr);
-				int client_fd = accept(fd, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
+				int client_fd = accept(event.data.fd, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
 				// if (new_fd == -1)
 				// 5xx error
-				std::cout << "New connection, socket fd: " << client_fd << std::endl;
-				poller.add(client_fd);
+				std::cout << "New connection on socket " << event.data.fd << ", created socket fd: " << client_fd << std::endl;
+				poller.add(client_fd, EPOLLIN);
 			}
 			else
 			{
-				std::cout << "I/O operations on socket fd: " << fd << ":" << std::endl;
-				const char *response = "test"; // craft response
-				char buffer[10000];
-				if (recv(fd, buffer, 10000, 0) == 0)
+				if (event.events & EPOLLIN)
 				{
-					std::cout << "Client with fd: " << fd << " disconnected" << std::endl;
+					std::cout << "In operations on socket fd: " << event.data.fd << ":" << std::endl;
+					char buffer[10000] = {0};
+					ssize_t bytes_received = recv(event.data.fd, buffer, 10000, 0);
+					if (bytes_received == 0)
+					{
+						std::cout << "Client with fd: " << event.data.fd << " disconnected" << std::endl;
+					}
+					print_recved(buffer);
+					// partial read if no \r\n\r\n in buffer or if content-length/transfer-encoding header field says so
+					poller.mod(event.data.fd, EPOLLOUT);
 				}
-				else
+				else if (event.events & EPOLLOUT)
 				{
-					send(fd, response, strlen(response), 0); // can send less than expected
+					std::cout << "Out operations on socket fd: " << event.data.fd << ":" << std::endl;
+					const char *response = "HTTP/1.1 200 OK\n";			// craft response
+					send(event.data.fd, response, strlen(response), 0); // can send less than expected
+					print_sended(response);
+
+					std::cout << "Terminating socket: " << event.data.fd << std::endl;
+					poller.del(event.data.fd); // only if done with I/O
+					close(event.data.fd);	   // only if done with I/O
 				}
-				print_recved(buffer);
-				print_sended(response);
-				poller.del(fd);
-				close(fd);
 			}
 		}
 	}
@@ -113,7 +126,7 @@ int main(int argc, char **argv)
 	if (argc > 1)
 		config_path = argv[1];
 	else
-		config_path = "conf/default.json"; // create
+		config_path = "conf/default.json";
 	std::ifstream file(config_path);
 	if (!file)
 	{
