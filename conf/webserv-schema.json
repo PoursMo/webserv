@@ -45,7 +45,7 @@
           "client_max_body_size": {
             "title": "Maximum allowed client request body size (in bytes)",
             "minimum": 0,
-            "maximum": 65535,
+            "maximum": 9223372036854775807,
             "type": "number",
             "default": 1024
           },
