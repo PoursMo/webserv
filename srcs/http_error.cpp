@@ -1,5 +1,6 @@
 #include "http_error.hpp"
 #include "utils.hpp"
+
 #include <algorithm>
 #include <iostream>
 
@@ -18,8 +19,7 @@ http_error::http_error(const char *ainfo, int status_code)
 {
 	if (errors.empty())
 		init_errors();
-	std::string serror = errors.at(statusCode);
-	whatMessage = int_to_str(statusCode) + " " + serror;
+	whatMessage = int_to_str(statusCode) + " " + errors.at(statusCode);
 	if (!additionalInfo.empty())
 		whatMessage.append(": " + additionalInfo);
 }
@@ -30,8 +30,7 @@ http_error::http_error(const std::string &ainfo, int status_code)
 {
 	if (errors.empty())
 		init_errors();
-	std::string serror = errors.at(statusCode);
-	whatMessage = int_to_str(statusCode) + " " + serror;
+	whatMessage = int_to_str(statusCode) + " " + errors.at(statusCode);
 	if (!additionalInfo.empty())
 		whatMessage.append(": " + additionalInfo);
 }
@@ -41,8 +40,7 @@ http_error::http_error(int status_code)
 {
 	if (errors.empty())
 		init_errors();
-	std::string serror = errors.at(statusCode);
-	whatMessage = int_to_str(statusCode) + " " + serror;
+	whatMessage = int_to_str(statusCode) + " " + errors.at(statusCode);
 }
 
 http_error::~http_error() throw()

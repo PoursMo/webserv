@@ -16,7 +16,7 @@ private:
 	in_port_t port;
 	std::vector<std::string> serverNames;
 	std::map<int, std::string> errorPages;
-	uint16_t clientMaxBodySize;
+	int32_t clientMaxBodySize;
 	std::map<std::string, LocationData> locations;
 
 	void setAddress(const std::string &input);
@@ -35,7 +35,7 @@ public:
 	in_port_t getPort() const;
 	const std::vector<std::string> &getServerNames() const;
 	const std::map<int, std::string> &getErrorPages() const;
-	uint16_t getClientMaxBodySize() const;
+	int32_t getClientMaxBodySize() const;
 	const std::map<std::string, LocationData> &getLocations() const;
 };
 
