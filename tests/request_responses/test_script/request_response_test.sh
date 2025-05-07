@@ -31,14 +31,14 @@ for i in ${test_files[@]}
 	echo "------------------------------------------------------------" >> test_logs.txt
 	echo "Sending to NGINX..."
 	echo "---NGINX response---" >> test_logs.txt
-	(cat ./$i; sleep 1) | telnet 127.0.0.1 8081 > response_NGINX.txt
+	(cat $i; sleep 1) | telnet 127.0.0.1 8081 > response_NGINX.txt
 	sed -i '1,3d' response_NGINX.txt
 	cat response_NGINX.txt >> test_logs.txt
 	echo "------------------------------------------------------------" >> test_logs.txt
 	echo "" >> test_logs.txt
 	echo "Sending to Webserv..."
 	echo "---Webserv response---" >> test_logs.txt
-	(cat ./$i; sleep 1) | telnet 127.0.0.2 8080 > response_Webserv.txt
+	(cat $i; sleep 1) | telnet 127.0.0.2 8080 > response_Webserv.txt
 	sed -i '1,3d' response_Webserv.txt
 	cat response_Webserv.txt >> test_logs.txt
 	echo "------------------------------------------------------------" >> test_logs.txt
@@ -61,4 +61,7 @@ for i in ${test_files[@]}
 		diff response_NGINX.txt response_Webserv.txt
 		echo -e "--------------------------------------------------------------------------${NC}"
 	fi
+
+	echo "" > response_Webserv.txt
+	echo "" > response_NGINX.txt
 }

@@ -1,0 +1,97 @@
+--------------------TEST RESULT LOGS--------------------
+------------------------------Test request/basic_request------------------------------
+--------Request-------
+GET / HTTP/1.1
+Host: test.com
+
+------------------------------------------------------------
+---NGINX response---
+HTTP/1.1 200 OK
+Server: nginx/1.24.0 (Ubuntu)
+Date: Wed, 07 May 2025 13:45:36 GMT
+Content-Type: text/html
+Content-Length: 615
+Last-Modified: Tue, 11 Apr 2023 01:45:34 GMT
+Connection: keep-alive
+ETag: "6434bbbe-267"
+Accept-Ranges: bytes
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+Connection closed by foreign host.
+------------------------------------------------------------
+
+---Webserv response---
+testConnection closed by foreign host.
+------------------------------------------------------------
+
+
+------------------------------Test request/test_request2------------------------------
+--------Request-------
+GET / HTTP/1.1
+Host: www.test.com
+
+------------------------------------------------------------
+---NGINX response---
+HTTP/1.1 200 OK
+Server: nginx/1.24.0 (Ubuntu)
+Date: Wed, 07 May 2025 13:45:38 GMT
+Content-Type: text/html
+Content-Length: 615
+Last-Modified: Tue, 11 Apr 2023 01:45:34 GMT
+Connection: keep-alive
+ETag: "6434bbbe-267"
+Accept-Ranges: bytes
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+Connection closed by foreign host.
+------------------------------------------------------------
+
+---Webserv response---
+testConnection closed by foreign host.
+------------------------------------------------------------
+
+
