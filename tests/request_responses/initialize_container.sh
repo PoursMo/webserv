@@ -18,5 +18,7 @@ docker cp ../../webserv request_response_test:/app/
 docker rm request_response_test:/etc/nginx/nginx.conf
 docker cp ./nginx_config/nginx.conf request_response_test:/etc/nginx/nginx.conf
 
+sleep 1
+
 ##start tests
 docker exec request_response_test bash /app/scripts/request_response_test.sh
