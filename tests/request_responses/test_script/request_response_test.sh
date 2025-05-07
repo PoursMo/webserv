@@ -12,6 +12,7 @@ NC='\033[0m'
 echo -e "${GRAY}--------------------------Launching both servers--------------------------${NC}"
 	echo -e "${GRAY}--------------------------Starting NGINX server---------------------------${NC}"
 	service nginx start
+	nginx -s reload
 
 	echo -e "${GRAY}--------------------------Starting OUR server-----------------------------${NC}"
 	./webserv ./config/tester.json &
