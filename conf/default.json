@@ -1,4 +1,5 @@
 {
+	"$schema": "./webserv-schema.json",
 	"servers": [
 		{
 			"locations": [
