@@ -6,7 +6,7 @@
 if [[ $(docker images -q test/nginx) == "" ]];
 	then docker build -t test/nginx .
 fi
-# docker run --rm -v .:/app --name request_response_test test/nginx >/dev/null
+docker run --rm -v .:/app test/nginx ./request_response_test.sh
 
 # echo "-----Stopping and removing containers-----"
 # echo "Finished."
