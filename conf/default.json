@@ -1,12 +1,12 @@
 {
-	"$schema": "./webserv-schema.json",
-	"servers": [
-		{
-			"locations": [
-				{
-					"path": "/"
-				}
-			]
-		}
-	]
+  "$schema": "./_schema.json",
+  "servers": [
+    {
+      "locations": [
+        {
+          "path": "/"
+        }
+      ]
+    }
+  ]
 }

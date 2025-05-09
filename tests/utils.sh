@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SRC_DIR="./srcs"
-LOGS_DIR="./logs/json"
+LOGS_DIR="./logs"
 LEAKS_FILE="leaks.log"
 
 mkdir -p "$LOGS_DIR"
@@ -34,9 +34,9 @@ check_leaks() {
 	LEAKS_FILE_NAME="$LOGS_DIR/$1_leaks.log"
 	mv $LEAKS_FILE $LEAKS_FILE_NAME
 	if [[ $LEAKS_DETECTED == "" ]] ; then
-		success "LEAKS [$NAME]\tOK"
+		success "LEAKS\t[$NAME]\tOK"
 	else
-		error "LEAKS [$NAME]\tERROR\t$LEAKS_FILE_NAME"
+		error "LEAKS\t[$NAME]\t$LEAKS_FILE_NAME"
 	fi
 }
 
@@ -55,9 +55,9 @@ get_diff() {
 	echo "$DIFF" > "$FILE_OUT"
 
 	if [[ $DIFF == "" ]] ; then
-		success "DIFF\t\tOK"
+		success "DIFF\t[$TEST_NAME]\t\tOK"
 	else
-		error "DIFF DETECTED\t$FILE_OUT"
+		error "DIFF DETECTED [$TEST_NAME]\t$FILE_OUT"
 		info "$FILE_A | $FILE_B"
 	fi
 }
@@ -68,13 +68,15 @@ get_prog_name() {
 
 compilation() {
 	PROG_NAME=$(get_prog_name)
-	info "Compilation of '$PROG_NAME' ..."
+
+	info "\nCompilation of '$PROG_NAME'..."
 	make re > /dev/null
 	if [ ! -x $PROG_NAME ] ; then
 		error "COMPILATION FAILED"
 		info "Executable '$PROG_NAME' not found"
 		return 1
 	fi
+	success "COMPILATION OK"
 }
 
 info() {

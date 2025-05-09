@@ -1,5 +1,5 @@
 {
-  "$schema": "./webserv-schema.json",
+  "$schema": "./_schema.json",
   "servers": [
     {
       "server_name": [""],

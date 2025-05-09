@@ -4,8 +4,7 @@ source ./tests/utils.sh
 
 test_json() {
 
-	info "Tests json parsing"
-
+	info "\nTests json parsing"
 	make tests/json.test > /dev/null
 
 	each_json_file "jq ." > $LOGS_DIR/res_jq.log

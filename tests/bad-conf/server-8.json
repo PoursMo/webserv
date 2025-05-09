@@ -1,0 +1,8 @@
+{
+  "$schema": "../../conf/_schema.json",
+  "servers": [
+    {
+      "port": -1
+    }
+  ]
+}

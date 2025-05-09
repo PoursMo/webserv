@@ -1,0 +1,4 @@
+{
+  "$schema": "../../conf/_schema.json",
+  "servers": [1, 2, 3]
+}
