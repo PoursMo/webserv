@@ -16,8 +16,14 @@ test_config() {
 
 	for CONF_FILE in tests/bad-conf/*.json ; do
 		valg $PROG $CONF_FILE 2> /dev/null
+		check_leaks "bad-$(basename $CONF_FILE .json)"
+	done
+
+	for CONF_FILE in conf/*.json ; do
+		valg $PROG $CONF_FILE 2> /dev/null
 		check_leaks $(basename $CONF_FILE .json)
 	done
+
 }
 
 test_config
