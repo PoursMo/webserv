@@ -16,7 +16,7 @@ fi
 for CONF_FILE in tests/bad-conf/*.json ; do
 	valg $PROG $CONF_FILE 2> /dev/null
 	if [ $? -eq 0 ] ; then
-		warning "ERROR NOT CATCHED\t$CONF_FILE"
+		warning "BAD CONFIG NOT CATCHED\t$CONF_FILE"
 	fi
 	check_leaks "conf/bad-$(basename $CONF_FILE .json)"
 done
