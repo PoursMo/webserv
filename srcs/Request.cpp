@@ -111,8 +111,28 @@ void Request::parseFirstLine(char *lstart, char *lend)
 
 void Request::parseHeaderLine(char *lstart, char *lend)
 {
+	std::string key;
+	std::string value;
+
+	while (lstart != lend && *lstart != ':')
+	{
+		key = key + *lstart;
+		lstart++;
+	}
+	if (*lstart != ':')
+		throw http_error(400);
+	lstart++;
+	if (*lstart != ' ' || lstart == lend)
+		throw http_error(400);
+	lstart++;
+	if (lstart == lend)
+		throw http_error(400);
 	while (lstart != lend)
-	char *key;
+	{
+		value = value + *lstart;
+		lstart++;
+	}
+	this->headers.insert(std::make_pair(key, value));
 }
 
 void Request::parseRequestLine(char *lstart, char *lend)
@@ -144,7 +164,17 @@ const char *Request::UnsupportedMethod::what() const throw()
 // 	while (test_line[i])
 // 		i++;
 // 	char *last = first + i;
+
+// 	char test_line2[]="Content-Size: test";
+// 	char *first2 = &(test_line2[0]);
+
+// 	int i2 = 0;
+// 	while (test_line2[i2])
+// 		i2++;
+// 	char *last2 = first2 + i2;
+
 // 	test_request.parseRequestLine(first, last);
+// 	test_request.parseRequestLine(first2, last2);
 // 	std::cout << "valid first line" << std::endl;
 // 	return 0;
 // }
