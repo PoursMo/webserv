@@ -31,7 +31,6 @@
     },
     {
       "address": "127.0.0.1",
-      "port": 8080,
       "server_name": ["test.com", "www.test.com", "ouioui.com"],
       "error_page": {
         "403": "/neddibrof.html",

@@ -3,7 +3,7 @@
   "servers": [
     {
       "address": "127.0.0.2",
-      "port": 8080,
+      "port": 8888,
       "server_name": ["test.com", "www.test.com"],
       "error_page": {
         "403": "/forbidden.html",
