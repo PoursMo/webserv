@@ -30,11 +30,11 @@ tests/%.test: tests/%.cpp $(OBJS)
 
 clean:
 	rm -rf $(OBJDIR)
-	rm ./tests/request_responses/test_logs.txt
 
 fclean: clean
 	rm -rf $(NAME)
 	rm -f tests/**/*.test
+	rm -rf logs
 
 re: fclean all
 

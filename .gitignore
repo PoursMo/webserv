@@ -33,8 +33,9 @@ webserv
 *.app
 
 # Dev, Log and tests
+logs/*
 *.log
 *.test
 *.diff
 .vscode
-tests/json/*.json
+

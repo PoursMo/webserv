@@ -1,14 +1,22 @@
 #!/bin/bash
 
 SRC_DIR="./srcs"
+LOGS_DIR="./logs/json"
+LEAKS_FILE="leaks.log"
 
-VALGRIND="valgrind"
-VALGRIND+=" --leak-check=full"
-VALGRIND+=" --track-fds=yes"
-VALGRIND+=" --show-leak-kinds=all"
-VALGRIND+=" --track-origins=yes"
-VALGRIND+=" --log-file=leaks.log"
-#VALGRIND+=" --trace-children=yes"
+mkdir -p "$LOGS_DIR"
+
+valg() {
+	local VALGRIND="valgrind"
+	local VALGRIND+=" --leak-check=full"
+	local VALGRIND+=" --track-fds=yes"
+	local VALGRIND+=" --show-leak-kinds=all"
+	local VALGRIND+=" --track-origins=yes"
+	local VALGRIND+=" --log-file=$LEAKS_FILE"
+	#local VALGRIND+=" --trace-children=yes"
+
+	$VALGRIND "$@"
+}
 
 sync_sources() {
 	SOURCES=$(ls $SRC_DIR/*.c $SRC_DIR/**/*.c | sed "s;$SRC_DIR/;;g" | tr '\n' ' ')
@@ -22,13 +30,13 @@ sync_sources() {
 
 check_leaks() {
 	NAME=$1
-	LEAKS_DETECTED=$(cat ./leaks.log | grep "ERROR SUMMARY" | awk '{printf "%s", $4}' | tr -d "0")
-	LEAKS_FILE="$1_leaks.log"
-	mv ./leaks.log "$LEAKS_FILE"
+	LEAKS_DETECTED=$(cat $LEAKS_FILE | grep "ERROR SUMMARY" | awk '{printf "%s", $4}' | tr -d "0")
+	LEAKS_FILE_NAME="$LOGS_DIR/$1_leaks.log"
+	mv $LEAKS_FILE $LEAKS_FILE_NAME
 	if [[ $LEAKS_DETECTED == "" ]] ; then
 		success "LEAKS [$NAME]\tOK"
 	else
-		error "LEAKS [$NAME]\tERROR\t$LEAKS_FILE"
+		error "LEAKS [$NAME]\tERROR\t$LEAKS_FILE_NAME"
 	fi
 }
 
@@ -36,7 +44,7 @@ get_diff() {
 	local TEST_NAME=$1
 	local FILE_A=$2
 	local FILE_B=$3
-	local FILE_OUT="$TEST_NAME.diff"
+	local FILE_OUT="$LOGS_DIR/$TEST_NAME.diff"
 
 	if [[ TEST_NAME == "" || FILE_A == "" || FILE_B == "" ]] ; then
 		warning "get_diff() need tree args. TEST_NAME FILE_A AND FILE_B"
@@ -49,10 +57,25 @@ get_diff() {
 	if [[ $DIFF == "" ]] ; then
 		success "DIFF\t\tOK"
 	else
-		error "DIFF\t\tERROR\t$(pwd)/$FILE_OUT"
+		error "DIFF DETECTED\t$FILE_OUT"
+		info "$FILE_A | $FILE_B"
 	fi
 }
 
+get_prog_name() {
+	cat Makefile | grep "^NAME " | cut -d'=' -f2 | xargs
+}
+
+compilation() {
+	PROG_NAME=$(get_prog_name)
+	info "Compilation of '$PROG_NAME' ..."
+	make re > /dev/null
+	if [ ! -x $PROG_NAME ] ; then
+		error "COMPILATION FAILED"
+		info "Executable '$PROG_NAME' not found"
+		return 1
+	fi
+}
 
 info() {
 	echo -e "\033[36m$1\033[0m"
