@@ -11,6 +11,7 @@ static void init_errors()
 	http_error::errors[400] = "Bad Request";
 	http_error::errors[404] = "Not Found";
 	http_error::errors[500] = "Internal Server Error";
+	http_error::errors[501] = "Not Implemented";
 }
 
 http_error::http_error(const char *ainfo, int status_code)

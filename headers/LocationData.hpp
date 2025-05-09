@@ -7,7 +7,8 @@ enum Method
 {
 	GET,
 	POST,
-	DELETE
+	DELETE,
+	NONE,
 };
 
 class LocationData

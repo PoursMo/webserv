@@ -1,8 +1,12 @@
 #include "Request.hpp"
 #include <stdexcept>
 
+//REMOVE ME
+#include <iostream>
+
 Request::Request(/* args */)
 {
+	this->method = NONE;
 }
 
 Request::~Request()
@@ -22,20 +26,24 @@ bool isSupportedMethod(char **lstart, char *lend, std::string method)
 	return true;
 }
 
-Method setMethod(char *lstart, char *lend)
+Method Request::setMethod(char *lstart, char *lend)
 {
-	int	i = 0;
+	char *backup = lstart;
 	std::string method;
 
 	std::vector<std::string> existing_methods = {"GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE"};
 	for (std::vector<std::string>::iterator s = existing_methods.begin(); s != existing_methods.end(); s++)
 	{
 		method = *s;
+		lstart = backup;
 		int	i = 0;
 		while (*lstart != ' ' && lstart != lend && i < method.size())
 		{
 			if (*lstart != method[i])
+			{
 				method = "";
+				break ;
+			}
 			lstart++;
 			i++;
 		}
@@ -51,15 +59,15 @@ Method setMethod(char *lstart, char *lend)
 	else if (method == "DELETE")
 		return DELETE;
 	else
-		throw http_error(501);;
-	return GET;
+		throw http_error(501);
+	return NONE;
 }
 
 std::string Request::setResource(char **lstart, char *lend)
 {
 	std::string resource;
 
-	while (**lstart != *lend && *lstart != lend)
+	while (**lstart != *lend && **lstart != ' ')
 	{
 		resource = resource + **lstart;
 		(*lstart)++;
@@ -69,16 +77,16 @@ std::string Request::setResource(char **lstart, char *lend)
 	return (resource);
 }
 
-bool isValidProtocol(char *lstart, char *lend)
+bool isValidProtocol(char **lstart, char *lend)
 {
 	int	i = 0;
 	std::string protocol = "HTTP/1.1";
-	while (lstart != lend)
+	while (*lstart != lend && i < protocol.size())
 	{
-		if (*lstart != protocol[i])
+		if (**lstart != protocol[i])
 			return false;
 		i++;
-		lstart++;
+		(*lstart)++;
 	}
 	return true;
 }
@@ -95,7 +103,7 @@ void Request::parseFirstLine(char *lstart, char *lend)
 	if (*lstart != ' ' || lstart == lend)
 		throw http_error(400);
 	lstart++;
-	if(!isValidProtocol(lstart, lend))
+	if(!isValidProtocol(&lstart, lend))
 		throw http_error(400);
 	if (lstart != lend)
 		throw http_error(400);
@@ -108,7 +116,7 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 
 void Request::parseRequestLine(char *lstart, char *lend)
 {
-	if (this->method == NULL)
+	if (this->method == NONE)
 		parseFirstLine(lstart, lend);
 	else
 		parseHeaderLine(lstart, lend);
@@ -124,10 +132,20 @@ const char *Request::UnsupportedMethod::what() const throw()
 	return ("Method not supported");
 }
 
-int main()
-{
+// int main()
+// {
+// 	Request test_request;
 
+// 	char test_line[]="GET / HTTP/1.1";
+// 	char *first = &(test_line[0]);
 
-	return 0;
-}
+// 	int i = 0;
+// 	while (test_line[i])
+// 		i++;
+// 	char *last = first + i;
+
+// 	test_request.parseRequestLine(first, last);
+// 	std::cout << "valid first line" << std::endl;
+// 	return 0;
+// }
 
