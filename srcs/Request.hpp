@@ -12,6 +12,8 @@ private:
     std::string resource;
     std::map<std::string, std::string> headers;
     int bodyFd = -1;
+	void parseFirstLine(char *lstart, char *lend);
+	void parseHeaderLine(char *lstart, char *lend);
     void addHeader();
 
 public:
