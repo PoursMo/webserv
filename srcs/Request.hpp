@@ -11,8 +11,9 @@ class Request
 	private:
 		Method method;
 		std::string resource;
-		std::map<std::string, std::string> headers;
+		std::map<char*, char*> headers;
 		int bodyFd = -1;
+		bool firstLineParsed = false;
 		void parseFirstLine(char *lstart, char *lend);
 		Method setMethod(char *lstart, char *lend);
 		std::string setResource(char **lstart, char *lend);

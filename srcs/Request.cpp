@@ -4,9 +4,8 @@
 //REMOVE ME
 #include <iostream>
 
-Request::Request(/* args */)
+Request::Request()
 {
-	this->method = NONE;
 }
 
 Request::~Request()
@@ -60,7 +59,7 @@ Method Request::setMethod(char *lstart, char *lend)
 		return DELETE;
 	else
 		throw http_error(501);
-	return NONE;
+	return GET; //Unreachable
 }
 
 std::string Request::setResource(char **lstart, char *lend)
@@ -107,16 +106,18 @@ void Request::parseFirstLine(char *lstart, char *lend)
 		throw http_error(400);
 	if (lstart != lend)
 		throw http_error(400);
+	this->firstLineParsed = true;
 }
 
 void Request::parseHeaderLine(char *lstart, char *lend)
 {
-
+	while (lstart != lend)
+	char *key;
 }
 
 void Request::parseRequestLine(char *lstart, char *lend)
 {
-	if (this->method == NONE)
+	if (!this->firstLineParsed)
 		parseFirstLine(lstart, lend);
 	else
 		parseHeaderLine(lstart, lend);
@@ -143,7 +144,6 @@ const char *Request::UnsupportedMethod::what() const throw()
 // 	while (test_line[i])
 // 		i++;
 // 	char *last = first + i;
-
 // 	test_request.parseRequestLine(first, last);
 // 	std::cout << "valid first line" << std::endl;
 // 	return 0;
