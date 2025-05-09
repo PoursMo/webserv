@@ -11,6 +11,7 @@ RUN apt-get install valgrind -y
 RUN apt-get install curl -y
 RUN apt-get install netcat -y
 RUN apt-get install git -y
+RUN apt-get install make -y
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 WORKDIR /app
 
