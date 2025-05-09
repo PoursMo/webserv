@@ -84,6 +84,8 @@ compare_response() {
 		local RES_WS=$(head -n 1 $LOG_FILE_WS)
 		local RES_NG=$(head -n 1 $LOG_FILE_NG)
 		
+		diff $LOG_FILE_WS $LOG_FILE_NG > $(echo $LOG_FILE_WS | sed 's/_webserv.log$/.diff/')
+
 		# TODO remove CRLF bypass
 		if [[ $RES_WS == ${RES_NG%$'\r'} ]] ; then
 			success "$(printf "%-42s" $LOG_FILE_WS) '$RES_WS'"
