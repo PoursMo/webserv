@@ -2,24 +2,6 @@
 
 source ./tests/utils.sh
 
-test_json() {
-
-	info "\nTests json parsing"
-	make tests/json.test > /dev/null
-
-	each_json_file "jq ." > $LOGS_DIR/res_jq.log
-	each_json_file "./tests/json.test" > $LOGS_DIR/res_parser.log
-	get_diff json $LOGS_DIR/res_jq.log $LOGS_DIR/res_parser.log
-
-	valg ./tests/json.test ./tests/json/058.json &> /dev/null
-	check_leaks json_good
-
-	valg ./tests/json.test ./tests/json/037.json &> /dev/null
-	check_leaks json_bad
-
-	return $?
-}
-
 each_json_file() {
 	local COMMAND=$1
 	for JSON_FILE in tests/json/*.json ; do
@@ -34,5 +16,16 @@ each_json_file() {
 	done
 }
 
-test_json
+info "\nTests json parsing"
+make tests/json.test > /dev/null
+mkdir -p "$LOGS_DIR/json"
 
+each_json_file "jq ." > $LOGS_DIR/json/parser_jq.log
+each_json_file "./tests/json.test" > $LOGS_DIR/json/parser.log
+get_diff json/parser $LOGS_DIR/json/parser_jq.log $LOGS_DIR/json/parser.log
+
+valg ./tests/json.test ./tests/json/058.json &> /dev/null
+check_leaks json/good
+
+valg ./tests/json.test ./tests/json/037.json &> /dev/null
+check_leaks json/bad

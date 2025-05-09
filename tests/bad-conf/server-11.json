@@ -2,7 +2,7 @@
   "$schema": "../../conf/_schema.json",
   "servers": [
     {
-      "address": "127.128.0.0"
+      "address": "127...0"
     }
   ]
 }
