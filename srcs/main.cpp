@@ -1,6 +1,7 @@
 #include "config.hpp"
 #include "VirtualServer.hpp"
 #include "Poller.hpp"
+#include "Receiver.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -8,9 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define WS_CLIENT_HEADER_BUFFER_SIZE 1024
-#define WS_CLIENT_LARGE_HEADER_BUFFER_SIZE 8192
-#define WS_CLIENT_BODY_BUFFER_SIZE 16384
 
 VirtualServer *find_virtual_server_with_host_name(const std::map<int, std::vector<VirtualServer *> > &m, const std::string &name)
 {
@@ -73,6 +71,7 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 	{
 		poller.add(i->first, EPOLLIN);
 	}
+	std::map<int, Receiver> connections;
 	while (1)
 	{
 		int nb_ready = poller.poll();
@@ -87,6 +86,7 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 				// if (new_fd == -1)
 				// 5xx error
 				std::cout << "New connection on socket " << event.data.fd << ", created socket fd: " << client_fd << std::endl;
+				connections[client_fd] = Receiver(client_fd);
 				poller.add(client_fd, EPOLLIN);
 			}
 			else
@@ -94,13 +94,7 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 				if (event.events & EPOLLIN)
 				{
 					std::cout << "In operations on socket fd: " << event.data.fd << ":" << std::endl;
-					char buffer[10000] = {0};
-					ssize_t bytes_received = recv(event.data.fd, buffer, 10000, 0);
-					if (bytes_received == 0)
-					{
-						std::cout << "Client with fd: " << event.data.fd << " disconnected" << std::endl;
-					}
-					print_recved(buffer);
+					connections.at(event.data.fd).receive();
 					// partial read if no \r\n\r\n in buffer or if content-length/transfer-encoding header field says so
 					poller.mod(event.data.fd, EPOLLOUT);
 				}
@@ -112,6 +106,7 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 					print_sended(response);
 
 					std::cout << "Terminating socket: " << event.data.fd << std::endl;
+					// remove connection
 					poller.del(event.data.fd); // only if done with I/O
 					close(event.data.fd);	   // only if done with I/O
 				}
