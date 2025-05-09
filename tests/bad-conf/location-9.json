@@ -1,0 +1,13 @@
+{
+  "$schema": "../../conf/_schema.json",
+  "servers": [
+    {
+      "locations": [
+        {
+          "path": "/",
+          "autoindex": 2
+        }
+      ]
+    }
+  ]
+}
