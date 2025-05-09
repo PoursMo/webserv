@@ -2,7 +2,7 @@
 
 source ./tests/utils.sh
 
-# compilation
+compilation
 # ./tests/json.sh
 # ./tests/conf.sh
 ./tests/server.sh
