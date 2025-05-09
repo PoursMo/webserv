@@ -13,7 +13,7 @@ DEFAULT_PORT="8000"
 
 main() {
 
-	info "\nTests server responses"
+	info "\nTests http request\n"
 
 	for FILE_CONF in conf/*.json ; do
 		local FILE_CONF_NG="$(pwd)/conf/nginx/$(basename $FILE_CONF .json).conf"
@@ -23,19 +23,20 @@ main() {
 
 		nginx -c $FILE_CONF_NG &
 		local PID=$!
-		info "NGINX STARTED conf=[$FILE_CONF_NG] pid=[$PID]"
+		info "[NGINX] $FILE_CONF_NG"
 		send_all_request $FILE_CONF "nginx"
 		kill $PID
-		info "NGINX STOPPED"
+		info "[NGINX]\n"
 
 		./webserv $FILE_CONF &> /dev/null &
 		local PID=$!
-		info "WEBSERV STARTED conf=[$FILE_CONF] pid=[$PID]"
+		info "[WEBSERV] $FILE_CONF"
 		send_all_request $FILE_CONF "webserv"
 		kill $PID
-		info "WEBSERV STOPPED"
-
+		info "[WEBSERV]\n"
 	done
+
+	compare_response
 }
 
 send_all_request() {
@@ -53,15 +54,15 @@ send_all_request() {
 		if [[ "$PORT" = "null" ]] ; then
 			PORT="$DEFAULT_PORT"
 		fi
-		info "SEND ALL REQUEST TO SERVER[$index]: $ADDRESS:$PORT"
+		info "│ server[$index] $ADDRESS:$PORT"
 		for FILE_HTTP in tests/http/*.http ; do
 			local REQ_NAME=$(basename $FILE_HTTP .http)
 			local OUTPUT_FILE="${LOGS_DIR}/http/${CONFIG_NAME}_${index}_${REQ_NAME}_${SERVER_NAME}.log"
 			send $FILE_HTTP $ADDRESS $PORT > $OUTPUT_FILE
 			if [ $? -eq 0 ] ; then
-				info "$(printf "%-16s" "│$REQ_NAME") │ $OUTPUT_FILE"
+				success "│ $(printf "%-26s" "$FILE_HTTP") -> $OUTPUT_FILE"
 			else
-				waring "NO RESPONSE FROM $2:$3"
+				warning "│ $(printf "%-26s" "$FILE_HTTP") -> NO RESPONSE"
 			fi
 		done
 		((index++))
@@ -71,11 +72,23 @@ send_all_request() {
 send() {
 	cat $1 | nc -q 0 $2 $3
 	# (cat $1; sleep 0.2) | telnet $2 $3
-
 	if [ $? -ne 0 ] ; then
 		echo "NO RESPONSE FROM $2:$3"
 		return 1
 	fi
+}
+
+compare_response() {
+	for LOG_FILE_WS in $LOGS_DIR/http/*webserv.log ; do
+		local LOG_FILE_NG=$(echo $LOG_FILE_WS | sed 's/webserv.log$/nginx.log/')
+		local RES_WS=$(head -n 1 $LOG_FILE_WS)
+		local RES_NG=$(head -n 1 $LOG_FILE_NG)
+		if [[ $RES_WS == ${RES_NG%$'\r'} ]] ; then
+			success "$(printf "%-42s" $LOG_FILE_WS) '$RES_WS'"
+		else
+			error "$(printf "%-42s" $LOG_FILE_WS) '$RES_WS' instead of '${RES_NG%$'\r'}'"
+		fi
+	done
 }
 
 main

@@ -2,7 +2,9 @@
 
 source ./tests/utils.sh
 
-compilation
-# ./tests/json.sh
-# ./tests/conf.sh
-./tests/server.sh
+if compilation ; then
+	rm -rf $LOGS_DIR
+	./tests/json.sh
+	./tests/conf.sh
+	./tests/server.sh
+fi

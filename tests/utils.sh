@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SRC_DIR="./srcs"
-LOGS_DIR="./logs"
+LOGS_DIR="logs"
 LEAKS_FILE="leaks.log"
 
 mkdir -p "$LOGS_DIR"
