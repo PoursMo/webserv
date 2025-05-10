@@ -81,8 +81,8 @@ send() {
 compare_response() {
 	for LOG_FILE_WS in $LOGS_DIR/http/*webserv.log ; do
 		local LOG_FILE_NG=$(echo $LOG_FILE_WS | sed 's/webserv.log$/nginx.log/')
-		local RES_WS=$(head -n 1 $LOG_FILE_WS | sed 's/\r/<CR>/g')
-		local RES_NG=$(head -n 1 $LOG_FILE_NG | sed 's/\r/<CR>/g')
+		local RES_WS=$(head -n 1 $LOG_FILE_WS | sed 's/\r/↵/g')
+		local RES_NG=$(head -n 1 $LOG_FILE_NG | sed 's/\r/↵/g')
 		diff $LOG_FILE_WS $LOG_FILE_NG > $(echo $LOG_FILE_WS | sed 's/_webserv.log$/.diff/')
 
 		# TODO remove CRLF bypass
