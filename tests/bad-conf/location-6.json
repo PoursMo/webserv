@@ -5,8 +5,8 @@
       "locations": [
         {
           "path": "/",
-          "cgi": {
-            ".empty": ""
+          "return": {
+            "666": ""
           }
         }
       ]

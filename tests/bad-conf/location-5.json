@@ -5,9 +5,7 @@
       "locations": [
         {
           "path": "/",
-          "cgi": {
-            "": "php-cgi"
-          }
+          "autoindex": 2
         }
       ]
     }

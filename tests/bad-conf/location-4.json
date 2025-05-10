@@ -5,9 +5,7 @@
       "locations": [
         {
           "path": "/",
-          "cgi": {
-            "not-ext": "php-cgi"
-          }
+          "method": [42]
         }
       ]
     }

@@ -1,8 +1,0 @@
-{
-  "$schema": "../../conf/_schema.json",
-  "servers": [
-    {
-      "server_name": [42]
-    }
-  ]
-}

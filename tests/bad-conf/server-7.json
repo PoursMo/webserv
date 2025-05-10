@@ -2,7 +2,7 @@
   "$schema": "../../conf/_schema.json",
   "servers": [
     {
-      "port": 100000
+      "port": ""
     }
   ]
 }

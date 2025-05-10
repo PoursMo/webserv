@@ -1,19 +1,22 @@
 FROM ubuntu:jammy
 RUN apt update
-RUN apt-get install bash
-RUN apt-get install g++ -y
-RUN apt-get install telnet -y
-RUN apt-get install libc-dev -y
-RUN apt-get install libbsd-dev -y
-RUN apt-get install zsh -y
-RUN apt-get install nginx -y
-RUN apt-get install valgrind -y
-RUN apt-get install curl -y
-RUN apt-get install netcat -y
-RUN apt-get install git -y
-RUN apt-get install make -y
-RUN apt-get install jq -y
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get install -y bash
+RUN apt-get install -y g++
+RUN apt-get install -y telnet
+RUN apt-get install -y libc-dev
+RUN apt-get install -y libbsd-dev
+RUN apt-get install -y zsh
+RUN apt-get install -y nginx
+RUN apt-get install -y valgrind
+RUN apt-get install -y curl
+RUN apt-get install -y netcat
+RUN apt-get install -y git
+RUN apt-get install -y make
+RUN apt-get install -y jq
+RUN apt-get install -y php-cgi
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+RUN unset DEBIAN_FRONTEND
 WORKDIR /app
 
 ENTRYPOINT [ "/bin/zsh" ]

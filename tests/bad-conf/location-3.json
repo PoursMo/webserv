@@ -4,7 +4,8 @@
     {
       "locations": [
         {
-          "path": ""
+          "path": "/",
+          "method": ["YOLO"]
         }
       ]
     }

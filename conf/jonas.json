@@ -16,10 +16,7 @@
           "return": {
             "404": ""
           },
-          "cgi": {
-            ".php": "/usr/bin/php-cgi84",
-            ".prout": "prout-cgi"
-          }
+          "cgi": "/bin/php-cgi"
         }
       ]
     }
