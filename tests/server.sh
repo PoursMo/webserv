@@ -70,7 +70,7 @@ send_all_request() {
 }
 
 send() {
-	cat $1 | nc -q 0 $2 $3
+	nc -q 0 $2 $3 < $1
 	# (cat $1; sleep 0.2) | telnet $2 $3
 	if [ $? -ne 0 ] ; then
 		echo "NO RESPONSE FROM $2:$3"
@@ -81,16 +81,15 @@ send() {
 compare_response() {
 	for LOG_FILE_WS in $LOGS_DIR/http/*webserv.log ; do
 		local LOG_FILE_NG=$(echo $LOG_FILE_WS | sed 's/webserv.log$/nginx.log/')
-		local RES_WS=$(head -n 1 $LOG_FILE_WS)
-		local RES_NG=$(head -n 1 $LOG_FILE_NG)
-		
+		local RES_WS=$(head -n 1 $LOG_FILE_WS | sed 's/\r/<CR>/g')
+		local RES_NG=$(head -n 1 $LOG_FILE_NG | sed 's/\r/<CR>/g')
 		diff $LOG_FILE_WS $LOG_FILE_NG > $(echo $LOG_FILE_WS | sed 's/_webserv.log$/.diff/')
 
 		# TODO remove CRLF bypass
-		if [[ $RES_WS == ${RES_NG%$'\r'} ]] ; then
-			success "$(printf "%-42s" $LOG_FILE_WS) '$RES_WS'"
+		if [[ $RES_WS == $RES_NG ]] ; then
+			success "$(printf "%-42s" $LOG_FILE_WS) $RES_WS"
 		else
-			error "$(printf "%-42s" $LOG_FILE_WS) '$RES_WS' instead of '${RES_NG%$'\r'}'"
+			error "$(printf "%-42s" $LOG_FILE_WS) '$RES_WS' instead of '$RES_NG'"
 		fi
 	done
 }
