@@ -33,7 +33,7 @@ clean:
 
 fclean: clean
 	rm -rf $(NAME)
-	rm -f tests/**/*.test
+	rm -f tests/*.test
 	rm -rf logs
 
 re: fclean all
