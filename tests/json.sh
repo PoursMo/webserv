@@ -17,15 +17,21 @@ each_json_file() {
 }
 
 info "\nTests json parsing"
-make tests/json.test > /dev/null
+PROG="./tests/json.test"
+make $PROG > /dev/null
+if [ ! -x $PROG ] ; then
+	error "PROGRAME TEST COMPILATION FAILED: $PROG"
+	exit 1
+fi
+
 mkdir -p "$LOGS_DIR/json"
 
 each_json_file "jq ." > $LOGS_DIR/json/parser_jq.log
-each_json_file "./tests/json.test" > $LOGS_DIR/json/parser.log
+each_json_file "$PROG" > $LOGS_DIR/json/parser.log
 get_diff json/parser $LOGS_DIR/json/parser_jq.log $LOGS_DIR/json/parser.log
 
-valg ./tests/json.test ./tests/json/058.json &> /dev/null
+valg $PROG ./tests/json/058.json &> /dev/null
 check_leaks json/good
 
-valg ./tests/json.test ./tests/json/037.json &> /dev/null
+valg $PROG ./tests/json/037.json &> /dev/null
 check_leaks json/bad
