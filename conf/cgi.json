@@ -1,0 +1,14 @@
+{
+  "$schema": "./_schema.json",
+  "servers": [
+    {
+      "address": "127.0.0.1",
+      "locations": [
+        {
+          "path": "/app/www",
+          "cgi": "/bin/php-cgi"
+        }
+      ]
+    }
+  ]
+}
