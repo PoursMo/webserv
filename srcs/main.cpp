@@ -9,7 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 
-
 VirtualServer *find_virtual_server_with_host_name(const std::map<int, std::vector<VirtualServer *> > &m, const std::string &name)
 {
 	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = m.begin(); i != m.end(); i++)
@@ -87,16 +86,15 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 				// 5xx error
 				std::cout << "New connection on socket " << event.data.fd << ", created socket fd: " << client_fd << std::endl;
 				connections[client_fd] = Receiver(client_fd);
-				poller.add(client_fd, EPOLLIN);
+				poller.add(client_fd, EPOLLIN | EPOLLET);
 			}
 			else
 			{
 				if (event.events & EPOLLIN)
 				{
 					std::cout << "In operations on socket fd: " << event.data.fd << ":" << std::endl;
-					connections.at(event.data.fd).receive();
-					// partial read if no \r\n\r\n in buffer or if content-length/transfer-encoding header field says so
-					poller.mod(event.data.fd, EPOLLOUT);
+					if (!connections.at(event.data.fd).receive())
+						poller.mod(event.data.fd, EPOLLOUT);
 				}
 				else if (event.events & EPOLLOUT)
 				{
@@ -106,7 +104,7 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 					print_sended(response);
 
 					std::cout << "Terminating socket: " << event.data.fd << std::endl;
-					// remove connection
+					connections.erase(event.data.fd);
 					poller.del(event.data.fd); // only if done with I/O
 					close(event.data.fd);	   // only if done with I/O
 				}

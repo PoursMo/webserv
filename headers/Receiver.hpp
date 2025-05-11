@@ -12,32 +12,19 @@
 
 #include <iostream>
 
-#define WS_CLIENT_HEADER_BUFFER_SIZE 10 // 4 max
+#define WS_CLIENT_HEADER_BUFFER_SIZE 12 // 4 max
 // #define WS_CLIENT_HEADER_BUFFER_SIZE 8192 // 4 max
 #define WS_CLIENT_BODY_BUFFER_SIZE 16384
 
 struct Buffer
 {
-	const char *first;
-	const char *last;
-	const char *pos;
+	char *first;
+	char *last;
+	char *pos;
 	size_t capacity;
 };
 
-const char *ws_strchr(const char *first, const char *last, char c)
-{
-	while (1)
-	{
-		if (*first == c)
-			return first;
-		if (first == last)
-			break;
-		first++;
-	}
-	return 0;
-}
-
-void debug_print(const char *first, const char *last)
+void debug_print(const char *first, const char *const last)
 {
 	while (1)
 	{
@@ -52,116 +39,197 @@ void debug_print(const char *first, const char *last)
 class Receiver
 {
 private:
-	int fd;
+	int fd; // keep elsewhere ?
 	// request object reference
 	std::list<Buffer *> buffers;
 	size_t headerBufferCount;
-	// size_t bodyBytesRecvd = 0;
+	bool readingHeader;
+	size_t bodyBytesRecvd;
+
+	static char *ws_strchr(char *first, const char *const last, char c)
+	{
+		while (1)
+		{
+			if (*first == c)
+				return first;
+			if (first == last)
+				break;
+			first++;
+		}
+		return 0;
+	}
+
+	enum BufferType
+	{
+		HEADER,
+		BODY
+	};
+
+	void flushHeaderBuffers()
+	{
+		Buffer *const lbuffer = buffers.back();
+		char *lf;
+		while ((lf = ws_strchr(lbuffer->pos, lbuffer->last, '\n')))
+		{
+			if (lbuffer != buffers.front())
+			{
+				std::string line;
+				for (std::list<Buffer *>::iterator j = buffers.begin(); *j != lbuffer;)
+				{
+					line.append((*j)->pos, (*j)->last + 1);
+					std::list<Buffer *>::iterator tmp = j;
+					++j;
+					delete[] (*tmp)->first;
+					delete (*tmp);
+					buffers.erase(tmp);
+				}
+				line.append(lbuffer->pos, lf + 1);
+				std::cout << "stitched line of size " << line.size() << ": ";
+				debug_print(&line[0], &line[line.size() - 1]);
+				// request.line(&line[0], &line[line.size()])
+				if (!std::strcmp(line.c_str(), "\r\n"))
+				{
+					readingHeader = false;
+					return;
+				}
+			}
+			else
+			{
+				std::cout << "made line of size " << lf - lbuffer->pos + 1 << ": ";
+				debug_print(lbuffer->pos, lf);
+				// request.line(pos, nl)
+				if (!std::strcmp(lbuffer->pos, "\r\n"))
+				{
+					readingHeader = false;
+					return;
+				}
+			}
+			if (lf != lbuffer->last) // line feed was not the last character of buffer
+				lbuffer->pos = lf + 1;
+			else if (lbuffer->last == lbuffer->first + lbuffer->capacity - 1) // line feed is last character of buffer and is exactly the last character the buffer can hold
+			{
+				delete[] lbuffer->first;
+				delete lbuffer;
+				buffers.clear();
+				break;
+			}
+			else
+				break;
+		}
+	}
+
+	Buffer *createBuffer(BufferType type)
+	{
+		std::cout << "creating new buffer" << std::endl;
+		Buffer *buffer = new Buffer;
+		switch (type)
+		{
+		case HEADER:
+			headerBufferCount++;
+			buffer->first = new char[WS_CLIENT_HEADER_BUFFER_SIZE];
+			buffer->capacity = WS_CLIENT_HEADER_BUFFER_SIZE;
+			break;
+		case BODY:
+			buffer->first = new char[WS_CLIENT_BODY_BUFFER_SIZE]; // std::min(request.bodysize - bodyBytesRecvd, WS_CLIENT_BODY_BUFFER_SIZE)
+			buffer->capacity = WS_CLIENT_BODY_BUFFER_SIZE;		  // std::min(request.bodysize - bodyBytesRecvd, WS_CLIENT_BODY_BUFFER_SIZE)
+			break;
+		default:
+			break;
+		}
+		buffer->pos = buffer->first;
+		buffers.push_back(buffer);
+		return buffer;
+	}
+
+	ssize_t handleRecv(void *buf, size_t len)
+	{
+		std::cout << "recving " << len << " bytes" << std::endl;
+		ssize_t bytes_received = recv(fd, buf, len, 0);
+		if (bytes_received == -1)
+			throw http_error(std::strerror(errno), 500);
+		if (bytes_received == 0)
+		{
+			std::cout << "Client with fd: " << fd << " disconnected" << std::endl;
+			// handle disconnection
+		}
+		return bytes_received;
+	}
+
+	void fillBuffer(BufferType type)
+	{
+		Buffer *buffer = buffers.back();
+		if (buffers.empty() || (size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
+		{
+			buffer = createBuffer(type);
+			ssize_t bytes_received;
+			switch (type)
+			{
+			case HEADER:
+				bytes_received = handleRecv(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
+				break;
+			case BODY:
+				bytes_received = handleRecv(buffer->first, WS_CLIENT_BODY_BUFFER_SIZE); // std::min(request.bodysize - bodyBytesRecvd, WS_CLIENT_BODY_BUFFER_SIZE)
+				break;
+			default:
+				break;
+			}
+			buffer->last = buffer->first + bytes_received - 1;
+		}
+		else
+		{
+			std::cout << "adding to existing buffer" << std::endl;
+			char *buf = buffer->last + 1;
+			size_t readSize = buffer->capacity - (buffer->last - buffer->first) - 1;
+			ssize_t bytes_received = handleRecv(buf, readSize);
+			buffer->last += bytes_received - 1;
+		}
+		std::cout << "buffer: ";
+		debug_print(buffer->first, buffer->last);
+	}
 
 public:
 	Receiver()
 	{
 	}
 
-	Receiver(int fd) : fd(fd), headerBufferCount(0)
+	Receiver(int fd)
+		: fd(fd),
+		  headerBufferCount(0),
+		  readingHeader(true),
+		  bodyBytesRecvd(0)
 	{
 	}
 
-	void sendLines()
+	~Receiver()
 	{
-		for (std::list<Buffer *>::iterator i = buffers.begin(); i != buffers.end(); i++)
+		for (std::list<Buffer *>::iterator i = buffers.begin(); i != buffers.end();)
 		{
-			const char *nl;
-			while ((nl = ws_strchr((*i)->pos, (*i)->last, '\n')))
-			{
-				if (i != buffers.begin())
-				{
-					std::string line;
-					for (std::list<Buffer *>::iterator j = buffers.begin(); j != i;)
-					{
-						line.append((*j)->pos, (*j)->last);
-						std::list<Buffer *>::iterator tmp = j;
-						++j;
-						delete (*tmp)->first;
-						delete (*tmp);
-						buffers.erase(tmp);
-					}
-					line.append((*i)->pos, nl);
-					debug_print(&line[0], &line[line.size() - 1]);
-					// if (!std::strcmp(line.c_str(), "\r\n\r\n"))
-					// is end of header
-					// request.line(&line[0], &line[line.size()])
-				}
-				else
-				{
-					debug_print((*i)->pos, nl);
-					// if (!std::strcmp((*i)->pos, "\r\n\r\n"))
-					// is end of header
-					// request.line(pos, nl)
-				}
-				if (nl != (*i)->last)
-					(*i)->pos = nl + 1;
-				else // edge case where \n is exactly at the end of buffer
-				{
-					std::cout << "blbl" << std::endl;
-					std::list<Buffer *>::iterator tmp = i;
-					++i;
-					delete (*tmp)->first;
-					delete (*tmp);
-					buffers.erase(tmp);
-					break;
-				}
-			}
+			std::list<Buffer *>::iterator tmp = i;
+			++i;
+			delete[] (*tmp)->first;
+			delete (*tmp);
+			buffers.erase(tmp);
 		}
 	}
 
-	void recvHeader() // header
+	bool receive()
 	{
-		if (headerBufferCount >= 4)
-			throw http_error(414);
-		Buffer *buffer;
-		buffer = buffers.back();
-		char *tmp;
-		if (!buffers.empty())
-			std::cout << "buffer->last - buffer->first: " << buffer->last - buffer->first << std::endl;
-		if (buffers.empty() || (size_t)(buffer->last - buffer->first) == buffer->capacity)
+		if (readingHeader)
 		{
-			buffer = new Buffer;
-			tmp = new char[WS_CLIENT_HEADER_BUFFER_SIZE];
-			buffer->capacity = WS_CLIENT_HEADER_BUFFER_SIZE;
-			buffer->first = tmp;
-			buffer->pos = tmp;
-			ssize_t bytes_received = recv(fd, tmp, WS_CLIENT_HEADER_BUFFER_SIZE, 0);
-			if (bytes_received == -1)
-				throw http_error(std::strerror(errno), 500); // free ?
-			if (bytes_received == 0)
-			{
-				std::cout << "Client with fd: " << fd << " disconnected" << std::endl;
-				// handle disconnection
-			}
-			buffer->last += bytes_received;
-			buffers.push_back(buffer);
+			if (headerBufferCount >= 4)
+				throw http_error(414);
+			fillBuffer(HEADER);
+			flushHeaderBuffers();
+			if (!readingHeader) // && !request.body
+				return false;
 		}
 		else
 		{
-			tmp = (char *)buffer->last + 1;
-			size_t readSize = buffer->capacity - (buffer->last - buffer->first);
-			ssize_t bytes_received = recv(fd, tmp, readSize, 0);
-			if (bytes_received == -1)
-				throw http_error(std::strerror(errno), 500);
-			if (bytes_received == 0)
-			{
-				std::cout << "Client with fd: " << fd << " disconnected" << std::endl;
-				// handle disconnection
-			}
-			buffer->last += bytes_received;
+			fillBuffer(BODY);
+			// if (bodyBytesRecvd == request.bodysize)
+			// return false;
 		}
-		sendLines();
-	}
-
-	void receive()
-	{
-		recvHeader();
+		return true;
 	}
 };
 
