@@ -8,6 +8,7 @@ Request::Request()
 {
 	bodyFd = -1;
 	firstLineParsed = false;
+	headerParsed = false;
 	contentLength = 0;
 }
 
@@ -28,7 +29,7 @@ Method Request::setMethod(char *lstart, char *lend)
 		method = *s;
 		lstart = backup;
 		size_t	i = 0;
-		while (*lstart != ' ' && lstart != lend && i < method.size())
+		while (*lstart != ' ' && lstart != lend && i < method.size() && *lstart != '\r')
 		{
 			if (*lstart != method[i])
 			{
@@ -63,7 +64,7 @@ std::string Request::setResource(char **lstart, char *lend)
 {
 	std::string resource;
 
-	while (**lstart != *lend && **lstart != ' ')
+	while (**lstart != *lend && **lstart != ' ' && **lstart != '\r')
 	{
 		resource = resource + **lstart;
 		(*lstart)++;
@@ -77,7 +78,7 @@ bool isValidProtocol(char **lstart, char *lend)
 {
 	size_t	i = 0;
 	std::string protocol = "HTTP/1.1";
-	while (*lstart != lend && i < protocol.size())
+	while (*lstart != lend && i < protocol.size() && **lstart != '\r')
 	{
 		if (**lstart != protocol[i])
 			return false;
@@ -90,17 +91,20 @@ bool isValidProtocol(char **lstart, char *lend)
 void Request::parseFirstLine(char *lstart, char *lend)
 {
 	this->method = setMethod(lstart, lend);
-	while (lstart != lend && *lstart != ' ')
+	while (lstart != lend && *lstart != ' ' && *lstart != '\r')
 		lstart++;
-	if (*lstart != ' ' || lstart == lend)
+	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
 		throw http_error(400);
 	lstart++;
 	this->resource = setResource(&lstart, lend);
-	if (*lstart != ' ' || lstart == lend)
+	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
 		throw http_error(400);
 	lstart++;
 	if(!isValidProtocol(&lstart, lend))
 		throw http_error(400);
+	if (*lstart != '\r')
+		throw http_error(400);
+	lstart++;
 	if (lstart != lend)
 		throw http_error(400);
 	this->firstLineParsed = true;
@@ -116,7 +120,7 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 	std::string key;
 	std::string value;
 
-	while (lstart != lend && *lstart != ':')
+	while (lstart != lend && *lstart != '\r' && *lstart != ':')
 	{
 		key = key + *lstart;
 		lstart++;
@@ -127,18 +131,37 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 	if (*lstart != ' ' || lstart == lend)
 		throw http_error(400);
 	lstart++;
-	if (lstart == lend)
-		throw http_error(400);
-	while (lstart != lend)
+	while (lstart != lend && *lstart != '\r')
 	{
 		value = value + *lstart;
 		lstart++;
 	}
+	if (!(*lstart == '\r' && *(lstart + 1) == '\n'))
+		throw http_error(400);
 	this->addHeader(key, value);
+}
+
+bool Request::checkEmptyline(char *lstart, char *lend)
+{
+	if (*lstart != '\r')
+		return false;
+	lstart++;
+	if (lstart == lend && *lstart == '\n')
+		return true;
+	return false;
 }
 
 void Request::parseRequestLine(char *lstart, char *lend)
 {
+	if (this->headerParsed)
+		return ;
+	if (*lend != '\n' || lstart == lend || lstart == NULL || lend == NULL)
+		throw http_error(400);
+	if (checkEmptyline(lstart, lend))
+	{
+		this->headerParsed = true;
+		return ;
+	}
 	if (!this->firstLineParsed)
 		parseFirstLine(lstart, lend);
 	else
@@ -175,21 +198,21 @@ enum Method Request::getMethod() const
 // {
 // 	Request test_request;
 
-// 	char test_line[]="HEAD / HTTP/1.1";
+// 	char test_line[]="POST / HTTP/1.1\r\n";
 // 	char *first = &(test_line[0]);
 
 // 	int i = 0;
 // 	while (test_line[i])
 // 		i++;
-// 	char *last = first + i;
+// 	char *last = first + i - 1;
 
-// 	char test_line2[]="Content-Size: test";
+// 	char test_line2[]="Content-Size: test\r\n";
 // 	char *first2 = &(test_line2[0]);
 
 // 	int i2 = 0;
 // 	while (test_line2[i2])
 // 		i2++;
-// 	char *last2 = first2 + i2;
+// 	char *last2 = first2 + i2 - 1;
 
 // 	test_request.parseRequestLine(first, last);
 // 	test_request.parseRequestLine(first2, last2);

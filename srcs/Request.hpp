@@ -15,7 +15,9 @@ class Request
 		int bodyFd;
 		unsigned long contentLength;
 		bool firstLineParsed;
+		bool headerParsed;
 		void parseFirstLine(char *lstart, char *lend);
+		bool checkEmptyline(char *lstart, char *lend);
 		Method setMethod(char *lstart, char *lend);
 		std::string setResource(char **lstart, char *lend);
 		void parseHeaderLine(char *lstart, char *lend);
