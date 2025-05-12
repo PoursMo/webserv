@@ -39,7 +39,7 @@ LocationData::LocationData(const ft_json::JsonObject &json_directives)
 			else if (!s.compare("upload_store"))
 				this->uploadStore = v.asString();
 			else if (!s.compare("cgi"))
-				this->cgi = v.asString();
+				setCgiConfig(v.asObject());
 			else
 				throw std::runtime_error("Unknown directive.");
 		}
@@ -84,6 +84,19 @@ void LocationData::setIndexes(const ft_json::JsonArray &input)
 	}
 }
 
+void LocationData::setCgiConfig(const ft_json::JsonObject &input)
+{
+	ft_json::JsonObject::const_iterator it = input.begin();
+	ft_json::JsonObject::const_iterator end = input.end();
+	while (it != end)
+	{
+		const std::string &key = it->first;
+		const ft_json::JsonValue &value = it->second;
+		this->cgiConfig[key] = value.asString();
+		it++;
+	}
+}
+
 // ********************************************************************
 // Getters
 // ********************************************************************
@@ -103,9 +116,9 @@ const std::string &LocationData::getRoot() const
 	return root;
 }
 
-const std::string & LocationData::getCgi() const
+const std::map<std::string,std::string>& LocationData::getCgiConfig() const
 {
-	return cgi;
+	return this->cgiConfig;
 }
 
 bool LocationData::getAutoIndex() const
@@ -126,6 +139,27 @@ const std::string &LocationData::getUploadStore() const
 // ********************************************************************
 // Debug
 // ********************************************************************
+
+static void printTabs(std::ostream &os, int tabs)
+{
+	for (int i = 0; i < tabs; i++)
+		os << "\t";
+}
+
+static void printStringMap(std::ostream &os, std::map<std::string, std::string> map, int tabs = 0)
+{
+	std::map<std::string, std::string>::const_iterator it = map.begin();
+	std::map<std::string, std::string>::const_iterator end = map.end();
+	os << "{\n";
+	while (it != end)
+	{
+		printTabs(os, tabs + 1);
+		os << it->first << ": " << it->second << ",\n";
+		it++;
+	}
+	printTabs(os, tabs);
+	os << "}" << std::endl;
+}
 
 std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 {
@@ -154,7 +188,6 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 	os << "\tReturnPair: (" << locationData.getReturnPair().first << ", " << locationData.getReturnPair().second << ")" << std::endl;
 	os << "\tAutoIndex: " << (locationData.getAutoIndex() ? "true" : "false") << std::endl;
 	os << "\tRoot: " << locationData.getRoot() << std::endl;
-	os << "\tCgi: " << locationData.getCgi() << std::endl;
 	os << "\tUploadStore: " << locationData.getUploadStore() << "\n";
 	os << "\tIndexes: [";
 	const std::vector<std::string> &indexes = locationData.getIndexes();
@@ -165,5 +198,7 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 		os << *i;
 	}
 	os << "]" << "\n";
+	os << "\tCgiConfig: ";
+	printStringMap(os, locationData.getCgiConfig(), 1);
 	return os;
 }

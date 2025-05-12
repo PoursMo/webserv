@@ -103,9 +103,13 @@
                   "type": "string"
                 },
                 "cgi": {
-                  "type": "string",
-                  "title": "Path of cgi script",
-                  "examples": ["/bin/php-cgi"]
+                  "type": "object",
+                  "title": "Map of extension and binary",
+                  "examples": [{ ".php": "/usr/bin/php-cgi84" }],
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^\\..+": { "type": "string" }
+                  }
                 }
               }
             }
