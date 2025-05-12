@@ -73,6 +73,7 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 	std::map<int, Receiver> connections;
 	while (1)
 	{
+		std::cout << "Polling..." << std::endl; // debug
 		int nb_ready = poller.poll();
 		for (int i = 0; i < nb_ready; i++)
 		{
@@ -86,19 +87,19 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 				// 5xx error
 				std::cout << "New connection on socket " << event.data.fd << ", created socket fd: " << client_fd << std::endl;
 				connections[client_fd] = Receiver(client_fd);
-				poller.add(client_fd, EPOLLIN | EPOLLET);
+				poller.add(client_fd, EPOLLIN);
 			}
 			else
 			{
 				if (event.events & EPOLLIN)
 				{
-					std::cout << "In operations on socket fd: " << event.data.fd << ":" << std::endl;
+					std::cout << "In operations on socket " << event.data.fd << ":" << std::endl;
 					if (!connections.at(event.data.fd).receive())
 						poller.mod(event.data.fd, EPOLLOUT);
 				}
 				else if (event.events & EPOLLOUT)
 				{
-					std::cout << "Out operations on socket fd: " << event.data.fd << ":" << std::endl;
+					std::cout << "Out operations on socket " << event.data.fd << ":" << std::endl;
 					const char *response = "HTTP/1.1 200 OK\n";			// craft response
 					send(event.data.fd, response, strlen(response), 0); // can send less than expected
 					print_sended(response);

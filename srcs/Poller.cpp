@@ -9,7 +9,6 @@
 #define WS_EPOLL_NB_EVENTS 512
 
 /*
-Suppose, the reader only consumed part of data from the buffer:
 edge-trigerred mode: Epoll_wait will return only when a new event is enqueued with the epoll object.
 level-triggered mode (default): Epoll_wait will return as long as the condition holds.
 */
