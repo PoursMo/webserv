@@ -15,19 +15,6 @@ Request::~Request()
 {
 }
 
-bool isSupportedMethod(char **lstart, char *lend, std::string method)
-{
-	int	i = 0;
-
-	while (**lstart != ' ' && *lstart != lend)
-	{
-		if (**lstart != method[i])
-			return false;
-		(*lstart)++;
-	}
-	return true;
-}
-
 Method Request::setMethod(char *lstart, char *lend)
 {
 	char *backup = lstart;
@@ -51,8 +38,13 @@ Method Request::setMethod(char *lstart, char *lend)
 			lstart++;
 			i++;
 		}
-		if (method != "")
-			break ;
+		if (method != "" )
+		{
+			if (*lstart != ' ')
+				throw http_error(400);
+			else
+				break ;
+		}
 	}
 	if (method == "")
 		throw http_error(400);
@@ -183,7 +175,7 @@ enum Method Request::getMethod() const
 // {
 // 	Request test_request;
 
-// 	char test_line[]="GET / HTTP/1.1";
+// 	char test_line[]="HEAD / HTTP/1.1";
 // 	char *first = &(test_line[0]);
 
 // 	int i = 0;
