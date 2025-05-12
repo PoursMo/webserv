@@ -27,8 +27,8 @@
             "description": "Defines the port the server listens on.",
             "default": 8000
           },
-          "server_name": {
-            "title": "Server's hostname",
+          "server_names": {
+            "title": "Server's hostname(s)",
             "type": "array",
             "description": "Specifies the server's hostname(s) for virtual hosting. The first server block for a given host:port becomes the default for that address. If omitted, the server will respond to any Host header that do not match other server.",
             "items": { "type": "string" }
