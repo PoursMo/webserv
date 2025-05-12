@@ -12,13 +12,14 @@ class Request
 		Method method;
 		std::string resource;
 		std::map<std::string, std::string> headers;
-		int bodyFd = -1;
-		bool firstLineParsed = false;
+		int bodyFd;
+		unsigned long contentLength;
+		bool firstLineParsed;
 		void parseFirstLine(char *lstart, char *lend);
 		Method setMethod(char *lstart, char *lend);
 		std::string setResource(char **lstart, char *lend);
 		void parseHeaderLine(char *lstart, char *lend);
-		void addHeader();
+		void addHeader(std::string key, std::string value);
 
 	public:
 		Request();
@@ -26,6 +27,9 @@ class Request
 		void parseRequestLine(char *lstart, char *lend);
 		void setBodyFd();
 		void execute();
+		std::string getResource() const;
+		enum Method getMethod() const;
+		std::string getHeaderValue(const std::string key) const;
 
 	class UnrecognizedMethod: public std::exception
 	{

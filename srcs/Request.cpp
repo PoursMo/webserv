@@ -6,6 +6,9 @@
 
 Request::Request()
 {
+	bodyFd = -1;
+	firstLineParsed = false;
+	contentLength = 0;
 }
 
 Request::~Request()
@@ -19,7 +22,7 @@ bool isSupportedMethod(char **lstart, char *lend, std::string method)
 	while (**lstart != ' ' && *lstart != lend)
 	{
 		if (**lstart != method[i])
-			return false,
+			return false;
 		(*lstart)++;
 	}
 	return true;
@@ -28,14 +31,16 @@ bool isSupportedMethod(char **lstart, char *lend, std::string method)
 Method Request::setMethod(char *lstart, char *lend)
 {
 	char *backup = lstart;
+
 	std::string method;
 
-	std::vector<std::string> existing_methods = {"GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE"};
+	const char* methods_array[] = {"GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE"};
+	std::vector<std::string> existing_methods(methods_array, methods_array + sizeof(methods_array)/sizeof(methods_array[0]));
 	for (std::vector<std::string>::iterator s = existing_methods.begin(); s != existing_methods.end(); s++)
 	{
 		method = *s;
 		lstart = backup;
-		int	i = 0;
+		size_t	i = 0;
 		while (*lstart != ' ' && lstart != lend && i < method.size())
 		{
 			if (*lstart != method[i])
@@ -78,7 +83,7 @@ std::string Request::setResource(char **lstart, char *lend)
 
 bool isValidProtocol(char **lstart, char *lend)
 {
-	int	i = 0;
+	size_t	i = 0;
 	std::string protocol = "HTTP/1.1";
 	while (*lstart != lend && i < protocol.size())
 	{
@@ -109,6 +114,11 @@ void Request::parseFirstLine(char *lstart, char *lend)
 	this->firstLineParsed = true;
 }
 
+void Request::addHeader(std::string key, std::string value)
+{
+	this->headers.insert(std::make_pair(key, value));
+}
+
 void Request::parseHeaderLine(char *lstart, char *lend)
 {
 	std::string key;
@@ -132,7 +142,7 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 		value = value + *lstart;
 		lstart++;
 	}
-	this->headers.insert(std::make_pair(key, value));
+	this->addHeader(key, value);
 }
 
 void Request::parseRequestLine(char *lstart, char *lend)
@@ -152,6 +162,22 @@ const char *Request::UnsupportedMethod::what() const throw()
 {
 	return ("Method not supported");
 }
+
+std::string Request::getResource() const
+{
+	return (this->resource);
+}
+
+std::string Request::getHeaderValue(const std::string key) const
+{
+	return ((*((this->headers).find(key))).second);
+}
+
+enum Method Request::getMethod() const
+{
+	return (this->method);
+}
+
 
 // int main()
 // {
@@ -175,7 +201,8 @@ const char *Request::UnsupportedMethod::what() const throw()
 
 // 	test_request.parseRequestLine(first, last);
 // 	test_request.parseRequestLine(first2, last2);
+// 	std::string target = "Content-Size";
 // 	std::cout << "valid first line" << std::endl;
+// 	std::cout << "Header Value of " << target << " is : " << test_request.getHeaderValue(target) << std::endl;
 // 	return 0;
 // }
-
