@@ -17,13 +17,16 @@ class Request
 		VirtualServer server;
 		Method method;
 		std::string resource;
+		std::string query;
 		std::map<std::string, std::string> headers;
 		int bodyFd;
 		std::string cgiExtension;
 		std::string cgiPath;
+		std::string cgiPathInfo;
 		char** getCgiEnv();
 		char** getCgiArgv();
-		std::string getCgiPathInfo();
+		void initQuery();
+		void initCgi();
 	public:
 		typedef struct {
 			LocationData location;
@@ -45,30 +48,48 @@ Request::Request(t_req_init init):
 	location(init.location),
 	server(init.server),
 	method(init.method),
-	resource(init.location.getRoot() + init.resource),
+	resource(init.resource),
+	query(""),
 	headers(init.headers),
 	bodyFd(init.bodyFd),
 	cgiExtension(""),
-	cgiPath("")
+	cgiPath(""),
+	cgiPathInfo("")
+{
+	this->initQuery();
+	this->initCgi();
+}
+
+void Request::initQuery()
+{
+	std::size_t query_index = this->resource.find("?");
+	if (query_index != std::string::npos)
+	{
+		this->query = this->resource.substr(query_index + 1);
+		this->resource = this->resource.substr(0, query_index);
+	}
+}
+
+void Request::initCgi()
 {
 	std::map<std::string, std::string> cgiConfig = this->location.getCgiConfig();
-
 	for (std::map<std::string, std::string>::const_iterator it = cgiConfig.begin(); it != cgiConfig.end(); it++)
 	{
 		std::string ext = it->first;
 		std::size_t index = this->resource.find(ext); // TODO: findlast() ?
 		if (index != std::string::npos)
 		{
-			std::size_t end = index + this->resource.length();
+			std::size_t end = index + ext.length();
 			if (!this->resource[end] || this->resource[end] == '/')
 			{
+				this->cgiPathInfo = this->resource.substr(end);
+				this->resource = this->resource.substr(0, end);
 				this->cgiExtension = it->first;
 				this->cgiPath = it->second;
 				return ;
 			}
 		}
 	}
-
 }
 
 Request::~Request()
@@ -131,7 +152,7 @@ char **Request::getCgiEnv()
 	std::map<std::string, std::string> env;
 
 	// https://fr.wikipedia.org/wiki/Variables_d%27environnement_CGI
-	env["SERVER_SOFTWARE"] = "webserv 0.1";
+	env["SERVER_SOFTWARE"] = "webserv_42";
 	env["SERVER_NAME"] = this->getHeader("Host");
 	env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	env["REDIRECT_STATUS"] = "200";
@@ -139,15 +160,15 @@ char **Request::getCgiEnv()
 	env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	env["SERVER_PORT"] = this->server.getPort();
 	env["REQUEST_METHOD"] = this->getMethodString();
-	env["PATH_INFO"] = this->getCgiPathInfo();
-	env["PATH_TRANSLATED"] = this->resource;
-	// env["SCRIPT_NAME"] = this->getLocation().getCgi();
-	// env["QUERY_STRING"] = "prout=42";
-	// // env["REMOTE_HOST"]
-	// // env["REMOTE_ADDR"]
-	// // env["AUTH_TYPE"]
-	// // env["REMOTE_USER"]
-	// // env["REMOTE_IDENT"]
+	env["PATH_INFO"] = this->cgiPathInfo;
+	env["PATH_TRANSLATED"] = this->location.getRoot() + this->resource;
+	env["SCRIPT_NAME"] = this->resource;
+	env["QUERY_STRING"] = this->query;
+	// env["REMOTE_HOST"]
+	// env["REMOTE_ADDR"]
+	// env["AUTH_TYPE"]
+	// env["REMOTE_USER"]
+	// env["REMOTE_IDENT"]
 	env["CONTENT_TYPE"] = this->getHeader("Content-type");
 	env["CONTENT_LENGTH"] = this->getHeader("Content-Length");
 
@@ -165,17 +186,9 @@ char **Request::getCgiArgv()
 	char **argv = new char*[3];
 
 	argv[0] = ft_strdup(this->cgiPath.c_str());
-	argv[1] = ft_strdup(this->resource.c_str());
+	argv[1] = ft_strdup(std::string(this->location.getRoot() + this->resource).c_str());
 	argv[2] = NULL;
 	return argv;
-}
-
-std::string Request::getCgiPathInfo()
-{
-	if (this->cgiPath == "")
-		throw std::runtime_error("cgi path is not defined");
-	std::size_t index = this->resource.find(this->cgiExtension);
-	return this->resource.substr(index + this->cgiExtension.length());
 }
 
 pid_t Request::cgiExecution(int fd_out)
@@ -186,10 +199,11 @@ pid_t Request::cgiExecution(int fd_out)
 	if (this->cgiPath == "")
 		throw std::runtime_error("cgi path is not defined");
 
-	std::cout << "resource:" << this->resource << std::endl;
-	std::cout << "cgi extension:" << this->cgiExtension << std::endl;
-	std::cout << "cgi path:" << this->cgiPath << std::endl;
-	std::cout << "cgi pathinfo:" << this->getCgiPathInfo() << std::endl;
+	std::cout << "resource:\t" << this->resource << std::endl;
+	std::cout << "query:\t\t" << this->query << std::endl;
+	std::cout << "cgi extension:\t" << this->cgiExtension << std::endl;
+	std::cout << "cgi path:\t" << this->cgiPath << std::endl;
+	std::cout << "cgi pathinfo:\t" << this->cgiPathInfo << std::endl;
 	pid_t pid = fork();
 	if (pid)
 	{
@@ -198,7 +212,7 @@ pid_t Request::cgiExecution(int fd_out)
 		return pid;
 	}
 	connect_fd(fd_in, STDIN_FILENO);
-	(void)fd_out;
+	close(fd_out);
 	// connect_fd(fd_out, STDOUT_FILENO);
 	char **envp = this->getCgiEnv();
 	char **argv = this->getCgiArgv();
@@ -238,7 +252,7 @@ int main(int argc, char **argv)
 			.location = location,
 			.server = server,
 			.method = GET,
-			.resource = "/test.php/hoho",
+			.resource = "/test.php/hahaha?name=toto",
 			.headers = headers,
 			.bodyFd = fd_in,
 		});

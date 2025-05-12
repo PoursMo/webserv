@@ -12,9 +12,11 @@
 	<h1>Salut</h1>
 
 	<?php
-		header('Prout: http://www.example.com/');
-		echo "HOHO"
-
+		echo 'Hello ' . htmlspecialchars($_GET["name"]) . "!\n";
+		echo 'Script filename: ' . htmlspecialchars($_SERVER['SCRIPT_FILENAME']) . "\n";
+		echo 'Server port: ' . $_SERVER['SERVER_PORT'] . "\n";
+		echo 'Request time: ' . $_SERVER['REQUEST_TIME'] . "\n";
+		echo 'Server: ' . $_SERVER['SERVER_SOFTWARE'] . "\n";
 	?>
 
 </body>
