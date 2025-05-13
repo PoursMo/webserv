@@ -11,22 +11,29 @@ Request::Request()
 	headerParsed = false;
 	socketFd = -1;
 	contentLength = 0;
+	error = false;
 }
 
 Request::~Request()
 {
 }
 
-void Request::RequestError(int code) const
+void Request::RequestError(int code)
 {
 	try
 	{
 		throw http_error(code);
 	}
-	catch(const std::exception& e)
+	catch(std::exception & e)
 	{
-		std::cerr << e.what() << '\n';
+		if (this->error == false)
+		{
+			this->error = true;
+			//Manage error
+			std::cerr << e.what() << '\n';
+		}
 	}
+	//REDIRECT TOWARDS ERROR MANAGEMENT
 }
 
 Method Request::setMethod(char *lstart, char *lend)
