@@ -9,8 +9,8 @@
 #define WS_EPOLL_NB_EVENTS 512
 
 /*
-edge-trigerred mode: Continue to receive events until the underlying file descriptor is no longer in a ready state
-level-triggered mode (default): Only receive events when the state of the watched file descriptors change
+edge-trigerred mode: Epoll_wait will return only when a new event is enqueued with the epoll object.
+level-triggered mode (default): Epoll_wait will return as long as the condition holds.
 */
 
 Poller::Poller()

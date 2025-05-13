@@ -1,6 +1,7 @@
 #include "config.hpp"
 #include "VirtualServer.hpp"
 #include "Poller.hpp"
+#include "Receiver.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -73,8 +74,10 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 	{
 		poller.add(i->first, EPOLLIN);
 	}
+	std::map<int, Receiver> connections;
 	while (1)
 	{
+		std::cout << "Polling..." << std::endl; // debug
 		int nb_ready = poller.poll();
 		for (int i = 0; i < nb_ready; i++)
 		{
@@ -87,31 +90,26 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 				// if (new_fd == -1)
 				// 5xx error
 				std::cout << "New connection on socket " << event.data.fd << ", created socket fd: " << client_fd << std::endl;
+				connections[client_fd] = Receiver(client_fd);
 				poller.add(client_fd, EPOLLIN);
 			}
 			else
 			{
 				if (event.events & EPOLLIN)
 				{
-					std::cout << "In operations on socket fd: " << event.data.fd << ":" << std::endl;
-					char buffer[10000] = {0};
-					ssize_t bytes_received = recv(event.data.fd, buffer, 10000, 0);
-					if (bytes_received == 0)
-					{
-						std::cout << "Client with fd: " << event.data.fd << " disconnected" << std::endl;
-					}
-					print_recved(buffer);
-					// partial read if no \r\n\r\n in buffer or if content-length/transfer-encoding header field says so
-					poller.mod(event.data.fd, EPOLLOUT);
+					std::cout << "In operations on socket " << event.data.fd << ":" << std::endl;
+					if (!connections.at(event.data.fd).receive())
+						poller.mod(event.data.fd, EPOLLOUT);
 				}
 				else if (event.events & EPOLLOUT)
 				{
-					std::cout << "Out operations on socket fd: " << event.data.fd << ":" << std::endl;
-					const char *response = "HTTP/1.1 200 OK\r\n";			// craft response
+					std::cout << "Out operations on socket " << event.data.fd << ":" << std::endl;
+					const char *response = "HTTP/1.1 200 OK\n";			// craft response
 					send(event.data.fd, response, strlen(response), 0); // can send less than expected
 					print_sended(response);
 
 					std::cout << "Terminating socket: " << event.data.fd << std::endl;
+					connections.erase(event.data.fd);
 					poller.del(event.data.fd); // only if done with I/O
 					close(event.data.fd);	   // only if done with I/O
 				}
