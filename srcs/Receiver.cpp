@@ -116,7 +116,7 @@ void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 		line.append(lbuffer->pos, lf + 1);
 		std::cout << "Receiver: stitched line of size " << line.size() << ": "; // debug
 		debug_print(&line[0], &line[line.size() - 1]);							// debug
-		// request.line(&line[0], &line[line.size()])
+		this->request.parseRequestLine(&line[0], &line[line.size()]);
 		if (!std::strncmp(line.c_str(), "\r\n", 2))
 			readingHeader = false;
 	}
@@ -124,7 +124,7 @@ void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 	{
 		std::cout << "Receiver: non-stitched line of size " << lf - lbuffer->pos + 1 << ": "; // debug
 		debug_print(lbuffer->pos, lf);														  // debug
-		// request.line(pos, nl)
+		this->request.parseRequestLine(lbuffer->pos, lf);
 		if (!std::strncmp(lbuffer->pos, "\r\n", 2))
 			readingHeader = false;
 	}

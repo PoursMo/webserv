@@ -1,6 +1,7 @@
 #ifndef RECEIVER_HPP
 #define RECEIVER_HPP
 
+#include <Request.hpp>
 #include <list>
 #include <sys/socket.h>
 #include "Request.hpp"
@@ -18,7 +19,6 @@ class Receiver
 private:
 	int fd; // keep elsewhere ?
 	Request request;
-	// request object reference
 	std::list<Buffer *> buffers;
 	size_t headerBufferCount;
 	bool readingHeader;
