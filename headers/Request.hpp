@@ -13,9 +13,11 @@ class Request
 		std::string resource;
 		std::map<std::string, std::string> headers;
 		int bodyFd;
+		int socketFd;
 		unsigned long contentLength;
 		bool firstLineParsed;
 		bool headerParsed;
+		void RequestError(int code) const;
 		void parseFirstLine(char *lstart, char *lend);
 		bool checkEmptyline(char *lstart, char *lend);
 		Method setMethod(char *lstart, char *lend);

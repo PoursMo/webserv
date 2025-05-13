@@ -3,6 +3,7 @@
 
 #include <list>
 #include <sys/socket.h>
+#include "Request.hpp"
 
 struct Buffer
 {
@@ -16,6 +17,7 @@ class Receiver
 {
 private:
 	int fd; // keep elsewhere ?
+	Request request;
 	// request object reference
 	std::list<Buffer *> buffers;
 	size_t headerBufferCount;

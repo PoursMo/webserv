@@ -1,4 +1,4 @@
-#include "Request.hpp"
+#include "../headers/Request.hpp"
 #include <stdexcept>
 
 //REMOVE ME
@@ -9,11 +9,24 @@ Request::Request()
 	bodyFd = -1;
 	firstLineParsed = false;
 	headerParsed = false;
+	socketFd = -1;
 	contentLength = 0;
 }
 
 Request::~Request()
 {
+}
+
+void Request::RequestError(int code) const
+{
+	try
+	{
+		throw http_error(code);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
 }
 
 Method Request::setMethod(char *lstart, char *lend)
@@ -42,13 +55,13 @@ Method Request::setMethod(char *lstart, char *lend)
 		if (method != "" )
 		{
 			if (*lstart != ' ')
-				throw http_error(400);
+				RequestError(400);
 			else
 				break ;
 		}
 	}
 	if (method == "")
-		throw http_error(400);
+		RequestError(400);
 	if (method == "GET")
 		return GET;
 	else if (method == "POST")
@@ -56,7 +69,7 @@ Method Request::setMethod(char *lstart, char *lend)
 	else if (method == "DELETE")
 		return DELETE;
 	else
-		throw http_error(501);
+		RequestError(501);
 	return GET; //Unreachable
 }
 
@@ -70,7 +83,7 @@ std::string Request::setResource(char **lstart, char *lend)
 		(*lstart)++;
 	}
 	if (resource == "")
-		throw http_error(400);
+		RequestError(400);
 	return (resource);
 }
 
@@ -94,19 +107,19 @@ void Request::parseFirstLine(char *lstart, char *lend)
 	while (lstart != lend && *lstart != ' ' && *lstart != '\r')
 		lstart++;
 	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
-		throw http_error(400);
+		RequestError(400);
 	lstart++;
 	this->resource = setResource(&lstart, lend);
 	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
-		throw http_error(400);
+		RequestError(400);
 	lstart++;
 	if(!isValidProtocol(&lstart, lend))
-		throw http_error(400);
+		RequestError(400);
 	if (*lstart != '\r')
-		throw http_error(400);
+		RequestError(400);
 	lstart++;
 	if (lstart != lend)
-		throw http_error(400);
+		RequestError(400);
 	this->firstLineParsed = true;
 }
 
@@ -126,10 +139,10 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 		lstart++;
 	}
 	if (*lstart != ':')
-		throw http_error(400);
+		RequestError(400);
 	lstart++;
 	if (*lstart != ' ' || lstart == lend)
-		throw http_error(400);
+		RequestError(400);
 	lstart++;
 	while (lstart != lend && *lstart != '\r')
 	{
@@ -137,7 +150,7 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 		lstart++;
 	}
 	if (!(*lstart == '\r' && *(lstart + 1) == '\n'))
-		throw http_error(400);
+		RequestError(400);
 	this->addHeader(key, value);
 }
 
@@ -156,7 +169,7 @@ void Request::parseRequestLine(char *lstart, char *lend)
 	if (this->headerParsed)
 		return ;
 	if (*lend != '\n' || lstart == lend || lstart == NULL || lend == NULL)
-		throw http_error(400);
+		RequestError(400);
 	if (checkEmptyline(lstart, lend))
 	{
 		this->headerParsed = true;

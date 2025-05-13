@@ -7,6 +7,7 @@ OBJDIR = objs
 NAME = webserv
 
 SRCS = $(SRCDIR)/ft_json.cpp \
+	$(SRCDIR)/Request.cpp \
 	$(SRCDIR)/config.cpp \
 	$(SRCDIR)/VirtualServer.cpp \
 	$(SRCDIR)/LocationData.cpp \
