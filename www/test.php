@@ -12,7 +12,16 @@
 	<h1>Salut</h1>
 
 	<?php
-		echo 'Hello ' . htmlspecialchars($_GET["name"]) . "!\n";
+
+		// Takes raw data from the request
+		$json = file_get_contents('php://input');
+
+		// Converts it into a PHP object
+		$data = json_decode($json);
+		echo 'data.name:' . $data->name . "\n";
+
+		// TODO: use application/x-www-form-urlencoded instead application/json
+		// echo 'Hello ' . htmlspecialchars($_POST["name"]) . "!\n";
 		echo 'Script filename: ' . htmlspecialchars($_SERVER['SCRIPT_FILENAME']) . "\n";
 		echo 'Server port: ' . $_SERVER['SERVER_PORT'] . "\n";
 		echo 'Request time: ' . $_SERVER['REQUEST_TIME'] . "\n";

@@ -10,7 +10,7 @@
 #include "LocationData.hpp"
 #include "VirtualServer.hpp"
 
-class Request
+class CgiHandler
 {
 	private:
 		LocationData location;
@@ -36,15 +36,15 @@ class Request
 			std::map<std::string, std::string> headers;
 			int bodyFd;
 		}	t_req_init;
-		Request(t_req_init init);
-		~Request();
+		CgiHandler(t_req_init init);
+		~CgiHandler();
 		std::string getMethodString() const;
 		const std::string getHeader(const std::string&) const;
 		bool isCgiResource();
 		pid_t cgiExecution(int fd_out);
 };
 
-Request::Request(t_req_init init):
+CgiHandler::CgiHandler(t_req_init init):
 	location(init.location),
 	server(init.server),
 	method(init.method),
@@ -60,7 +60,7 @@ Request::Request(t_req_init init):
 	this->initCgi();
 }
 
-void Request::initQuery()
+void CgiHandler::initQuery()
 {
 	std::size_t query_index = this->resource.find("?");
 	if (query_index != std::string::npos)
@@ -70,7 +70,7 @@ void Request::initQuery()
 	}
 }
 
-void Request::initCgi()
+void CgiHandler::initCgi()
 {
 	std::map<std::string, std::string> cgiConfig = this->location.getCgiConfig();
 	for (std::map<std::string, std::string>::const_iterator it = cgiConfig.begin(); it != cgiConfig.end(); it++)
@@ -92,11 +92,11 @@ void Request::initCgi()
 	}
 }
 
-Request::~Request()
+CgiHandler::~CgiHandler()
 {
 }
 
-std::string Request::getMethodString() const
+std::string CgiHandler::getMethodString() const
 {
 	if (this->method == GET)
 		return "GET";
@@ -105,14 +105,14 @@ std::string Request::getMethodString() const
 	return "DELETE";
 }
 
-const std::string Request::getHeader(const std::string& key) const
+const std::string CgiHandler::getHeader(const std::string& key) const
 {
 	if (this->headers.count(key))
 		return this->headers.at(key);
 	return "";
 }
 
-bool Request::isCgiResource()
+bool CgiHandler::isCgiResource()
 {
 	return (this->cgiPath != "");
 }
@@ -147,7 +147,7 @@ static char **mapToStringArray(std::map<std::string, std::string> map)
 	return (arr);
 }
 
-char **Request::getCgiEnv()
+char **CgiHandler::getCgiEnv()
 {
 	std::map<std::string, std::string> env;
 
@@ -181,7 +181,7 @@ char **Request::getCgiEnv()
 	return mapToStringArray(env);
 }
 
-char **Request::getCgiArgv()
+char **CgiHandler::getCgiArgv()
 {
 	char **argv = new char*[3];
 
@@ -191,7 +191,7 @@ char **Request::getCgiArgv()
 	return argv;
 }
 
-pid_t Request::cgiExecution(int fd_out)
+pid_t CgiHandler::cgiExecution(int fd_out)
 {
 
 	int fd_in = this->bodyFd;
@@ -201,9 +201,12 @@ pid_t Request::cgiExecution(int fd_out)
 
 	std::cout << "resource:\t" << this->resource << std::endl;
 	std::cout << "query:\t\t" << this->query << std::endl;
+	std::cout << "content-type:\t" << this->getHeader("Content-Type") << std::endl;
+	std::cout << "content-length:\t" << this->getHeader("Content-Length") << std::endl;
 	std::cout << "cgi extension:\t" << this->cgiExtension << std::endl;
 	std::cout << "cgi path:\t" << this->cgiPath << std::endl;
 	std::cout << "cgi pathinfo:\t" << this->cgiPathInfo << std::endl;
+
 	pid_t pid = fork();
 	if (pid)
 	{
@@ -227,7 +230,7 @@ pid_t Request::cgiExecution(int fd_out)
 
 int main(int argc, char **argv)
 {
-	std::string request_path = "./tests/http/simple.http";
+	std::string request_path = "./tests/http/data.http";
 	std::map<int, std::vector<VirtualServer *> > servers;
 	if (argc > 1)
 		request_path = argv[1];
@@ -243,15 +246,16 @@ int main(int argc, char **argv)
 
 		std::map<std::string, std::string> headers;
 		headers["Host"] = "localhost";
-		headers["Content-Lenght"] = "42";
+		headers["Content-Type"] = "application/json";
+		headers["Content-Length"] = "20";
 
 		int fd_in = open(request_path.c_str(), O_RDONLY);
 		int fd_out = open("./logs/cgi-out.log", O_CREAT | O_TRUNC | O_WRONLY); 
 
-		Request req((Request::t_req_init) {
+		CgiHandler req((CgiHandler::t_req_init) {
 			.location = location,
 			.server = server,
-			.method = GET,
+			.method = POST,
 			.resource = "/test.php/hahaha?name=toto",
 			.headers = headers,
 			.bodyFd = fd_in,
@@ -259,7 +263,7 @@ int main(int argc, char **argv)
 
 		if (!req.isCgiResource())
 		{
-			std::cout << "Request don't match with CGI extension" << std::endl;
+			std::cout << "CgiHandler don't match with CGI extension" << std::endl;
 			return 1;
 		}
 

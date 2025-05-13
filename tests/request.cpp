@@ -6,7 +6,7 @@ int main()
 {
 	Request test_request;
 
-	char test_line[]="POST/ HTTP/1.1\r\n";
+	char test_line[]="POST / HTTP/1.1\r\n";
 	char *first = &(test_line[0]);
 
 	int i = 0;
