@@ -21,6 +21,7 @@ main() {
 			continue
 		fi
 
+		# NGINX
 		nginx -c $FILE_CONF_NG &
 		local PID=$!
 		info "[NGINX] $FILE_CONF_NG"
@@ -28,12 +29,14 @@ main() {
 		kill $PID
 		info "[NGINX]\n"
 
+		# WEBSERV
 		./webserv $FILE_CONF &> /dev/null &
 		local PID=$!
 		info "[WEBSERV] $FILE_CONF"
 		send_all_request $FILE_CONF "webserv"
 		kill $PID
 		info "[WEBSERV]\n"
+		
 	done
 
 	compare_response
