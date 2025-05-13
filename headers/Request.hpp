@@ -30,8 +30,6 @@ class Request
 		Request();
 		~Request();
 		void parseRequestLine(char *lstart, char *lend);
-		void setBodyFd();
-		void execute();
 		std::string getResource() const;
 		enum Method getMethod() const;
 		std::string getHeaderValue(const std::string key) const;
