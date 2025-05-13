@@ -57,6 +57,10 @@ send_all_request() {
 		info "│ server[$index] $ADDRESS:$PORT"
 		for FILE_HTTP in tests/http/*.http ; do
 			local REQ_NAME=$(basename $FILE_HTTP .http)
+			if [[ $REQ_NAME = _* ]] ; then 
+				warning "│ IGNORED REQUEST $REQ_NAME"
+				continue
+			fi
 			local OUTPUT_FILE="${LOGS_DIR}/http/${CONFIG_NAME}_${index}_${REQ_NAME}_${SERVER_NAME}.log"
 			send $FILE_HTTP $ADDRESS $PORT > $OUTPUT_FILE
 			if [ $? -eq 0 ] ; then

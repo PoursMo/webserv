@@ -104,7 +104,7 @@ void poll_loop(const std::map<int, std::vector<VirtualServer *> > &servers)
 				else if (event.events & EPOLLOUT)
 				{
 					std::cout << "Out operations on socket " << event.data.fd << ":" << std::endl;
-					const char *response = "HTTP/1.1 200 OK\n";			// craft response
+					const char *response = "HTTP/1.1 200 OK\r\n";			// craft response
 					send(event.data.fd, response, strlen(response), 0); // can send less than expected
 					print_sended(response);
 
