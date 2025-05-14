@@ -18,11 +18,12 @@ struct Buffer
 class Receiver
 {
 private:
-	int fd; // keep elsewhere ?
+	int fd;
 	Request &request;
 	std::list<Buffer *> buffers;
 	size_t headerBufferCount;
 	bool readingHeader;
+	size_t bodySize;
 	size_t bodyBytesRecvd;
 
 	enum BufferType

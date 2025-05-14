@@ -45,6 +45,7 @@ Receiver::Receiver(int fd, Request &request)
 	  request(request),
 	  headerBufferCount(0),
 	  readingHeader(true),
+	  bodySize(0),
 	  bodyBytesRecvd(0)
 {
 }
@@ -70,8 +71,12 @@ bool Receiver::receive()
 			throw http_error(400);
 		fillBuffer(HEADER);
 		flushHeaderBuffers();
-		if (!readingHeader && (bodyBytesRecvd >= request.getBodySize() || request.getBodySize() == 0))
-			return false;
+		if (!readingHeader)
+		{
+			bodySize = request.getBodySize();
+			if (bodyBytesRecvd >= bodySize || bodySize == 0)
+				return false;
+		}
 	}
 	else
 	{
@@ -83,9 +88,9 @@ bool Receiver::receive()
 			std::cout << "Receiver: writing buffer in fd " << request.getBodyFd() << std::endl;
 			write(request.getBodyFd(), buffer->first, buffer->capacity);
 		}
-		if (bodyBytesRecvd > request.getBodySize())											 // should never happen
-			std::cout << "Receiver: attention !: bodyBytesRecvd > request.getBodySize()" << std::endl; // should never happen
-		if (bodyBytesRecvd >= request.getBodySize())
+		if (bodyBytesRecvd > bodySize)													// should never happen
+			std::cout << "Receiver: WARNING !: bodyBytesRecvd > bodySize" << std::endl; // should never happen
+		if (bodyBytesRecvd >= bodySize)
 			return false;
 	}
 	return true;
@@ -148,7 +153,7 @@ void Receiver::flushHeaderBuffers()
 		{
 			bodyBytesRecvd = lbuffer->last - lbuffer->pos + 1;
 			std::cout << "Receiver: writing buffer in fd " << request.getBodyFd() << std::endl;
-			write(request.getBodyFd(), lbuffer->pos, std::min(bodyBytesRecvd, request.getBodySize()));
+			write(request.getBodyFd(), lbuffer->pos, std::min(bodyBytesRecvd, bodySize));
 			delete[] lbuffer->first;
 			delete lbuffer;
 			buffers.clear();
@@ -180,8 +185,8 @@ Buffer *Receiver::createBuffer(BufferType type)
 		std::cout << WS_CLIENT_HEADER_BUFFER_SIZE << std::endl; // debug
 		break;
 	case BODY:
-		buffer->first = new char[WS_CLIENT_BODY_BUFFER_SIZE]; // std::min(request.bodysize - bodyBytesRecvd, WS_CLIENT_BODY_BUFFER_SIZE)
-		buffer->capacity = WS_CLIENT_BODY_BUFFER_SIZE;		  // std::min(request.bodysize - bodyBytesRecvd, WS_CLIENT_BODY_BUFFER_SIZE)
+		buffer->first = new char[std::min(bodySize - bodyBytesRecvd, (unsigned long)WS_CLIENT_BODY_BUFFER_SIZE)];
+		buffer->capacity = std::min(bodySize - bodyBytesRecvd, (unsigned long)WS_CLIENT_BODY_BUFFER_SIZE);
 		std::cout << WS_CLIENT_BODY_BUFFER_SIZE << std::endl; // debug
 		break;
 	default:
@@ -195,46 +200,50 @@ Buffer *Receiver::createBuffer(BufferType type)
 ssize_t Receiver::handleRecv(void *buf, size_t len)
 {
 	std::cout << "Receiver: recving for " << len << " bytes" << std::endl; // debug
-	ssize_t bytes_received = recv(fd, buf, len, 0);
-	std::cout << "Receiver: recved " << bytes_received << " bytes" << std::endl;
-	if (bytes_received == -1)
+	ssize_t bytesReceived = recv(fd, buf, len, 0);
+	std::cout << "Receiver: recved " << bytesReceived << " bytes" << std::endl;
+	if (bytesReceived == -1)
 		throw http_error(std::strerror(errno), 500);
-	if (bytes_received == 0)
+	if (bytesReceived == 0)
 	{
-		std::cout << "Client with fd: " << fd << " disconnected" << std::endl; // debug
-																			   // send buffer to request
+		// send buffer to request
 	}
-	return bytes_received;
+	return bytesReceived;
 }
 
 void Receiver::fillBuffer(BufferType type)
 {
 	Buffer *buffer = buffers.back();
+	ssize_t bytesReceived = 0;
 	if (buffers.empty() || (size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
 	{
 		buffer = createBuffer(type);
-		ssize_t bytes_received;
 		switch (type)
 		{
 		case HEADER:
-			bytes_received = handleRecv(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
+			bytesReceived = handleRecv(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
 			break;
 		case BODY:
-			bytes_received = handleRecv(buffer->first, WS_CLIENT_BODY_BUFFER_SIZE); // std::min(request.bodysize - bodyBytesRecvd, WS_CLIENT_BODY_BUFFER_SIZE)
-			bodyBytesRecvd += bytes_received;
+			bytesReceived = handleRecv(buffer->first, std::min(bodySize - bodyBytesRecvd, (unsigned long)WS_CLIENT_BODY_BUFFER_SIZE));
+			bodyBytesRecvd += bytesReceived;
 			break;
 		default:
 			break;
 		}
-		buffer->last = buffer->first + bytes_received - 1;
+		buffer->last = buffer->first + bytesReceived - 1;
 	}
 	else
 	{
 		std::cout << "Receiver: adding to existing buffer" << std::endl; // debug
 		char *buf = buffer->last + 1;
 		size_t readSize = buffer->capacity - (buffer->last - buffer->first) - 1;
-		ssize_t bytes_received = handleRecv(buf, readSize);
-		buffer->last += bytes_received;
+		bytesReceived = handleRecv(buf, readSize);
+		buffer->last += bytesReceived;
+	}
+	if (bytesReceived == 0)
+	{
+		std::cout << "Client with fd: " << fd << " disconnected" << std::endl; // debug
+		throw http_error(400);
 	}
 	std::cout << "Receiver: buffer: ";		  // debug
 	debug_print(buffer->first, buffer->last); // debug
