@@ -5,6 +5,6 @@
 
 class VirtualServer;
 
-std::map<int, std::vector<VirtualServer *> > create_servers(const ft_json::JsonValue &json);
+void create_servers(const ft_json::JsonValue &json, std::map<int, std::vector<VirtualServer *> > &servers);
 
 #endif

@@ -1,14 +1,18 @@
 {
-  "$schema": "./_schema.json",
-  "servers": [
-    {
-      "address": "127.0.0.1",
-      "locations": [
-        {
-          "root": "/app",
-          "path": "/"
-        }
-      ]
-    }
-  ]
+	"$schema": "./_schema.json",
+	"servers": [
+		{
+			"server_names": [
+				"webserv.com",
+				"www.webserv.com"
+			],
+			"address": "127.0.0.1",
+			"locations": [
+				{
+					"root": "/app",
+					"path": "/"
+				}
+			]
+		}
+	]
 }

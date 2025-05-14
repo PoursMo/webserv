@@ -60,9 +60,8 @@ static int check_duplicate_fd(const std::map<int, std::vector<VirtualServer *> >
 	return -1;
 }
 
-std::map<int, std::vector<VirtualServer *> > create_servers(const ft_json::JsonValue &json)
+void create_servers(const ft_json::JsonValue &json, std::map<int, std::vector<VirtualServer *> > &servers)
 {
-	std::map<int, std::vector<VirtualServer *> > servers;
 	const ft_json::JsonObject &root = json.asObject();
 	if (root.count("servers") != 1 || root.at("servers").getType() != ft_json::ARRAY)
 		throw std::runtime_error("Root level must have a \"servers\" array of objects as it's value.");
@@ -94,5 +93,4 @@ std::map<int, std::vector<VirtualServer *> > create_servers(const ft_json::JsonV
 	}
 	if (count == 1)
 		throw std::runtime_error("Atleast 1 server is required.");
-	return servers;
 }

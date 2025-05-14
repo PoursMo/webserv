@@ -26,7 +26,7 @@ VirtualServer::VirtualServer(const ft_json::JsonObject &json_directives)
 				setAddress(v.asString());
 			else if (!s.compare("port"))
 				setPort(v.asNumber());
-			else if (!s.compare("server_name"))
+			else if (!s.compare("server_names"))
 				setServerNames(v.asArray());
 			else if (!s.compare("error_page"))
 				setErrorPages(v.asObject());

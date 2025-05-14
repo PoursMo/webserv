@@ -1,6 +1,7 @@
 #include "Receiver.hpp"
 #include "http_error.hpp"
 
+#include <unistd.h>
 #include <cstring>
 #include <cerrno>
 #include <algorithm>
@@ -39,12 +40,9 @@ void debug_print(const char *first, const char *const last)
 // ********************************************************************
 
 // Public
-Receiver::Receiver()
-{
-}
-
-Receiver::Receiver(int fd)
+Receiver::Receiver(int fd, Request &request)
 	: fd(fd),
+	  request(request),
 	  headerBufferCount(0),
 	  readingHeader(true),
 	  bodyBytesRecvd(0)
@@ -69,18 +67,26 @@ bool Receiver::receive()
 	{
 		std::cout << "Receiver: recving header" << std::endl; // debug
 		if (headerBufferCount >= 4)
-			throw http_error(414);
+			throw http_error(400);
 		fillBuffer(HEADER);
 		flushHeaderBuffers();
-		if (!readingHeader) // && !request.body
+		if (!readingHeader && (bodyBytesRecvd >= request.getBodySize() || request.getBodySize() == 0))
 			return false;
 	}
 	else
 	{
 		std::cout << "Receiver: recving body" << std::endl; // debug
 		fillBuffer(BODY);
-		// if (bodyBytesRecvd == request.bodysize)
-		// return false;
+		Buffer *buffer = buffers.back();
+		if ((size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
+		{
+			std::cout << "Receiver: writing buffer in fd " << request.getBodyFd() << std::endl;
+			write(request.getBodyFd(), buffer->first, buffer->capacity);
+		}
+		if (bodyBytesRecvd > request.getBodySize())											 // should never happen
+			std::cout << "Receiver: attention !: bodyBytesRecvd > request.getBodySize()" << std::endl; // should never happen
+		if (bodyBytesRecvd >= request.getBodySize())
+			return false;
 	}
 	return true;
 }
@@ -117,7 +123,7 @@ void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 		std::cout << "Receiver: stitched line of size " << line.size() << ": "; // debug
 		debug_print(&line[0], &line[line.size() - 1]);							// debug
 		this->request.parseRequestLine(&line[0], &line[line.size()]);
-		if (!std::strncmp(line.c_str(), "\r\n", 2))
+		if (line == "\r\n")
 			readingHeader = false;
 	}
 	else
@@ -138,7 +144,17 @@ void Receiver::flushHeaderBuffers()
 	{
 		sendLineToParsing(lbuffer, lf);
 		lbuffer->pos = lf + 1;
-		if (lf == lbuffer->last)
+		if (!readingHeader)
+		{
+			bodyBytesRecvd = lbuffer->last - lbuffer->pos + 1;
+			std::cout << "Receiver: writing buffer in fd " << request.getBodyFd() << std::endl;
+			write(request.getBodyFd(), lbuffer->pos, std::min(bodyBytesRecvd, request.getBodySize()));
+			delete[] lbuffer->first;
+			delete lbuffer;
+			buffers.clear();
+			break;
+		}
+		else if (lf == lbuffer->last)
 		{
 			if (lbuffer->last == lbuffer->first + lbuffer->capacity - 1)
 			{
@@ -186,7 +202,7 @@ ssize_t Receiver::handleRecv(void *buf, size_t len)
 	if (bytes_received == 0)
 	{
 		std::cout << "Client with fd: " << fd << " disconnected" << std::endl; // debug
-																			   // handle disconnection
+																			   // send buffer to request
 	}
 	return bytes_received;
 }
@@ -205,6 +221,7 @@ void Receiver::fillBuffer(BufferType type)
 			break;
 		case BODY:
 			bytes_received = handleRecv(buffer->first, WS_CLIENT_BODY_BUFFER_SIZE); // std::min(request.bodysize - bodyBytesRecvd, WS_CLIENT_BODY_BUFFER_SIZE)
+			bodyBytesRecvd += bytes_received;
 			break;
 		default:
 			break;

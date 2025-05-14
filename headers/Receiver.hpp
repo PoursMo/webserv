@@ -4,7 +4,8 @@
 #include <Request.hpp>
 #include <list>
 #include <sys/socket.h>
-#include "Request.hpp"
+
+class Request;
 
 struct Buffer
 {
@@ -18,7 +19,7 @@ class Receiver
 {
 private:
 	int fd; // keep elsewhere ?
-	Request request;
+	Request &request;
 	std::list<Buffer *> buffers;
 	size_t headerBufferCount;
 	bool readingHeader;
@@ -39,8 +40,7 @@ private:
 	static char *ws_strchr(char *first, const char *const last, char c);
 
 public:
-	Receiver();
-	Receiver(int fd);
+	Receiver(int fd, Request &request);
 	~Receiver();
 
 	bool receive();

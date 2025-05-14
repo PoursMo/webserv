@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <unistd.h>
 
 int main(int argc, char **argv)
 {
@@ -20,7 +21,15 @@ int main(int argc, char **argv)
 	try
 	{
 		ft_json::JsonValue json = ft_json::parse_json(file);
-		servers = create_servers(json);
+		create_servers(json, servers);
+		for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
+		{
+			for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
+			{
+				delete (*j);
+			}
+			close(i->first);
+		}
 	}
 	catch (const std::exception &e)
 	{

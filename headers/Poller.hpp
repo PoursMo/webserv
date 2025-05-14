@@ -1,24 +1,47 @@
 #ifndef POLLER_HPP
 #define POLLER_HPP
 
+#include "Receiver.hpp"
+#include "Request.hpp"
+
 #include <vector>
+#include <map>
 #include <sys/epoll.h>
+
+class VirtualServer;
+
+struct Connection
+{
+	Request request;
+	Receiver receiver;
+
+	Connection(int clientFd);
+};
 
 class Poller
 {
 private:
 	int epollFd;
 	std::vector<struct epoll_event> events;
-
-public:
-	Poller();
-	~Poller();
+	const std::map<int, std::vector<VirtualServer *> > &servers;
+	std::map<int, Connection *> connections;
 
 	void add(int fd, uint32_t events);
 	void del(int fd);
 	void mod(int fd, uint32_t events);
-	int poll();
-	const struct epoll_event &getEvent(size_t index) const;
+	int waitEvents();
+
+	void terminateConnection(int fd);
+	bool isServerFd(int fd);
+	void handleNewConnection(int fd);
+	void handleInput(int fd);
+	void handleOutput(int fd);
+
+public:
+	Poller(const std::map<int, std::vector<VirtualServer *> > &servers);
+	~Poller();
+
+	void loop();
 };
 
 #endif
