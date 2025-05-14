@@ -63,32 +63,42 @@ std::string getIndexHtml(const std::string &root, const std::string &path)
 	html << "<title>Index of " << path << "</title>";
 	html << "</head>";
 	html << "</body>";
+	html << "<div style=\"display: flex; flex-direction: column; gap: .2rem; max-width: 40rem; margin: auto;\">";
 	html << "<h1>Index of " << path << "</h1>";
-	html << "<hr>";
-	html << "<div>";
 
 	for (std::vector<struct s_entrie>::const_iterator it = folders.begin(); it != folders.end(); it++)
 	{
-		html << "<div>";
 		html << "<a href=\"" << it->uri << "\">";
-		html << it->name;
+		html << "<span>" << "📂" << "</span>";
+		html << "<span class=\"entrie-name\">" << it->name << "</span>";
+		html << "<span>" << it->size << "</span>";
 		html << "</a>";
-		html << "<span>";
-		html << it->size;
-		html << "</span>";
-		html << "</div>";
 	}
 	for (std::vector<struct s_entrie>::const_iterator it = files.begin(); it != files.end(); it++)
 	{
-		html << "<div>";
 		html << "<a href=\"" << it->uri << "\">";
-		html << it->name;
+		html << "<span>" << "📄" << "</span>";
+		html << "<span class=\"entrie-name\">" << it->name << "</span>";
+		html << "<span>" << it->size << "</span>";
 		html << "</a>";
-		html << "<span>";
-		html << it->size;
-		html << "</span>";
-		html << "</div>";
 	}
+	html << "<style>";
+	html << "a {";
+	html << "text-decoration: none;";
+	html << "color: black;";
+	html << "display: flex;";
+    html << "gap: .5rem;";
+    html << "align-items: center;";
+    html << "padding: .3rem .6rem;";
+    html << "border: #eee solid 1px;";
+    html << "border-radius: .2rem;";
+	html << "}";
+	html << "a:hover {";
+	html << "border-color: #bbb;";
+	html << "background-color: #eee;";
+	html << "}";
+	html << ".entrie-name {flex-grow: 1;}";
+	html << "</style>";
 	
 	html << "</div>";
 	html << "</body>";
