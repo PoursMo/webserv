@@ -71,7 +71,6 @@ std::string getIndexHtml(const std::string &root, const std::string &path)
 		html << "<a href=\"" << it->uri << "\">";
 		html << "<span>" << "📂" << "</span>";
 		html << "<span class=\"entrie-name\">" << it->name << "</span>";
-		html << "<span>" << it->size << "</span>";
 		html << "</a>";
 	}
 	for (std::vector<struct s_entrie>::const_iterator it = files.begin(); it != files.end(); it++)
