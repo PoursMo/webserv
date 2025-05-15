@@ -1,6 +1,7 @@
 #include "../headers/Request.hpp"
 #include "VirtualServer.hpp"
 #include "Receiver.hpp"
+#include "utils.hpp"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -32,8 +33,7 @@ Request::Request(int clientFd)
 	  clientFd(clientFd),
 	  error(false),
 	  contentLength(0),
-	  firstLineParsed(false),
-	  headerParsed(false)
+	  firstLineParsed(false)
 {
 }
 
@@ -123,7 +123,7 @@ void Request::setVirtualServer(const std::map<int, std::vector<VirtualServer *> 
 {
 	try
 	{
-		vServer = find_virtual_server_with_host_name(servers, headers.at("Host"));
+		vServer = find_virtual_server_with_host_name(servers, headers.at("host"));
 	}
 	catch (...)
 	{
@@ -159,17 +159,20 @@ void Request::parseFirstLine(char *lstart, char *lend)
 	lstart++;
 	if (!isValidProtocol(&lstart, lend))
 		throw http_error(400);
-	if (*lstart != '\r')
+	if (!(*lstart == '\r' || lstart == lend))
 		throw http_error(400);
-	lstart++;
-	if (lstart != lend)
-		throw http_error(400);
+	if (*lstart == '\r')
+	{
+		lstart++;
+		if (lstart != lend)
+			throw http_error(400);
+	}
 	this->firstLineParsed = true;
 }
 
 void Request::addHeader(std::string key, std::string value)
 {
-	this->headers.insert(std::make_pair(key, value));
+	headers[str_to_lower(key)] = value;
 }
 
 void Request::parseHeaderLine(char *lstart, char *lend)
@@ -193,15 +196,19 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 		value = value + *lstart;
 		lstart++;
 	}
-	if (!(*lstart == '\r' && *(lstart + 1) == '\n'))
+	if (*lstart != '\r' && lstart != lend)
+		throw http_error(400);
+	if (*lstart == '\r' && *(lstart + 1) != '\n')
 		throw http_error(400);
 	this->addHeader(key, value);
 }
 
 bool Request::checkEmptyline(char *lstart, char *lend)
 {
-	if (*lstart != '\r')
+	if (*lstart != '\r' && *lstart != '\n')
 		return false;
+	if (lstart == lend && *lstart == '\n')
+		return true;
 	lstart++;
 	if (lstart == lend && *lstart == '\n')
 		return true;
@@ -210,13 +217,10 @@ bool Request::checkEmptyline(char *lstart, char *lend)
 
 void Request::parseRequestLine(char *lstart, char *lend)
 {
-	if (this->headerParsed)
-		return;
-	if (*lend != '\n' || lstart == lend || lstart == NULL || lend == NULL)
+	if (lstart == NULL || lend == NULL || *lend != '\n')
 		throw http_error(400);
 	if (checkEmptyline(lstart, lend))
 	{
-		this->headerParsed = true;
 		bodyFd = open("./logs/body.out", O_CREAT | O_WRONLY | O_TRUNC, 0644);
 		if (bodyFd == -1)
 			throw http_error("open: " + std::string(strerror(errno)), 500);
@@ -252,6 +256,6 @@ int Request::getBodyFd()
 
 size_t Request::getBodySize()
 {
-	std::string str = getHeaderValue("Content-Length");
+	std::string str = getHeaderValue("content-length");
 	return std::strtoul(str.c_str(), 0, 10);
 }

@@ -33,3 +33,12 @@ int extract_status_code(const std::string &s)
 		throw std::runtime_error("Invalid status code.");
 	return code;
 }
+
+std::string &str_to_lower(std::string &str)
+{
+	for (size_t i = 0; i < str.size(); i++)
+	{
+		str[i] = std::tolower(str[i]);
+	}
+	return str;
+}

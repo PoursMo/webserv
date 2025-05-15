@@ -19,7 +19,6 @@ private:
 	bool error;
 	unsigned long contentLength;
 	bool firstLineParsed;
-	bool headerParsed;
 	VirtualServer *vServer;
 	void RequestError(int code);
 	void parseFirstLine(char *lstart, char *lend);

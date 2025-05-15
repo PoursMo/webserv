@@ -121,7 +121,7 @@ void Poller::handleInput(int fd)
 	std::cout << "In operations on socket " << fd << ":" << std::endl;
 	if (!connections.at(fd)->receiver.receive())
 	{
-		// connections.at(fd)->request.setVirtualServer(servers)
+		connections.at(fd)->request.setVirtualServer(servers);
 		this->mod(fd, EPOLLOUT);
 	}
 }

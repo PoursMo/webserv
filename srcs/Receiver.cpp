@@ -71,11 +71,9 @@ bool Receiver::receive()
 			throw http_error(400);
 		fillBuffer(HEADER);
 		flushHeaderBuffers();
-		if (!readingHeader)
+		if (!readingHeader && (bodyBytesRecvd >= bodySize || bodySize == 0))
 		{
-			bodySize = request.getBodySize();
-			if (bodyBytesRecvd >= bodySize || bodySize == 0)
-				return false;
+			return false;
 		}
 	}
 	else
@@ -128,16 +126,22 @@ void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 		std::cout << "Receiver: stitched line of size " << line.size() << ": "; // debug
 		debug_print(&line[0], &line[line.size() - 1]);							// debug
 		this->request.parseRequestLine(&line[0], &line[line.size()]);
-		if (line == "\r\n")
+		if (line == "\n" || line == "\r\n")
+		{
+			bodySize = request.getBodySize();
 			readingHeader = false;
+		}
 	}
 	else
 	{
 		std::cout << "Receiver: non-stitched line of size " << lf - lbuffer->pos + 1 << ": "; // debug
 		debug_print(lbuffer->pos, lf);														  // debug
 		this->request.parseRequestLine(lbuffer->pos, lf);
-		if (!std::strncmp(lbuffer->pos, "\r\n", 2))
+		if (!std::strncmp(lbuffer->pos, "\n", 1) || !std::strncmp(lbuffer->pos, "\r\n", 2))
+		{
+			bodySize = request.getBodySize();
 			readingHeader = false;
+		}
 	}
 }
 
@@ -206,7 +210,8 @@ ssize_t Receiver::handleRecv(void *buf, size_t len)
 		throw http_error(std::strerror(errno), 500);
 	if (bytesReceived == 0)
 	{
-		// send buffer to request
+		std::cout << "Client with fd: " << fd << " disconnected or sent a bad request" << std::endl; // debug
+		request.parseRequestLine(NULL, NULL);
 	}
 	return bytesReceived;
 }
@@ -239,11 +244,6 @@ void Receiver::fillBuffer(BufferType type)
 		size_t readSize = buffer->capacity - (buffer->last - buffer->first) - 1;
 		bytesReceived = handleRecv(buf, readSize);
 		buffer->last += bytesReceived;
-	}
-	if (bytesReceived == 0)
-	{
-		std::cout << "Client with fd: " << fd << " disconnected" << std::endl; // debug
-		throw http_error(400);
 	}
 	std::cout << "Receiver: buffer: ";		  // debug
 	debug_print(buffer->first, buffer->last); // debug
