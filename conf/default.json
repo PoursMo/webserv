@@ -2,6 +2,9 @@
 	"$schema": "./_schema.json",
 	"servers": [
 		{
+			"error_page": {
+				"404": "/app/www/my-error-404.html"
+			},
 			"server_names": [
 				"webserv.com",
 				"www.webserv.com"
@@ -10,7 +13,7 @@
 			"locations": [
 				{
 					"root": "/app",
-					"path": "/"
+					"path": "/"			
 				}
 			]
 		}

@@ -14,6 +14,8 @@
 
 #define WS_MAX_URI_SIZE 6144
 
+// TODO: give explanation to every http_error
+
 VirtualServer *Request::selectVServer()
 {
 	const std::string &hostName = this->getHeaderValue("host");
@@ -115,6 +117,7 @@ void Request::setError(int status)
 		fd = open(vServer->getErrorPages().at(status).c_str(), O_RDONLY);
 		if (fd != -1)
 		{
+			// TODO: add header
 			this->sender = new Sender(clientFd, fd);
 			return;
 		}
