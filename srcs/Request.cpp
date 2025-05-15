@@ -12,28 +12,32 @@
 // REMOVE ME
 #include <iostream>
 
-VirtualServer *find_virtual_server_with_host_name(const std::map<int, std::vector<VirtualServer *> > &m, const std::string &name)
+#define WS_MAX_URI_SIZE 6144
+
+VirtualServer *Request::selectVServer()
 {
-	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = m.begin(); i != m.end(); i++)
+	const std::string &hostName = this->getHeaderValue("host");
+	if (hostName.empty())
+		throw http_error(400);
+	for (std::vector<VirtualServer *>::const_iterator i = vServers.begin(); i != vServers.end(); i++)
 	{
-		for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
+		for (std::vector<std::string>::const_iterator j = (*i)->getServerNames().begin(); j != (*i)->getServerNames().end(); j++)
 		{
-			for (std::vector<std::string>::const_iterator k = (*j)->getServerNames().begin(); k != (*j)->getServerNames().end(); k++)
-			{
-				if (*k == name)
-					return *j;
-			}
+			if (*j == hostName)
+				return *i;
 		}
 	}
-	return 0;
+	return (vServers.front());
 }
 
-Request::Request(int clientFd)
+Request::Request(int clientFd, const std::vector<VirtualServer *> &vServers)
 	: bodyFd(-1),
 	  clientFd(clientFd),
 	  error(false),
 	  contentLength(0),
-	  firstLineParsed(false)
+	  firstLineParsed(false),
+	  sender(NULL),
+	  vServers(vServers)
 {
 }
 
@@ -41,6 +45,8 @@ Request::~Request()
 {
 	if (bodyFd != -1)
 		close(bodyFd);
+	if (this->sender)
+		delete this->sender;
 }
 
 void Request::RequestError(int code)
@@ -119,16 +125,12 @@ std::string Request::setResource(char **lstart, char *lend)
 	return (resource);
 }
 
-void Request::setVirtualServer(const std::map<int, std::vector<VirtualServer *> > &servers)
+void Request::processRequest()
 {
-	try
-	{
-		vServer = find_virtual_server_with_host_name(servers, headers.at("host"));
-	}
-	catch (...)
-	{
-		throw http_error(400);
-	}
+	vServer = selectVServer();
+	if (this->getBodySize() > vServer->getClientMaxBodySize())
+		throw http_error(413);
+	this->sender = new Sender(clientFd, "HTTP/1.1 200 OK\r\n");
 }
 
 bool isValidProtocol(char **lstart, char *lend)
@@ -154,6 +156,8 @@ void Request::parseFirstLine(char *lstart, char *lend)
 		throw http_error(400);
 	lstart++;
 	this->resource = setResource(&lstart, lend);
+	if (this->resource.size() > WS_MAX_URI_SIZE)
+		throw http_error(414);
 	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
 		throw http_error(400);
 	lstart++;
@@ -221,9 +225,11 @@ void Request::parseRequestLine(char *lstart, char *lend)
 		throw http_error(400);
 	if (checkEmptyline(lstart, lend))
 	{
-		bodyFd = open("./logs/body.out", O_CREAT | O_WRONLY | O_TRUNC, 0644);
-		if (bodyFd == -1)
-			throw http_error("open: " + std::string(strerror(errno)), 500);
+		if (this->method == POST && !headers.count("content-length"))
+			throw http_error(411);
+		bodyFd = open("./logs/body.out", O_CREAT | O_WRONLY | O_TRUNC, 0644); // tmp
+		if (bodyFd == -1)													  // tmp
+			throw http_error("open: " + std::string(strerror(errno)), 500);	  // tmp
 		return;
 	}
 	if (!this->firstLineParsed)
@@ -254,8 +260,16 @@ int Request::getBodyFd()
 	return bodyFd;
 }
 
-size_t Request::getBodySize()
+int32_t Request::getBodySize()
 {
 	std::string str = getHeaderValue("content-length");
-	return std::strtoul(str.c_str(), 0, 10);
+	long res = std::strtoul(str.c_str(), 0, 10);
+	if (res > UINT32_MAX)
+		throw http_error(413);
+	return res;
+}
+
+bool Request::sendResponse()
+{
+	return this->sender->handleSend();
 }

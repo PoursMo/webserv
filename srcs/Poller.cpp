@@ -12,8 +12,8 @@
 
 #define WS_EPOLL_NB_EVENTS 512
 
-Connection::Connection(int clientFd)
-	: request(clientFd),
+Connection::Connection(int clientFd, const std::vector<VirtualServer *> &vServers)
+	: request(clientFd, vServers),
 	  receiver(clientFd, request)
 {
 }
@@ -112,7 +112,7 @@ void Poller::handleNewConnection(int fd)
 	if (clientFd == -1)
 		throw std::runtime_error("accept: " + std::string(strerror(errno)));
 	std::cout << "New connection on socket " << fd << ", created socket fd: " << clientFd << std::endl;
-	connections[clientFd] = new Connection(clientFd);
+	connections[clientFd] = new Connection(clientFd, servers.at(fd));
 	this->add(clientFd, EPOLLIN);
 }
 
@@ -121,7 +121,7 @@ void Poller::handleInput(int fd)
 	std::cout << "In operations on socket " << fd << ":" << std::endl;
 	if (!connections.at(fd)->receiver.receive())
 	{
-		connections.at(fd)->request.setVirtualServer(servers);
+		connections.at(fd)->request.processRequest();
 		this->mod(fd, EPOLLOUT);
 	}
 }
@@ -129,11 +129,11 @@ void Poller::handleInput(int fd)
 void Poller::handleOutput(int fd)
 {
 	std::cout << "Out operations on socket " << fd << ":" << std::endl;
-	const char *response = "HTTP/1.1 200 OK\r\n"; // craft response
-	send(fd, response, strlen(response), 0);	  // can send less than expected
-
-	std::cout << "Terminating socket: " << fd << std::endl;
-	terminateConnection(fd); // only if done with I/O
+	if (!connections.at(fd)->request.sendResponse())
+	{
+		std::cout << "Terminating socket: " << fd << std::endl;
+		terminateConnection(fd); // only if done with I/O
+	}
 }
 
 void Poller::loop()

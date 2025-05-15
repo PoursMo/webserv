@@ -5,6 +5,7 @@
 #include <string>
 #include "LocationData.hpp"
 #include "http_error.hpp"
+#include "Sender.hpp"
 
 class VirtualServer;
 
@@ -20,6 +21,9 @@ private:
 	unsigned long contentLength;
 	bool firstLineParsed;
 	VirtualServer *vServer;
+	Sender *sender;
+	const std::vector<VirtualServer *> &vServers;
+
 	void RequestError(int code);
 	void parseFirstLine(char *lstart, char *lend);
 	bool checkEmptyline(char *lstart, char *lend);
@@ -27,17 +31,20 @@ private:
 	std::string setResource(char **lstart, char *lend);
 	void parseHeaderLine(char *lstart, char *lend);
 	void addHeader(std::string key, std::string value);
+	VirtualServer *selectVServer();
 
 public:
-	Request(int clientFd);
+	Request(int clientFd, const std::vector<VirtualServer *> &vServers);
 	~Request();
 	void parseRequestLine(char *lstart, char *lend);
 	std::string getResource() const;
 	enum Method getMethod() const;
 	std::string getHeaderValue(const std::string key) const;
-	void setVirtualServer(const std::map<int, std::vector<VirtualServer *> > &servers);
-	size_t getBodySize();
+	int32_t getBodySize();
 	int getBodyFd();
+
+	void processRequest();
+	bool sendResponse();
 };
 
 #endif

@@ -15,7 +15,7 @@ struct Connection
 	Request request;
 	Receiver receiver;
 
-	Connection(int clientFd);
+	Connection(int clientFd, const std::vector<VirtualServer *> &vServers);
 };
 
 class Poller
