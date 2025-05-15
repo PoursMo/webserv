@@ -108,12 +108,21 @@ std::string Request::setResource(char **lstart, char *lend)
 
 void Request::setError(int status)
 {
+	//TODO: server.errorpages[status]
 	this->sender = new Sender(clientFd, generateErrorResponse(status));
 }
 
 void Request::processRequest()
 {
 	vServer = selectVServer();
+	//TODO: location match
+	if (!vServer->getLocations().count(resource))
+		throw http_error("Resource not found in location data", 404);
+	locationData = &vServer->getLocations().at(resource);
+	if (!isInVector(locationData->getMethods(), this->method))
+		throw http_error("Method not in location data", 403);
+	if (this->method == POST && !headers.count("content-length"))
+		throw http_error("No content-length in POST request", 411);
 	if (this->getBodySize() > vServer->getClientMaxBodySize())
 		throw http_error("Body size > Client max body size", 413);
 	this->sender = new Sender(clientFd, "HTTP/1.1 200 OK\r\n");
@@ -211,8 +220,7 @@ void Request::parseRequestLine(char *lstart, char *lend)
 		throw http_error("Empty request line", 400);
 	if (checkEmptyline(lstart, lend))
 	{
-		if (this->method == POST && !headers.count("content-length"))
-			throw http_error("No content-length in POST request", 411);
+		// TODO
 		bodyFd = open("./logs/body.out", O_CREAT | O_WRONLY | O_TRUNC, 0644); // tmp
 		if (bodyFd == -1)													  // tmp
 			throw http_error("open: " + std::string(strerror(errno)), 500);	  // tmp

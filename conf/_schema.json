@@ -63,7 +63,7 @@
                 },
                 "method": {
                   "title": "Allowed HTTP methods",
-                  "description": "If omitted, all methods are allowed.",
+                  "description": "If omitted, only GET method is allowed.",
                   "type": "array",
                   "items": {
                     "enum": ["GET", "POST", "DELETE"]

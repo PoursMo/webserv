@@ -20,6 +20,7 @@ private:
 	unsigned long contentLength;
 	bool firstLineParsed;
 	VirtualServer *vServer;
+	const LocationData *locationData;
 	Sender *sender;
 	const std::vector<VirtualServer *> &vServers;
 

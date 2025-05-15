@@ -26,7 +26,6 @@ main() {
 		local PID=$!
 		info "[NGINX] $FILE_CONF_NG"
 		send_all_request $FILE_CONF "nginx"
-		./tests/partitionned_nc.sh
 		kill $PID
 		info "[NGINX]\n"
 
@@ -35,7 +34,6 @@ main() {
 		local PID=$!
 		info "[WEBSERV] $FILE_CONF"
 		send_all_request $FILE_CONF "webserv"
-		./tests/partitionned_nc.sh
 		kill $PID
 		info "[WEBSERV]\n"
 		
@@ -78,20 +76,40 @@ send_all_request() {
 	done
 }
 
+USE_NETCAT=$false
+#USE_NETCAT=$true
+
 send() {
-	# (cat $1; sleep 1) | telnet $2 $3
-	nc -q 0 $2 $3 < $1
-	if [ $? -ne 0 ] ; then
-		echo "NO RESPONSE FROM $2:$3"
-		return 1
+	if [ $USE_NETCAT ] ; then
+		# NETCAT MODE
+		nc -q 0 $2 $3 < $1
+		if [ $? -ne 0 ] ; then
+			echo "NO RESPONSE FROM $2:$3"
+			return 1
+		fi
+	else
+		# TELNET MODE
+		(cat $1; sleep 0.1) | telnet $2 $3 2> /dev/null
+		if [ $? -ne 1 ] ; then
+			echo "NO RESPONSE FROM $2:$3"
+			return 1
+		fi
 	fi
 }
 
 compare_response() {
 	for LOG_FILE_WS in $LOGS_DIR/http/*webserv.log ; do
 		local LOG_FILE_NG=$(echo $LOG_FILE_WS | sed 's/webserv.log$/nginx.log/')
-		local RES_WS=$(head -n 1 $LOG_FILE_WS | sed 's/\r/↵/g')
-		local RES_NG=$(head -n 1 $LOG_FILE_NG | sed 's/\r/↵/g')
+
+		if [ $USE_NETCAT ] ; then
+			# NETCAT MODE
+			local RES_WS=$(head -n 1 $LOG_FILE_WS | sed 's/\r/↵/g')
+			local RES_NG=$(head -n 1 $LOG_FILE_NG | sed 's/\r/↵/g')
+		else
+			# TELNET MODE
+			local RES_WS=$(head -n 4 $LOG_FILE_WS | tail -n 1 | sed 's/\r/↵/g')
+			local RES_NG=$(head -n 4 $LOG_FILE_NG | tail -n 1 | sed 's/\r/↵/g')
+		fi
 		diff $LOG_FILE_WS $LOG_FILE_NG > $(echo $LOG_FILE_WS | sed 's/_webserv.log$/.diff/')
 
 		if [[ $RES_WS == $RES_NG ]] ; then

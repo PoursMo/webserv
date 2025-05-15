@@ -12,8 +12,6 @@ LocationData::LocationData(const ft_json::JsonObject &json_directives)
 {
 	// Default values
 	methods.push_back(GET);
-	methods.push_back(POST);
-	methods.push_back(DELETE);
 	root = "/var/www/html";
 	autoIndex = false;
 	indexes.push_back("index.html");

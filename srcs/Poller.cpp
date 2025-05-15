@@ -141,7 +141,7 @@ void Poller::handleOutput(int fd)
 	if (!connections.at(fd)->request.sendResponse())
 	{
 		std::cout << "Terminating socket: " << fd << std::endl;
-		terminateConnection(fd); // only if done with I/O
+		terminateConnection(fd);
 	}
 }
 
