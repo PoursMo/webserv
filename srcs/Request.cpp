@@ -35,6 +35,7 @@ Request::Request(int clientFd, const std::vector<VirtualServer *> &vServers)
 	  clientFd(clientFd),
 	  contentLength(0),
 	  firstLineParsed(false),
+	  vServer(0),
 	  sender(NULL),
 	  vServers(vServers)
 {
@@ -108,23 +109,35 @@ std::string Request::setResource(char **lstart, char *lend)
 
 void Request::setError(int status)
 {
-	//TODO: server.errorpages[status]
+	if (vServer && vServer->getErrorPages().count(status))
+	{
+		int fd;
+		fd = open(vServer->getErrorPages().at(status).c_str(), O_RDONLY);
+		if (fd != -1)
+		{
+			this->sender = new Sender(clientFd, fd);
+			return;
+		}
+		else
+			std::cerr << "error page: " << strerror(errno) << std::endl;
+	}
 	this->sender = new Sender(clientFd, generateErrorResponse(status));
 }
 
 void Request::processRequest()
 {
-	vServer = selectVServer();
-	//TODO: location match
-	if (!vServer->getLocations().count(resource))
+	this->vServer = selectVServer();
+	this->locationData = vServer->getLocation(resource);
+	if (!this->locationData)
 		throw http_error("Resource not found in location data", 404);
-	locationData = &vServer->getLocations().at(resource);
-	if (!isInVector(locationData->getMethods(), this->method))
+	if (!isInVector(this->locationData->getMethods(), this->method))
 		throw http_error("Method not in location data", 403);
 	if (this->method == POST && !headers.count("content-length"))
 		throw http_error("No content-length in POST request", 411);
 	if (this->getBodySize() > vServer->getClientMaxBodySize())
 		throw http_error("Body size > Client max body size", 413);
+
+	// TODO: concat(root, path) -> access(path) -> isDir(path) etc...
 	this->sender = new Sender(clientFd, "HTTP/1.1 200 OK\r\n");
 }
 

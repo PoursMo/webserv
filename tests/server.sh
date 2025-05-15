@@ -13,11 +13,16 @@ DEFAULT_PORT="8000"
 
 main() {
 
+	local CONF_NAME="$1"
+
 	info "\nTests http request\n"
 
 	for FILE_CONF in conf/*.json ; do
 		local FILE_CONF_NG="$(pwd)/conf/nginx/$(basename $FILE_CONF .json).conf"
 		if [ ! -f "$FILE_CONF_NG" ] ; then
+			continue
+		fi
+		if [[ "$CONF_NAME" != "" &&  "$CONF_NAME" != "$(basename $FILE_CONF .json)" ]] ; then
 			continue
 		fi
 
@@ -120,4 +125,4 @@ compare_response() {
 	done
 }
 
-main
+main "$@"

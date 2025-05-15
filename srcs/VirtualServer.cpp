@@ -152,9 +152,30 @@ int32_t VirtualServer::getClientMaxBodySize() const
 	return clientMaxBodySize;
 }
 
+// DEBUG
 const std::map<std::string, LocationData> &VirtualServer::getLocations() const
 {
 	return locations;
+}
+
+const LocationData *VirtualServer::getLocation(const std::string &resource) const
+{
+	std::size_t index;
+
+	if (this->locations.count(resource))
+		return &this->locations.at(resource);
+	std::string sub = resource;
+	while ((index = sub.find_last_of('/')))
+	{
+		if (index == std::string::npos)
+			return 0;
+		sub = resource.substr(0, index);
+		if (this->locations.count(sub))
+			return &this->locations.at(sub);
+	}
+	if (this->locations.count("/"))
+		return &this->locations.at("/");
+	return 0;
 }
 
 in_addr_t VirtualServer::getAddressAsNum() const

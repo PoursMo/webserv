@@ -37,6 +37,7 @@ public:
 	const std::map<int, std::string> &getErrorPages() const;
 	int32_t getClientMaxBodySize() const;
 	const std::map<std::string, LocationData> &getLocations() const;
+	const LocationData *getLocation(const std::string &resource) const;
 };
 
 std::ostream &operator<<(std::ostream &os, const VirtualServer &server);

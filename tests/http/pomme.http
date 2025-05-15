@@ -1,0 +1,5 @@
+GET /pomme/index.html HTTP/1.1
+Host: webserv.com
+Connection: keep-alive
+Accept: text/html
+

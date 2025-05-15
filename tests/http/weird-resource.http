@@ -1,4 +1,4 @@
-GET / HTTP/1.1
+GET pipi HTTP/1.1
 Host: webserv.com
 Content-Type: application/x-www-form-urlencoded
 

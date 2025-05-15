@@ -1,0 +1,30 @@
+{
+	"$schema": "./_schema.json",
+	"servers": [
+		{
+			"server_names": [
+				"webserv.com",
+				"www.webserv.com"
+			],
+			"address": "127.0.0.1",
+			"locations": [
+				{
+					"path": "/",
+					"root": "/app"
+				},
+				{
+					"path": "/pomme",
+					"root": "/app/www"
+				},
+				{
+					"path": "/pomme/banane",
+					"root": "/app/srcs"
+				},
+				{
+					"path": "/pomme/orange",
+					"root": "/app/doc"
+				}
+			]
+		}
+	]
+}
