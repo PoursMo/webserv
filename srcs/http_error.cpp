@@ -52,8 +52,9 @@ static void init_errors()
 	http_error::errors[511] = "Network Authentication Required";
 }
 
-std::string generateErrorPage(int status)
+std::string generateErrorResponse(int status)
 {
+	std::stringstream http;
 	std::stringstream html;
 
 	if (http_error::errors.empty())
@@ -62,18 +63,28 @@ std::string generateErrorPage(int status)
 	if (http_error::errors.count(status))
 		errorName = http_error::errors.at(status);
 
-	html << "<!DOCTYPE html>";
-	html << "<html lang=\"en\">";
-	html << "<head>";
-	html << "<meta charset=\"UTF-8\">";
-	html << "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
-	html << "<title>" << status << ": " << errorName << "</title>";
-	html << "</head>";
-	html << "</body>";
-	html << "<div>";
-	html << "<title>" << status << ": " << errorName << "</title>";
-	html << "</div>";
-	return html.str();
+	html << "<!DOCTYPE http>" << CRLF;
+	html << "<http lang=\"en\">" << CRLF;
+	html << "<head>" << CRLF;
+	html << "<meta charset=\"UTF-8\">" << CRLF;
+	html << "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << CRLF;
+	html << "<title>" << status << ": " << errorName << "</title>" << CRLF;
+	html << "</head>" << CRLF;
+	html << "<body>" << CRLF;
+	html << "<div>" << CRLF;
+	html << "<h1>" << status << ": " << errorName << "</h1>" << CRLF;
+	html << "</div>" << CRLF;
+	html << "</body>" << CRLF;
+	
+	http << "HTTP/1.1 " << status << " " << errorName << CRLF;
+	http << "Server: Webserv_42" << CRLF;
+	http << "Date: " << getDateString() << CRLF;
+	http << "Content-Type: text/html" << CRLF;
+	http << "Content-Length: " << html.str().size() << CRLF;
+	http << "Connection: close" << CRLF;
+	http << CRLF;
+
+	return http.str() + html.str();
 }
 
 http_error::http_error(const char *ainfo, int status_code)
@@ -113,4 +124,9 @@ http_error::~http_error() throw()
 const char *http_error::what() const throw()
 {
 	return whatMessage.c_str();
+}
+
+int http_error::getStatusCode() const
+{
+	return statusCode;
 }

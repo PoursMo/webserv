@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <ctime>
 
 std::string int_to_str(int num)
 {
@@ -41,4 +42,18 @@ std::string &str_to_lower(std::string &str)
 		str[i] = std::tolower(str[i]);
 	}
 	return str;
+}
+
+std::string getDateString()
+{
+	std::time_t rawtime;
+	std::tm *timeinfo;
+	char buffer[80];
+
+	std::time(&rawtime);
+	timeinfo = std::gmtime(&rawtime);
+	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeinfo);
+
+	std::string formatted_time(buffer);
+	return (formatted_time);
 }

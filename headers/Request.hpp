@@ -17,14 +17,12 @@ private:
 	std::map<std::string, std::string> headers;
 	int bodyFd;
 	int clientFd;
-	bool error;
 	unsigned long contentLength;
 	bool firstLineParsed;
 	VirtualServer *vServer;
 	Sender *sender;
 	const std::vector<VirtualServer *> &vServers;
 
-	void RequestError(int code);
 	void parseFirstLine(char *lstart, char *lend);
 	bool checkEmptyline(char *lstart, char *lend);
 	Method setMethod(char *lstart, char *lend);
@@ -43,6 +41,7 @@ public:
 	int32_t getBodySize();
 	int getBodyFd();
 
+	void setError(int status);
 	void processRequest();
 	bool sendResponse();
 };

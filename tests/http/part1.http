@@ -1,3 +1,2 @@
-POST /test HTTP/1.1
-Host: webserv.com
-Content-Type: applicati
+GET / HTTP/1.1
+Host: 127.0.

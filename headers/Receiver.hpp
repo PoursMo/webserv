@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 
 class Request;
+class Poller;
 
 struct Buffer
 {

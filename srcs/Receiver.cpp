@@ -1,5 +1,6 @@
 #include "Receiver.hpp"
 #include "http_error.hpp"
+#include "Poller.hpp"
 
 #include <unistd.h>
 #include <cstring>
@@ -68,7 +69,7 @@ bool Receiver::receive()
 	{
 		std::cout << "Receiver: recving header" << std::endl; // debug
 		if (headerBufferCount >= 4)
-			throw http_error(400);
+			throw http_error("Header too large", 400);
 		fillBuffer(HEADER);
 		flushHeaderBuffers();
 		if (!readingHeader && (bodyBytesRecvd >= bodySize || bodySize == 0))
@@ -125,7 +126,7 @@ void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 		line.append(lbuffer->pos, lf + 1);
 		std::cout << "Receiver: stitched line of size " << line.size() << ": "; // debug
 		debug_print(&line[0], &line[line.size() - 1]);							// debug
-		this->request.parseRequestLine(&line[0], &line[line.size()]);
+		this->request.parseRequestLine(&line[0], &line[line.size() - 1]);
 		if (line == "\n" || line == "\r\n")
 		{
 			bodySize = request.getBodySize();
@@ -153,7 +154,7 @@ void Receiver::flushHeaderBuffers()
 	{
 		sendLineToParsing(lbuffer, lf);
 		lbuffer->pos = lf + 1;
-		if (!readingHeader)
+		if (!readingHeader && lbuffer->last != lf)
 		{
 			bodyBytesRecvd = lbuffer->last - lbuffer->pos + 1;
 			std::cout << "Receiver: writing buffer in fd " << request.getBodyFd() << std::endl;
@@ -208,11 +209,8 @@ ssize_t Receiver::handleRecv(void *buf, size_t len)
 	std::cout << "Receiver: recved " << bytesReceived << " bytes" << std::endl;
 	if (bytesReceived == -1)
 		throw http_error(std::strerror(errno), 500);
-	if (bytesReceived == 0)
-	{
-		std::cout << "Client with fd: " << fd << " disconnected or sent a bad request" << std::endl; // debug
-		request.parseRequestLine(NULL, NULL);
-	}
+	else if (bytesReceived == 0)
+		throw std::runtime_error("Client disconnected or sent an unfinished request");
 	return bytesReceived;
 }
 

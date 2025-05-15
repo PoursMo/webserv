@@ -19,6 +19,9 @@ public:
 	http_error(int status_code);
 	~http_error() throw();
 	const char *what() const throw();
+	int getStatusCode() const;
 };
+
+std::string generateErrorResponse(int status);
 
 #endif

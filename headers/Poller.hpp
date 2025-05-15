@@ -28,7 +28,6 @@ private:
 
 	void add(int fd, uint32_t events);
 	void del(int fd);
-	void mod(int fd, uint32_t events);
 	int waitEvents();
 
 	void terminateConnection(int fd);
@@ -39,6 +38,7 @@ private:
 
 public:
 	Poller(const std::map<int, std::vector<VirtualServer *> > &servers);
+	void mod(int fd, uint32_t events);
 	~Poller();
 
 	void loop();

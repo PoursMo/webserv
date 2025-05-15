@@ -33,7 +33,6 @@ VirtualServer *Request::selectVServer()
 Request::Request(int clientFd, const std::vector<VirtualServer *> &vServers)
 	: bodyFd(-1),
 	  clientFd(clientFd),
-	  error(false),
 	  contentLength(0),
 	  firstLineParsed(false),
 	  sender(NULL),
@@ -47,24 +46,6 @@ Request::~Request()
 		close(bodyFd);
 	if (this->sender)
 		delete this->sender;
-}
-
-void Request::RequestError(int code)
-{
-	try
-	{
-		throw http_error(code);
-	}
-	catch (std::exception &e)
-	{
-		if (this->error == false)
-		{
-			this->error = true;
-			// Manage error
-			std::cerr << e.what() << '\n';
-		}
-	}
-	// REDIRECT TOWARDS ERROR MANAGEMENT
 }
 
 Method Request::setMethod(char *lstart, char *lend)
@@ -121,15 +102,20 @@ std::string Request::setResource(char **lstart, char *lend)
 		(*lstart)++;
 	}
 	if (resource == "")
-		throw http_error(400);
+		throw http_error("Empty resource in request", 400);
 	return (resource);
+}
+
+void Request::setError(int status)
+{
+	this->sender = new Sender(clientFd, generateErrorResponse(status));
 }
 
 void Request::processRequest()
 {
 	vServer = selectVServer();
 	if (this->getBodySize() > vServer->getClientMaxBodySize())
-		throw http_error(413);
+		throw http_error("Body size > Client max body size", 413);
 	this->sender = new Sender(clientFd, "HTTP/1.1 200 OK\r\n");
 }
 
@@ -153,23 +139,23 @@ void Request::parseFirstLine(char *lstart, char *lend)
 	while (lstart != lend && *lstart != ' ' && *lstart != '\r')
 		lstart++;
 	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
-		throw http_error(400);
+		throw http_error("No space after method", 400);
 	lstart++;
 	this->resource = setResource(&lstart, lend);
 	if (this->resource.size() > WS_MAX_URI_SIZE)
 		throw http_error(414);
 	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
-		throw http_error(400);
+		throw http_error("No space after resource name", 400);
 	lstart++;
 	if (!isValidProtocol(&lstart, lend))
-		throw http_error(400);
+		throw http_error("Invalid Protocol", 400);
 	if (!(*lstart == '\r' || lstart == lend))
-		throw http_error(400);
+		throw http_error("First line not correctly terminated", 400);
 	if (*lstart == '\r')
 	{
 		lstart++;
 		if (lstart != lend)
-			throw http_error(400);
+			throw http_error("First line not correctly terminated", 400);
 	}
 	this->firstLineParsed = true;
 }
@@ -190,10 +176,10 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 		lstart++;
 	}
 	if (*lstart != ':')
-		throw http_error(400);
+		throw http_error("No ':' in header line", 400);
 	lstart++;
 	if (*lstart != ' ' || lstart == lend)
-		throw http_error(400);
+		throw http_error("No space between key and value in header line", 400);
 	lstart++;
 	while (lstart != lend && *lstart != '\r')
 	{
@@ -201,9 +187,9 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 		lstart++;
 	}
 	if (*lstart != '\r' && lstart != lend)
-		throw http_error(400);
+		throw http_error("Header line not correctly ended", 400);
 	if (*lstart == '\r' && *(lstart + 1) != '\n')
-		throw http_error(400);
+		throw http_error("Header line not correctly ended", 400);
 	this->addHeader(key, value);
 }
 
@@ -222,11 +208,11 @@ bool Request::checkEmptyline(char *lstart, char *lend)
 void Request::parseRequestLine(char *lstart, char *lend)
 {
 	if (lstart == NULL || lend == NULL || *lend != '\n')
-		throw http_error(400);
+		throw http_error("Empty request line", 400);
 	if (checkEmptyline(lstart, lend))
 	{
 		if (this->method == POST && !headers.count("content-length"))
-			throw http_error(411);
+			throw http_error("No content-length in POST request", 411);
 		bodyFd = open("./logs/body.out", O_CREAT | O_WRONLY | O_TRUNC, 0644); // tmp
 		if (bodyFd == -1)													  // tmp
 			throw http_error("open: " + std::string(strerror(errno)), 500);	  // tmp
@@ -265,7 +251,7 @@ int32_t Request::getBodySize()
 	std::string str = getHeaderValue("content-length");
 	long res = std::strtoul(str.c_str(), 0, 10);
 	if (res > UINT32_MAX)
-		throw http_error(413);
+		throw http_error("content-length > UINT32_MAX", 413);
 	return res;
 }
 

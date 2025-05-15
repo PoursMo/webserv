@@ -26,6 +26,7 @@ main() {
 		local PID=$!
 		info "[NGINX] $FILE_CONF_NG"
 		send_all_request $FILE_CONF "nginx"
+		./tests/partitionned_nc.sh
 		kill $PID
 		info "[NGINX]\n"
 
@@ -34,6 +35,7 @@ main() {
 		local PID=$!
 		info "[WEBSERV] $FILE_CONF"
 		send_all_request $FILE_CONF "webserv"
+		./tests/partitionned_nc.sh
 		kill $PID
 		info "[WEBSERV]\n"
 		
@@ -77,8 +79,8 @@ send_all_request() {
 }
 
 send() {
+	# (cat $1; sleep 1) | telnet $2 $3
 	nc -q 0 $2 $3 < $1
-	# (cat $1; sleep 0.2) | telnet $2 $3
 	if [ $? -ne 0 ] ; then
 		echo "NO RESPONSE FROM $2:$3"
 		return 1
@@ -95,7 +97,7 @@ compare_response() {
 		if [[ $RES_WS == $RES_NG ]] ; then
 			success "$(printf "%-42s" $LOG_FILE_WS) $RES_WS"
 		else
-			error "$(printf "%-42s" $LOG_FILE_WS) '$RES_WS' instead of '$RES_NG'"
+			error "$(printf "%-42s" $LOG_FILE_WS)\nWEBSERV:\t$RES_WS\nNGINX:\t\t$RES_NG"
 		fi
 	done
 }

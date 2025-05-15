@@ -119,9 +119,18 @@ void Poller::handleNewConnection(int fd)
 void Poller::handleInput(int fd)
 {
 	std::cout << "In operations on socket " << fd << ":" << std::endl;
-	if (!connections.at(fd)->receiver.receive())
+	try
 	{
-		connections.at(fd)->request.processRequest();
+		if (!connections.at(fd)->receiver.receive())
+		{
+			connections.at(fd)->request.processRequest();
+			this->mod(fd, EPOLLOUT);
+		}
+	}
+	catch (const http_error &e)
+	{
+		std::cerr << e.what() << '\n';
+		connections.at(fd)->request.setError(e.getStatusCode());
 		this->mod(fd, EPOLLOUT);
 	}
 }
