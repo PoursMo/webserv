@@ -47,7 +47,7 @@ void Request::processRequest()
 	this->locationData = vServer->getLocation(resource);
 	if (!this->locationData)
 		throw http_error("Resource not found in location data", 404);
-	// handleReturn(this->locationData->getReturnPair());
+	// TODO: handleReturn(this->locationData->getReturnPair());
 	if (!isInVector(this->locationData->getMethods(), this->method))
 		throw http_error("Method not in location data", 403);
 	if (this->method == POST && !headers.count("content-length"))

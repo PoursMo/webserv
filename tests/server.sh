@@ -81,9 +81,7 @@ send_all_request() {
 	done
 }
 
-
-USE_NETCAT=$false
-#USE_NETCAT=$true
+USE_NETCAT=$true
 
 send() {
 	if [ $USE_NETCAT ] ; then

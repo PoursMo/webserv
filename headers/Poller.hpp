@@ -9,6 +9,7 @@ class VirtualServer;
 
 struct Connection
 {
+	// TODO: timer
 	Request request;
 	Receiver receiver;
 

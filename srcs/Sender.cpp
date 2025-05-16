@@ -22,7 +22,6 @@ static ssize_t trySend(int fd, const char *buffer, size_t len)
 
 bool Sender::handleSend()
 {
-	std::cout << "> Call Sender::handleSend() " << std::endl;
 	if (this->resourceFd == -1 && this->contentSent)
 		return false;
 	if (!this->contentSent)
