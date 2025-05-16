@@ -14,6 +14,8 @@ std::string &str_to_lower(std::string &str);
 
 std::string getDateString();
 
+std::string getDateString(time_t time);
+
 template <typename T>
 bool isInVector(const std::vector<T> &vector, const T &value)
 {

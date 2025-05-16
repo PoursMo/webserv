@@ -11,14 +11,14 @@ class Sender
 private:
 	int clientFd;
 	int resourceFd;
-	std::string str;
+	std::string content;
 	char buffer[WS_SENDER_BUFFER_SIZE];
 	ssize_t bytesSent;
 	ssize_t bytesRead;
+	bool contentSent;
 
 public:
-	Sender(int clientFd, std::string str);
-	Sender(int clientFd, int resourceFd);
+	Sender(int clientFd, const std::string &content, int resourceFd = -1);
 
 	bool handleSend();
 };

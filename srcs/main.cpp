@@ -2,6 +2,7 @@
 #include "VirtualServer.hpp"
 #include "Poller.hpp"
 #include "Receiver.hpp"
+#include "http_status.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -34,6 +35,7 @@ bool init(const char *config_path, std::map<int, std::vector<VirtualServer *> > 
 			}
 		}
 		std::cout << std::endl;
+		http_status::init();
 	}
 	catch (const std::exception &e)
 	{

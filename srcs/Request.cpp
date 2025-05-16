@@ -2,6 +2,7 @@
 #include "VirtualServer.hpp"
 #include "Receiver.hpp"
 #include "utils.hpp"
+#include "http_status.hpp"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -107,22 +108,87 @@ std::string Request::setResource(char **lstart, char *lend)
 	return (resource);
 }
 
+std::string Request::generateHeader(int status, const std::string &body) const
+{
+	std::stringstream header;
+	const std::string &statusName = http_status::get(status);
+
+	header << "HTTP/1.1 " << status << " " << statusName << CRLF;
+	header << "Server: Webserv_42" << CRLF;
+	header << "Date: " << getDateString() << CRLF;
+	header << "Content-Type: text/body" << CRLF;
+	if (!body.empty())
+		header << "Content-Length: " << body.size() << CRLF;
+	header << "Connection: close" << CRLF;
+	header << CRLF;
+
+	return header.str();
+}
+
+std::string Request::generateHeader(int status, struct stat &statBuf) const
+{
+	std::stringstream header;
+	const std::string &statusName = http_status::get(status);
+
+	header << "HTTP/1.1 " << status << " " << statusName << CRLF;
+	header << "Server: Webserv_42" << CRLF;
+	header << "Date: " << getDateString() << CRLF;
+	header << "Content-Type: text/body" << CRLF;
+	header << "Last-Modified: " << getDateString(statBuf.st_mtim.tv_sec) << CRLF;
+	header << "Content-Length: " << statBuf.st_size << CRLF;
+	header << "Connection: close" << CRLF;
+	header << CRLF;
+	return header.str();
+}
+
+std::string Request::generateHeader(int status) const
+{
+	std::stringstream header;
+	const std::string &statusName = http_status::get(status);
+
+	header << "HTTP/1.1 " << status << " " << statusName << CRLF;
+	header << "Server: Webserv_42" << CRLF;
+	header << "Date: " << getDateString() << CRLF;
+	header << "Content-Type: text/body" << CRLF;
+	header << "Connection: close" << CRLF;
+	header << CRLF;
+	return header.str();
+}
+
 void Request::setError(int status)
 {
+	struct stat statBuf;
+
 	if (vServer && vServer->getErrorPages().count(status))
 	{
+		// TODO: Request::sendFile(const std::string &filePath, int status)
 		int fd;
-		fd = open(vServer->getErrorPages().at(status).c_str(), O_RDONLY);
+		const std::string &filePath = vServer->getErrorPages().at(status);
+		fd = open(filePath.c_str(), O_RDONLY);
 		if (fd != -1)
 		{
-			// TODO: add header
-			this->sender = new Sender(clientFd, fd);
+			if (stat(filePath.c_str(), &statBuf) == -1)
+				throw std::runtime_error("stat: " + std::string(strerror(errno)));
+			std::string header = this->generateHeader(status, statBuf);
+			this->sender = new Sender(clientFd, header, fd);
 			return;
 		}
 		else
 			std::cerr << "error page: " << strerror(errno) << std::endl;
 	}
-	this->sender = new Sender(clientFd, generateErrorResponse(status));
+	std::string body = generateErrorBody(status);
+	std::string header = this->generateHeader(status, body);
+	this->sender = new Sender(clientFd, header + body);
+}
+
+static void handleReturn(const std::pair<int, std::string> &returnPair)
+{
+	if (returnPair.first != -1)
+	{
+		if (returnPair.first >= 400 && returnPair.first < 600)
+			throw http_error("Returned error", returnPair.first);
+		// < 400
+	}
 }
 
 void Request::processRequest()
@@ -131,13 +197,15 @@ void Request::processRequest()
 	this->locationData = vServer->getLocation(resource);
 	if (!this->locationData)
 		throw http_error("Resource not found in location data", 404);
-	// TODO: check return
+	handleReturn(this->locationData->getReturnPair());
 	if (!isInVector(this->locationData->getMethods(), this->method))
 		throw http_error("Method not in location data", 403);
 	if (this->method == POST && !headers.count("content-length"))
 		throw http_error("No content-length in POST request", 411);
 	if (this->getBodySize() > vServer->getClientMaxBodySize())
 		throw http_error("Body size > Client max body size", 413);
+
+	std::string fullPath = locationData->getRoot() + resource;
 
 	// TODO: concat(root, path) -> access(path) -> isDir(path) etc...
 	this->sender = new Sender(clientFd, "HTTP/1.1 200 OK\r\n");

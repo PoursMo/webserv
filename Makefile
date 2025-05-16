@@ -14,6 +14,7 @@ SRCS = $(SRCDIR)/ft_json.cpp \
 	$(SRCDIR)/utils.cpp \
 	$(SRCDIR)/Poller.cpp \
 	$(SRCDIR)/http_error.cpp \
+	$(SRCDIR)/http_status.cpp \
 	$(SRCDIR)/Receiver.cpp \
 	$(SRCDIR)/Request.cpp \
 	$(SRCDIR)/Sender.cpp \
@@ -38,7 +39,7 @@ clean:
 fclean: clean
 	rm -rf $(NAME)
 	rm -f tests/*.test
-	rm -rf logs
+	rm -rf logs/*
 
 re: fclean all
 

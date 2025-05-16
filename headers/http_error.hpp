@@ -12,8 +12,6 @@ private:
 	std::string whatMessage;
 
 public:
-	static std::map<int, std::string> errors;
-
 	http_error(const char *ainfo, int status_code);
 	http_error(const std::string &ainfo, int status_code);
 	http_error(int status_code);
@@ -22,6 +20,6 @@ public:
 	int getStatusCode() const;
 };
 
-std::string generateErrorResponse(int status);
+std::string generateErrorBody(int status);
 
 #endif

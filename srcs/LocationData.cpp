@@ -15,6 +15,7 @@ LocationData::LocationData(const ft_json::JsonObject &json_directives)
 	root = "/var/www/html";
 	autoIndex = false;
 	indexes.push_back("index.html");
+	returnPair.first = -1;
 
 	for (ft_json::JsonObject::const_iterator json_directive = json_directives.begin(); json_directive != json_directives.end(); json_directive++)
 	{
@@ -114,7 +115,7 @@ const std::string &LocationData::getRoot() const
 	return root;
 }
 
-const std::map<std::string,std::string>& LocationData::getCgiConfig() const
+const std::map<std::string, std::string> &LocationData::getCgiConfig() const
 {
 	return this->cgiConfig;
 }

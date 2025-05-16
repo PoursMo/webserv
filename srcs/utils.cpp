@@ -57,3 +57,14 @@ std::string getDateString()
 	std::string formatted_time(buffer);
 	return (formatted_time);
 }
+
+std::string getDateString(time_t time)
+{
+	char buffer[80];
+
+	tm *timeinfo = std::gmtime(&time);
+	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeinfo);
+
+	std::string formatted_time(buffer);
+	return (formatted_time);
+}

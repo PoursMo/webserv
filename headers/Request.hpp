@@ -3,9 +3,11 @@
 
 #include <map>
 #include <string>
+#include <sstream>
 #include "LocationData.hpp"
 #include "http_error.hpp"
 #include "Sender.hpp"
+#include <sys/stat.h>
 
 class VirtualServer;
 
@@ -31,9 +33,13 @@ private:
 	void parseHeaderLine(char *lstart, char *lend);
 	void addHeader(std::string key, std::string value);
 	VirtualServer *selectVServer();
+	std::string generateHeader(int status, const std::string &body) const;
+	std::string generateHeader(int status, struct stat &statBuf) const;
+	std::string generateHeader(int status) const;
 
 public:
 	Request(int clientFd, const std::vector<VirtualServer *> &vServers);
+
 	~Request();
 	void parseRequestLine(char *lstart, char *lend);
 	std::string getResource() const;

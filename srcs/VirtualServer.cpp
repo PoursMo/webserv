@@ -121,8 +121,6 @@ void VirtualServer::setLocations(const ft_json::JsonArray &input)
 		LocationData location_data((*location).asObject());
 		locations[path] = location_data;
 	}
-
-	// TODO: build std::vector<std::string> locationsPath sorted by signifient
 }
 
 // ********************************************************************
