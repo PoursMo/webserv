@@ -4,11 +4,6 @@
 #include "config.hpp"
 #include "LocationData.hpp"
 
-#include <stdexcept>
-#include <iostream>
-
-#define WS_MAX_CLIENT_MAX_BODY_SIZE 104857600
-
 VirtualServer::VirtualServer(const ft_json::JsonObject &json_directives)
 {
 	// Default values

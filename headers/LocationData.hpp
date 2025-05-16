@@ -1,14 +1,8 @@
 #ifndef LOCATIONDATA_HPP
 #define LOCATIONDATA_HPP
 
+#include "webserv.hpp"
 #include "ft_json.hpp"
-
-enum Method
-{
-	GET,
-	POST,
-	DELETE
-};
 
 class LocationData
 {

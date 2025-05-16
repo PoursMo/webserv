@@ -1,12 +1,11 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
-#include <string>
-#include <vector>
-
-#define CRLF "\r\n"
+#include "webserv.hpp"
 
 std::string int_to_str(int num);
+std::string long_to_str(long num);
+std::string ulong_to_str(unsigned long num);
 
 int extract_status_code(const std::string &s);
 

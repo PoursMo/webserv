@@ -1,21 +1,31 @@
-#include "../headers/Request.hpp"
+#include "Request.hpp"
 #include "VirtualServer.hpp"
+#include "LocationData.hpp"
 #include "Receiver.hpp"
 #include "utils.hpp"
-#include "http_status.hpp"
+#include "http_error.hpp"
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdexcept>
-#include <cstring>
-#include <cerrno>
+Request::Request(int clientFd, const std::vector<VirtualServer *> &vServers)
+	: bodyFd(-1),
+	  clientFd(clientFd),
+	  firstLineParsed(false),
+	  vServers(vServers),
+	  vServer(0),
+	  response(*this)
+{
+}
 
-// REMOVE ME
-#include <iostream>
+Request::~Request()
+{
+	if (bodyFd != -1)
+		close(bodyFd);
+}
 
-#define WS_MAX_URI_SIZE 6144
+// ********************************************************************
+// Processing
+// ********************************************************************
 
-VirtualServer *Request::selectVServer()
+const VirtualServer *Request::selectVServer()
 {
 	const std::string &hostName = this->getHeaderValue("host");
 	if (hostName.empty())
@@ -31,23 +41,46 @@ VirtualServer *Request::selectVServer()
 	return (vServers.front());
 }
 
-Request::Request(int clientFd, const std::vector<VirtualServer *> &vServers)
-	: bodyFd(-1),
-	  clientFd(clientFd),
-	  contentLength(0),
-	  firstLineParsed(false),
-	  vServer(0),
-	  sender(NULL),
-	  vServers(vServers)
+void Request::processRequest()
 {
+	this->vServer = selectVServer();
+	this->locationData = vServer->getLocation(resource);
+	if (!this->locationData)
+		throw http_error("Resource not found in location data", 404);
+	// handleReturn(this->locationData->getReturnPair());
+	if (!isInVector(this->locationData->getMethods(), this->method))
+		throw http_error("Method not in location data", 403);
+	if (this->method == POST && !headers.count("content-length"))
+		throw http_error("No content-length in POST request", 411);
+	if (this->getBodySize() > vServer->getClientMaxBodySize())
+		throw http_error("Body size > Client max body size", 413);
+
+	std::string fullPath = locationData->getRoot() + resource;
+	this->response.setStat(fullPath);
+	this->response.setFileSender(fullPath, 200);
 }
 
-Request::~Request()
+// ********************************************************************
+// Setters
+// ********************************************************************
+
+std::string Request::setResource(char **lstart, char *lend)
 {
-	if (bodyFd != -1)
-		close(bodyFd);
-	if (this->sender)
-		delete this->sender;
+	std::string resource;
+
+	while (**lstart != *lend && **lstart != ' ' && **lstart != '\r')
+	{
+		resource = resource + **lstart;
+		(*lstart)++;
+	}
+	if (resource == "")
+		throw http_error("Empty resource in header-field line", 400);
+	return (resource);
+}
+
+void Request::addHeader(std::string key, std::string value)
+{
+	headers[str_to_lower(key)] = value;
 }
 
 Method Request::setMethod(char *lstart, char *lend)
@@ -94,122 +127,9 @@ Method Request::setMethod(char *lstart, char *lend)
 	return GET; // Unreachable
 }
 
-std::string Request::setResource(char **lstart, char *lend)
-{
-	std::string resource;
-
-	while (**lstart != *lend && **lstart != ' ' && **lstart != '\r')
-	{
-		resource = resource + **lstart;
-		(*lstart)++;
-	}
-	if (resource == "")
-		throw http_error("Empty resource in header-field line", 400);
-	return (resource);
-}
-
-std::string Request::generateHeader(int status, const std::string &body) const
-{
-	std::stringstream header;
-	const std::string &statusName = http_status::get(status);
-
-	header << "HTTP/1.1 " << status << " " << statusName << CRLF;
-	header << "Server: Webserv_42" << CRLF;
-	header << "Date: " << getDateString() << CRLF;
-	header << "Content-Type: text/body" << CRLF;
-	if (!body.empty())
-		header << "Content-Length: " << body.size() << CRLF;
-	header << "Connection: close" << CRLF;
-	header << CRLF;
-
-	return header.str();
-}
-
-std::string Request::generateHeader(int status, struct stat &statBuf) const
-{
-	std::stringstream header;
-	const std::string &statusName = http_status::get(status);
-
-	header << "HTTP/1.1 " << status << " " << statusName << CRLF;
-	header << "Server: Webserv_42" << CRLF;
-	header << "Date: " << getDateString() << CRLF;
-	header << "Content-Type: text/body" << CRLF;
-	header << "Last-Modified: " << getDateString(statBuf.st_mtim.tv_sec) << CRLF;
-	header << "Content-Length: " << statBuf.st_size << CRLF;
-	header << "Connection: close" << CRLF;
-	header << CRLF;
-	return header.str();
-}
-
-std::string Request::generateHeader(int status) const
-{
-	std::stringstream header;
-	const std::string &statusName = http_status::get(status);
-
-	header << "HTTP/1.1 " << status << " " << statusName << CRLF;
-	header << "Server: Webserv_42" << CRLF;
-	header << "Date: " << getDateString() << CRLF;
-	header << "Content-Type: text/body" << CRLF;
-	header << "Connection: close" << CRLF;
-	header << CRLF;
-	return header.str();
-}
-
-void Request::setError(int status)
-{
-	struct stat statBuf;
-
-	if (vServer && vServer->getErrorPages().count(status))
-	{
-		// TODO: Request::sendFile(const std::string &filePath, int status)
-		int fd;
-		const std::string &filePath = vServer->getErrorPages().at(status);
-		fd = open(filePath.c_str(), O_RDONLY);
-		if (fd != -1)
-		{
-			if (stat(filePath.c_str(), &statBuf) == -1)
-				throw std::runtime_error("stat: " + std::string(strerror(errno)));
-			std::string header = this->generateHeader(status, statBuf);
-			this->sender = new Sender(clientFd, header, fd);
-			return;
-		}
-		else
-			std::cerr << "error page: " << strerror(errno) << std::endl;
-	}
-	std::string body = generateErrorBody(status);
-	std::string header = this->generateHeader(status, body);
-	this->sender = new Sender(clientFd, header + body);
-}
-
-static void handleReturn(const std::pair<int, std::string> &returnPair)
-{
-	if (returnPair.first != -1)
-	{
-		if (returnPair.first >= 400 && returnPair.first < 600)
-			throw http_error("Returned error", returnPair.first);
-		// < 400
-	}
-}
-
-void Request::processRequest()
-{
-	this->vServer = selectVServer();
-	this->locationData = vServer->getLocation(resource);
-	if (!this->locationData)
-		throw http_error("Resource not found in location data", 404);
-	handleReturn(this->locationData->getReturnPair());
-	if (!isInVector(this->locationData->getMethods(), this->method))
-		throw http_error("Method not in location data", 403);
-	if (this->method == POST && !headers.count("content-length"))
-		throw http_error("No content-length in POST request", 411);
-	if (this->getBodySize() > vServer->getClientMaxBodySize())
-		throw http_error("Body size > Client max body size", 413);
-
-	std::string fullPath = locationData->getRoot() + resource;
-
-	// TODO: concat(root, path) -> access(path) -> isDir(path) etc...
-	this->sender = new Sender(clientFd, "HTTP/1.1 200 OK\r\n");
-}
+// ********************************************************************
+// Line received parsing
+// ********************************************************************
 
 bool isValidProtocol(char **lstart, char *lend)
 {
@@ -250,11 +170,6 @@ void Request::parseFirstLine(char *lstart, char *lend)
 			throw http_error("First line not correctly terminated", 400);
 	}
 	this->firstLineParsed = true;
-}
-
-void Request::addHeader(std::string key, std::string value)
-{
-	headers[str_to_lower(key)] = value;
 }
 
 void Request::parseHeaderLine(char *lstart, char *lend)
@@ -315,6 +230,10 @@ void Request::parseRequestLine(char *lstart, char *lend)
 		parseHeaderLine(lstart, lend);
 }
 
+// ********************************************************************
+// Getters
+// ********************************************************************
+
 std::string Request::getResource() const
 {
 	return (this->resource);
@@ -329,15 +248,20 @@ std::string Request::getHeaderValue(const std::string key) const
 
 enum Method Request::getMethod() const
 {
-	return (this->method);
+	return this->method;
 }
 
-int Request::getBodyFd()
+int Request::getBodyFd() const
 {
-	return bodyFd;
+	return this->bodyFd;
 }
 
-int32_t Request::getBodySize()
+int Request::getClientFd() const
+{
+	return this->clientFd;
+}
+
+int32_t Request::getBodySize() const
 {
 	std::string str = getHeaderValue("content-length");
 	long res = std::strtoul(str.c_str(), 0, 10);
@@ -346,7 +270,7 @@ int32_t Request::getBodySize()
 	return res;
 }
 
-bool Request::sendResponse()
+const VirtualServer *Request::getVServer() const
 {
-	return this->sender->handleSend();
+	return this->vServer;
 }

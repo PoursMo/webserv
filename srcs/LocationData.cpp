@@ -2,9 +2,6 @@
 #include "config.hpp"
 #include "utils.hpp"
 
-#include <stdexcept>
-#include <iostream>
-
 // Default constructor necessary for use in map
 LocationData::LocationData() {}
 

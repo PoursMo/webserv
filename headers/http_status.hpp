@@ -1,8 +1,7 @@
 #ifndef HTTP_STATUS_HPP
 #define HTTP_STATUS_HPP
 
-#include <map>
-#include <string>
+#include "webserv.hpp"
 
 class http_status
 {

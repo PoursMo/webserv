@@ -1,12 +1,9 @@
 #ifndef POLLER_HPP
 #define POLLER_HPP
 
-#include "Receiver.hpp"
+#include "webserv.hpp"
 #include "Request.hpp"
-
-#include <vector>
-#include <map>
-#include <sys/epoll.h>
+#include "Receiver.hpp"
 
 class VirtualServer;
 

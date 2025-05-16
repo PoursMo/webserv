@@ -1,56 +1,59 @@
 #ifndef REQUEST_HPP
 #define REQUEST_HPP
 
-#include <map>
-#include <string>
-#include <sstream>
-#include "LocationData.hpp"
-#include "http_error.hpp"
-#include "Sender.hpp"
-#include <sys/stat.h>
+#include "webserv.hpp"
+#include "Response.hpp"
 
 class VirtualServer;
+class LocationData;
 
 class Request
 {
 private:
+	// Attributes
 	Method method;
 	std::string resource;
 	std::map<std::string, std::string> headers;
 	int bodyFd;
 	int clientFd;
-	unsigned long contentLength;
 	bool firstLineParsed;
-	VirtualServer *vServer;
-	const LocationData *locationData;
-	Sender *sender;
 	const std::vector<VirtualServer *> &vServers;
+	const VirtualServer *vServer;
+	const LocationData *locationData;
 
+	// Line received parsing
 	void parseFirstLine(char *lstart, char *lend);
 	bool checkEmptyline(char *lstart, char *lend);
-	Method setMethod(char *lstart, char *lend);
-	std::string setResource(char **lstart, char *lend);
 	void parseHeaderLine(char *lstart, char *lend);
+
+	// Setters
+	std::string setResource(char **lstart, char *lend);
 	void addHeader(std::string key, std::string value);
-	VirtualServer *selectVServer();
-	std::string generateHeader(int status, const std::string &body) const;
-	std::string generateHeader(int status, struct stat &statBuf) const;
-	std::string generateHeader(int status) const;
+	Method setMethod(char *lstart, char *lend);
+
+	// Processing
+	const VirtualServer *selectVServer();
 
 public:
 	Request(int clientFd, const std::vector<VirtualServer *> &vServers);
-
 	~Request();
-	void parseRequestLine(char *lstart, char *lend);
-	std::string getResource() const;
-	enum Method getMethod() const;
-	std::string getHeaderValue(const std::string key) const;
-	int32_t getBodySize();
-	int getBodyFd();
 
-	void setError(int status);
+	// Line received parsing
+	void parseRequestLine(char *lstart, char *lend);
+
+	// Processing
 	void processRequest();
-	bool sendResponse();
+
+	// Getters
+	std::string getResource() const;
+	std::string getHeaderValue(const std::string key) const;
+	enum Method getMethod() const;
+	int getBodyFd() const;
+	int getClientFd() const;
+	int32_t getBodySize() const;
+	const VirtualServer *getVServer() const;
+
+	Response response;
 };
 
 #endif

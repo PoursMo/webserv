@@ -1,14 +1,8 @@
+#include "webserv.hpp"
 #include "config.hpp"
 #include "VirtualServer.hpp"
 #include "Poller.hpp"
-#include "Receiver.hpp"
 #include "http_status.hpp"
-
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <string.h>
-#include <unistd.h>
 
 bool init(const char *config_path, std::map<int, std::vector<VirtualServer *> > &servers)
 {

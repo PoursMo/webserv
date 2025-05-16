@@ -81,6 +81,28 @@ send_all_request() {
 	done
 }
 
+
+USE_NETCAT=$false
+#USE_NETCAT=$true
+
+send() {
+	if [ $USE_NETCAT ] ; then
+		# NETCAT MODE
+		nc -q 0 $2 $3 < $1
+		if [ $? -ne 0 ] ; then
+			echo "NO RESPONSE FROM $2:$3"
+			return 1
+		fi
+	else
+		# TELNET MODE
+		(cat $1; sleep 0.1) | telnet $2 $3 2> /dev/null
+		if [ $? -ne 1 ] ; then
+			echo "NO RESPONSE FROM $2:$3"
+			return 1
+		fi
+	fi
+}
+
 compare_response() {
 	for LOG_FILE_WS in $LOGS_DIR/http/*webserv.log ; do
 		local LOG_FILE_NG=$(echo $LOG_FILE_WS | sed 's/webserv.log$/nginx.log/')
@@ -99,7 +121,7 @@ compare_response() {
 		if [[ $RES_WS == $RES_NG ]] ; then
 			success "$(printf "%-42s" $LOG_FILE_WS) $RES_WS"
 		else
-			error "$(printf "%-42s" $LOG_FILE_WS)\nWEBSERV:\t$RES_WS\nNGINX:\t\t$RES_NG"
+			error "$LOG_FILE_WS\nWEBSERV:\t$RES_WS\nNGINX:\t\t$RES_NG"
 		fi
 	done
 }

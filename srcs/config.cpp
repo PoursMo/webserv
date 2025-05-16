@@ -2,18 +2,6 @@
 #include "config.hpp"
 #include "utils.hpp"
 
-#include <stdexcept>
-#include <iostream>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-
-#define WS_BACKLOG 511
-
 static int initializeSocket(in_port_t port, in_addr_t vserver_addr)
 {
 	int socket_fd = socket(PF_INET, SOCK_STREAM, 0); // SOCK_NONBLOCK ? it has no effect on epoll

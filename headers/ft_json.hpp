@@ -1,10 +1,7 @@
 #ifndef FT_JSON_HPP
 #define FT_JSON_HPP
 
-#include <map>
-#include <vector>
-#include <string>
-#include <stdint.h>
+#include "webserv.hpp"
 
 namespace ft_json
 {
@@ -65,7 +62,6 @@ namespace ft_json
 
 	JsonValue parse_json(std::string file_content);
 	JsonValue parse_json(std::istream& stream);
-
 }
 
 #endif

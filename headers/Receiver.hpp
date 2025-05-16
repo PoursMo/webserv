@@ -1,9 +1,7 @@
 #ifndef RECEIVER_HPP
 #define RECEIVER_HPP
 
-#include <Request.hpp>
-#include <list>
-#include <sys/socket.h>
+#include "webserv.hpp"
 
 class Request;
 class Poller;

@@ -1,10 +1,7 @@
 #ifndef SENDER_HPP
 #define SENDER_HPP
 
-#include <string>
-#include <sys/types.h>
-
-#define WS_SENDER_BUFFER_SIZE 32768
+#include "webserv.hpp"
 
 class Sender
 {

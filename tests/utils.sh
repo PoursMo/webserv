@@ -8,12 +8,12 @@ mkdir -p "$LOGS_DIR"
 
 valg() {
 	local VALGRIND="valgrind"
-	local VALGRIND+=" --leak-check=full"
-	local VALGRIND+=" --track-fds=yes"
-	local VALGRIND+=" --show-leak-kinds=all"
-	local VALGRIND+=" --track-origins=yes"
-	local VALGRIND+=" --log-file=$LEAKS_FILE"
-	#local VALGRIND+=" --trace-children=yes"
+	local VALGRIND="$VALGRIND --leak-check=full"
+	local VALGRIND="$VALGRIND --track-fds=yes"
+	local VALGRIND="$VALGRIND --show-leak-kinds=all"
+	local VALGRIND="$VALGRIND --track-origins=yes"
+	local VALGRIND="$VALGRIND --log-file=$LEAKS_FILE"
+	#local VALGRIND="$VALGRIND --trace-children=yes"
 
 	$VALGRIND "$@"
 }
@@ -37,27 +37,6 @@ check_leaks() {
 		success "LEAKS\t[$NAME]\tOK"
 	else
 		error "LEAKS\t[$NAME]\t$LEAKS_FILE_NAME"
-	fi
-}
-
-USE_NETCAT=$false
-#USE_NETCAT=$true
-
-send() {
-	if [ $USE_NETCAT ] ; then
-		# NETCAT MODE
-		nc -q 0 $2 $3 < $1
-		if [ $? -ne 0 ] ; then
-			echo "NO RESPONSE FROM $2:$3"
-			return 1
-		fi
-	else
-		# TELNET MODE
-		(cat $1; sleep 0.1) | telnet $2 $3 2> /dev/null
-		if [ $? -ne 1 ] ; then
-			echo "NO RESPONSE FROM $2:$3"
-			return 1
-		fi
 	fi
 }
 

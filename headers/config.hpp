@@ -1,6 +1,7 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
+#include "webserv.hpp"
 #include "ft_json.hpp"
 
 class VirtualServer;

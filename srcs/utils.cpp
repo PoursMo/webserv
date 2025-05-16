@@ -1,9 +1,5 @@
 #include "utils.hpp"
 
-#include <algorithm>
-#include <stdexcept>
-#include <ctime>
-
 std::string int_to_str(int num)
 {
 	bool isNegative = (num < 0);
@@ -17,6 +13,35 @@ std::string int_to_str(int num)
 	} while (num > 0);
 	if (isNegative)
 		result += '-';
+	std::reverse(result.begin(), result.end());
+	return result;
+}
+
+std::string long_to_str(long num)
+{
+	bool isNegative = (num < 0);
+	if (isNegative)
+		num = -num;
+	std::string result;
+	do
+	{
+		result += '0' + (num % 10);
+		num /= 10;
+	} while (num > 0);
+	if (isNegative)
+		result += '-';
+	std::reverse(result.begin(), result.end());
+	return result;
+}
+
+std::string ulong_to_str(unsigned long num)
+{
+	std::string result;
+	do
+	{
+		result += '0' + (num % 10);
+		num /= 10;
+	} while (num > 0);
 	std::reverse(result.begin(), result.end());
 	return result;
 }

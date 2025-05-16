@@ -2,19 +2,6 @@
 #include "http_error.hpp"
 #include "Poller.hpp"
 
-#include <unistd.h>
-#include <cstring>
-#include <cerrno>
-#include <algorithm>
-
-#include <list>
-#include <sys/socket.h>
-
-#include <iostream>
-
-#define WS_CLIENT_HEADER_BUFFER_SIZE 8192 // 4 max
-#define WS_CLIENT_BODY_BUFFER_SIZE 16384
-
 // ********************************************************************
 // Debug
 // ********************************************************************

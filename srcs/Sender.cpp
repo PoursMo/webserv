@@ -1,12 +1,5 @@
 #include "Sender.hpp"
 
-#include <string>
-#include <sys/socket.h>
-#include <iostream>
-#include <unistd.h>
-#include <cstring>
-#include <cerrno>
-
 Sender::Sender(int clientFd, const std::string &content, int resourceFd)
 	: clientFd(clientFd),
 	  resourceFd(resourceFd),
@@ -15,18 +8,21 @@ Sender::Sender(int clientFd, const std::string &content, int resourceFd)
 	  bytesRead(0),
 	  contentSent(content.empty())
 {
+	std::cout << "Sender: new sender with content size: " << content.size() << ", resourceFd: " << resourceFd << std::endl;
 }
 
 static ssize_t trySend(int fd, const char *buffer, size_t len)
 {
-	ssize_t bytesRead = send(fd, buffer, len, 0);
-	if (bytesRead == -1)
+	ssize_t bytesSent = send(fd, buffer, len, 0);
+	if (bytesSent == -1)
 		throw std::runtime_error("send: " + std::string(strerror(errno)));
-	return bytesRead;
+	std::cout << "> bytesSent: " << bytesSent << std::endl;
+	return bytesSent;
 }
 
 bool Sender::handleSend()
 {
+	std::cout << "> Call Sender::handleSend() " << std::endl;
 	if (this->resourceFd == -1 && this->contentSent)
 		return false;
 	if (!this->contentSent)

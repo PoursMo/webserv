@@ -1,8 +1,7 @@
 #ifndef HTTP_ERROR_HPP
 #define HTTP_ERROR_HPP
 
-#include <stdexcept>
-#include <map>
+#include "webserv.hpp"
 
 class http_error : public std::exception
 {

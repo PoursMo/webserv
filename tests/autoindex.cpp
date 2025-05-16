@@ -21,7 +21,7 @@ void initDirectoryEntries(
 	std::string dirPath = root + path;
 	DIR* dirp;
 	dirent *dp;
-	struct stat statBuf;
+	struct stat statBuffer;
 	struct s_entrie ent;
 	
 	dirp = opendir(dirPath.c_str());
@@ -34,10 +34,10 @@ void initDirectoryEntries(
 			continue;
 		ent.path = dirPath + "/" + ent.name;
 		ent.uri = path + "/" + ent.name;
-		if (stat(ent.path.c_str(), &statBuf) == -1)
+		if (stat(ent.path.c_str(), &statBuffer) == -1)
 			continue;
-		ent.size = statBuf.st_size;
-		if (statBuf.st_mode & S_IFDIR)
+		ent.size = statBuffer.st_size;
+		if (statBuffer.st_mode & S_IFDIR)
 		{
 			ent.name += "/";
 			folders.push_back(ent);

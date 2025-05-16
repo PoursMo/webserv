@@ -1,13 +1,9 @@
 #ifndef VIRTUALSERVER_HPP
 #define VIRTUALSERVER_HPP
 
+#include "webserv.hpp"
 #include "ft_json.hpp"
 #include "LocationData.hpp"
-
-#include <algorithm>
-#include <functional>
-
-#include <netdb.h>
 
 class VirtualServer
 {

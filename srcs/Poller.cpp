@@ -2,15 +2,6 @@
 #include "http_error.hpp"
 #include "Request.hpp"
 #include "Receiver.hpp"
-#include <unistd.h>
-
-#include <netinet/in.h>
-#include <iostream>
-#include <stdexcept>
-#include <string.h>
-#include <errno.h>
-
-#define WS_EPOLL_NB_EVENTS 512
 
 Connection::Connection(int clientFd, const std::vector<VirtualServer *> &vServers)
 	: request(clientFd, vServers),
@@ -130,7 +121,7 @@ void Poller::handleInput(int fd)
 	catch (const http_error &e)
 	{
 		std::cerr << e.what() << '\n';
-		connections.at(fd)->request.setError(e.getStatusCode());
+		connections.at(fd)->request.response.setErrorSender(e.getStatusCode());
 		this->mod(fd, EPOLLOUT);
 	}
 }
@@ -138,7 +129,7 @@ void Poller::handleInput(int fd)
 void Poller::handleOutput(int fd)
 {
 	std::cout << "Out operations on socket " << fd << ":" << std::endl;
-	if (!connections.at(fd)->request.sendResponse())
+	if (!connections.at(fd)->request.response.send())
 	{
 		std::cout << "Terminating socket: " << fd << std::endl;
 		terminateConnection(fd);
