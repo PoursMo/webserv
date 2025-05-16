@@ -4,7 +4,7 @@
 #include <string>
 #include <sys/types.h>
 
-#define WS_SENDER_BUFFER_SIZE 16384
+#define WS_SENDER_BUFFER_SIZE 32768
 
 class Sender
 {

@@ -10,7 +10,7 @@
 			"locations": [
 				{
 					"path": "/",
-					"root": "/app"
+					"root": "/app/www"
 				},
 				{
 					"path": "/pomme",
@@ -18,11 +18,11 @@
 				},
 				{
 					"path": "/pomme/banane",
-					"root": "/app/srcs"
+					"root": "/app/www"
 				},
 				{
 					"path": "/pomme/orange",
-					"root": "/app/doc"
+					"root": "/app/www"
 				}
 			]
 		}

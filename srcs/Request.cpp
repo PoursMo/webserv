@@ -14,13 +14,11 @@
 
 #define WS_MAX_URI_SIZE 6144
 
-// TODO: give explanation to every http_error
-
 VirtualServer *Request::selectVServer()
 {
 	const std::string &hostName = this->getHeaderValue("host");
 	if (hostName.empty())
-		throw http_error(400);
+		throw http_error("No host header field-line in request", 400);
 	for (std::vector<VirtualServer *>::const_iterator i = vServers.begin(); i != vServers.end(); i++)
 	{
 		for (std::vector<std::string>::const_iterator j = (*i)->getServerNames().begin(); j != (*i)->getServerNames().end(); j++)
@@ -77,13 +75,13 @@ Method Request::setMethod(char *lstart, char *lend)
 		if (method != "")
 		{
 			if (*lstart != ' ')
-				throw http_error(400);
+				throw http_error("Method not followed by space in header-field line", 400);
 			else
 				break;
 		}
 	}
 	if (method == "")
-		throw http_error(400);
+		throw http_error("Method not available in HTTP/1.1", 400);
 	if (method == "GET")
 		return GET;
 	else if (method == "POST")
@@ -91,7 +89,7 @@ Method Request::setMethod(char *lstart, char *lend)
 	else if (method == "DELETE")
 		return DELETE;
 	else
-		throw http_error(501);
+		throw http_error("Method not supported by this server", 501);
 	return GET; // Unreachable
 }
 
@@ -105,7 +103,7 @@ std::string Request::setResource(char **lstart, char *lend)
 		(*lstart)++;
 	}
 	if (resource == "")
-		throw http_error("Empty resource in request", 400);
+		throw http_error("Empty resource in header-field line", 400);
 	return (resource);
 }
 
@@ -133,6 +131,7 @@ void Request::processRequest()
 	this->locationData = vServer->getLocation(resource);
 	if (!this->locationData)
 		throw http_error("Resource not found in location data", 404);
+	// TODO: check return
 	if (!isInVector(this->locationData->getMethods(), this->method))
 		throw http_error("Method not in location data", 403);
 	if (this->method == POST && !headers.count("content-length"))
@@ -164,13 +163,13 @@ void Request::parseFirstLine(char *lstart, char *lend)
 	while (lstart != lend && *lstart != ' ' && *lstart != '\r')
 		lstart++;
 	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
-		throw http_error("No space after method", 400);
+		throw http_error("No space after method in header-field line", 400);
 	lstart++;
 	this->resource = setResource(&lstart, lend);
 	if (this->resource.size() > WS_MAX_URI_SIZE)
 		throw http_error(414);
 	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
-		throw http_error("No space after resource name", 400);
+		throw http_error("No space after resource name in header-field line", 400);
 	lstart++;
 	if (!isValidProtocol(&lstart, lend))
 		throw http_error("Invalid Protocol", 400);

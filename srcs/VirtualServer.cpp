@@ -121,6 +121,8 @@ void VirtualServer::setLocations(const ft_json::JsonArray &input)
 		LocationData location_data((*location).asObject());
 		locations[path] = location_data;
 	}
+
+	// TODO: build std::vector<std::string> locationsPath sorted by signifient
 }
 
 // ********************************************************************
@@ -158,24 +160,32 @@ const std::map<std::string, LocationData> &VirtualServer::getLocations() const
 	return locations;
 }
 
+static size_t locationMatchScore(const std::string &path, const std::string &resource)
+{
+	size_t score = 0;
+
+	while (path[score] && resource[score] && path[score] == resource[score])
+		score++;
+	if (path[score])
+		return (0);
+	return score;
+}
+
 const LocationData *VirtualServer::getLocation(const std::string &resource) const
 {
-	std::size_t index;
+	const LocationData *bestMatch = NULL;
+	size_t matchScore = 0;
 
-	if (this->locations.count(resource))
-		return &this->locations.at(resource);
-	std::string sub = resource;
-	while ((index = sub.find_last_of('/')))
+	for (std::map<std::string, LocationData>::const_iterator i = locations.begin(); i != locations.end(); i++)
 	{
-		if (index == std::string::npos)
-			return 0;
-		sub = resource.substr(0, index);
-		if (this->locations.count(sub))
-			return &this->locations.at(sub);
+		size_t score = locationMatchScore(i->first, resource);
+		if (score > matchScore)
+		{
+			matchScore = score;
+			bestMatch = &i->second;
+		}
 	}
-	if (this->locations.count("/"))
-		return &this->locations.at("/");
-	return 0;
+	return bestMatch;
 }
 
 in_addr_t VirtualServer::getAddressAsNum() const
