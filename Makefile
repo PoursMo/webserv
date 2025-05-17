@@ -7,11 +7,12 @@ OBJDIR = objs
 NAME = webserv
 
 SRCS = $(SRCDIR)/ft_json.cpp \
-	$(SRCDIR)/Request.cpp \
 	$(SRCDIR)/config.cpp \
+	$(SRCDIR)/utils.cpp \
+	$(SRCDIR)/autoindex.cpp \
+	$(SRCDIR)/Request.cpp \
 	$(SRCDIR)/VirtualServer.cpp \
 	$(SRCDIR)/LocationData.cpp \
-	$(SRCDIR)/utils.cpp \
 	$(SRCDIR)/Poller.cpp \
 	$(SRCDIR)/http_error.cpp \
 	$(SRCDIR)/http_status.cpp \

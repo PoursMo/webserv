@@ -9,11 +9,12 @@
 				"webserv.com",
 				"www.webserv.com"
 			],
-			"address": "127.0.0.1",
+			"address": "0.0.0.0",
 			"locations": [
 				{
-					"root": "/app",
-					"path": "/"
+					"root": "/app/www",
+					"path": "/",
+					"autoindex": true
 				}
 			]
 		}

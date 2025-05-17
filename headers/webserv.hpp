@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include "dirent.h"
 
 #include <cstring>
 #include <cerrno>
@@ -24,14 +25,14 @@
 #include <map>
 #include <vector>
 
-#define WS_MAX_CLIENT_MAX_BODY_SIZE 104857600
-#define WS_MAX_URI_SIZE 6144
-#define WS_CLIENT_HEADER_BUFFER_SIZE 8192 // 4 max
-#define WS_CLIENT_BODY_BUFFER_SIZE 16384
-#define WS_EPOLL_NB_EVENTS 512
-#define WS_BACKLOG 511
-#define WS_SENDER_BUFFER_SIZE 32768
-#define CRLF "\r\n"
+#define WS_MAX_CLIENT_MAX_BODY_SIZE 104857600 // Maximum allowed clientMaxBodySize
+#define WS_MAX_URI_SIZE 6144				  // Maximum allowed URI size
+#define WS_CLIENT_HEADER_BUFFER_SIZE 8192	  // Receiver header buffer size, max 4
+#define WS_CLIENT_BODY_BUFFER_SIZE 16384	  // Receiver body buffer size
+#define WS_EPOLL_NB_EVENTS 512				  // Epoll maximum number of events returned by epoll_wait
+#define WS_BACKLOG 511						  // Listening socket backlog size
+#define WS_SENDER_BUFFER_SIZE 32768			  // Sender buffer size
+#define CRLF "\r\n"							  // CRLF
 
 enum Method
 {

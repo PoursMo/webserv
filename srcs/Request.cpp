@@ -56,8 +56,7 @@ void Request::processRequest()
 		throw http_error("Body size > Client max body size", 413);
 
 	std::string fullPath = locationData->getRoot() + resource;
-	this->response.setStat(fullPath);
-	this->response.setFileSender(fullPath, 200);
+	this->response.setResourceSender(fullPath);
 }
 
 // ********************************************************************
@@ -273,4 +272,9 @@ int32_t Request::getBodySize() const
 const VirtualServer *Request::getVServer() const
 {
 	return this->vServer;
+}
+
+const LocationData *Request::getLocation() const
+{
+	return this->locationData;
 }

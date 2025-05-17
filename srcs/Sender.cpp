@@ -16,7 +16,7 @@ static ssize_t trySend(int fd, const char *buffer, size_t len)
 	ssize_t bytesSent = send(fd, buffer, len, 0);
 	if (bytesSent == -1)
 		throw std::runtime_error("send: " + std::string(strerror(errno)));
-	std::cout << "> bytesSent: " << bytesSent << std::endl;
+	std::cout << "Sender: bytesSent: " << bytesSent << std::endl;
 	return bytesSent;
 }
 
@@ -26,6 +26,7 @@ bool Sender::handleSend()
 		return false;
 	if (!this->contentSent)
 	{
+		std::cout << "Sender: sending content" << std::endl;
 		bytesSent += trySend(clientFd, content.c_str() + bytesSent, content.size() - bytesSent);
 		if ((size_t)bytesSent == content.size())
 		{
@@ -36,6 +37,7 @@ bool Sender::handleSend()
 	}
 	else
 	{
+		std::cout << "Sender: sending buffer" << std::endl;
 		ssize_t rest = bytesRead - bytesSent;
 		if (rest)
 		{

@@ -122,7 +122,7 @@ bool LocationData::getAutoIndex() const
 	return autoIndex;
 }
 
-const std::vector<std::string> LocationData::getIndexes() const
+const std::vector<std::string> &LocationData::getIndexes() const
 {
 	return indexes;
 }

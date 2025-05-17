@@ -52,6 +52,7 @@ public:
 	int getClientFd() const;
 	int32_t getBodySize() const;
 	const VirtualServer *getVServer() const;
+	const LocationData *getLocation() const;
 
 	Response response;
 };

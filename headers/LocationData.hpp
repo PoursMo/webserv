@@ -27,7 +27,7 @@ public:
 	// Getters
 	const std::vector<Method> &getMethods() const;
 	const std::pair<int, std::string> &getReturnPair() const;
-	const std::vector<std::string> getIndexes() const;
+	const std::vector<std::string> &getIndexes() const;
 	bool getAutoIndex() const;
 	const std::string &getUploadStore() const;
 	const std::string &getRoot() const;

@@ -3,8 +3,9 @@
 #include "LocationData.hpp"
 #include "http_error.hpp"
 #include "http_status.hpp"
-#include "Sender.hpp"
 #include "utils.hpp"
+#include "autoindex.hpp"
+#include "Sender.hpp"
 #include "VirtualServer.hpp"
 
 Response::Response(const Request &request)
@@ -18,6 +19,10 @@ Response::~Response()
 	if (this->sender)
 		delete this->sender;
 }
+
+// ********************************************************************
+// Logic
+// ********************************************************************
 
 bool Response::send() const
 {
@@ -37,39 +42,90 @@ bool Response::send() const
 // 	}
 // }
 
-bool Response::setFileSender(const std::string &path, int status)
+std::string Response::getIndexPage(const std::string &path)
 {
-	// header << "Last-Modified: " << getDateString(statBuffer.st_mtim.tv_sec) << CRLF;
-	// header << "Content-Length: " << statBuffer.st_size << CRLF;
+	const std::vector<std::string> &indexes = this->request.getLocation()->getIndexes();
+	for (std::vector<std::string>::const_iterator i = indexes.begin(); i != indexes.end(); i++)
+	{
+		std::string fullPath = path + *i;
+		if (access(fullPath.c_str(), R_OK) != -1)
+			return fullPath;
+	}
+	return "";
+}
+
+int Response::fileHandler(const std::string &path) const
+{
+	// isCGI ?
 	int fd = open(path.c_str(), O_RDONLY);
 	if (fd == -1)
+		throw http_error("error page open: " + std::string(strerror(errno)), 500);
+	return fd;
+}
+
+void Response::setResourceSender(const std::string &path, int status)
+{
+	std::cout << "accessing path: " << path << std::endl;
+	if (access(path.c_str(), R_OK) == -1)
+		throw http_error("access: " + std::string(strerror(errno)), 404);
+	struct stat statBuffer;
+	if (stat(path.c_str(), &statBuffer) == -1)
+		throw http_error("stat: " + std::string(strerror(errno)), 500);
+
+	// POST/DELETE
+	if (S_ISDIR(statBuffer.st_mode))
 	{
-		std::cerr << "error page open: " << strerror(errno) << std::endl;
-		return false;
+		if (path[path.size() - 1] != '/')
+		{
+			std::string loc = path.substr(this->request.getLocation()->getRoot().size());
+			this->addHeader("Location", loc + '/');
+			this->setErrorSender(301);
+			return;
+		}
+		std::string indexPagePath = getIndexPage(path);
+		if (indexPagePath.empty())
+		{
+			if (!this->request.getLocation()->getAutoIndex())
+				throw http_error("This resource is a dir not have index pages and autoindex is disabled", 404);
+			this->setSender(200, getAutoIndexHtml(path, this->request.getLocation()->getRoot()));
+		}
+		else
+		{
+			this->setResourceSender(indexPagePath);
+		}
 	}
-	std::string header = this->generateHeader(status);
-	this->sender = new Sender(this->request.getClientFd(), header, fd);
-	std::cout << "SENDER PTR" << this->sender << std::endl;
-	return true;
+	else if (S_ISREG(statBuffer.st_mode))
+	{
+		this->addHeader("Last-Modified", getDateString(statBuffer.st_mtim.tv_sec));
+		this->addHeader("Content-Length", statBuffer.st_size);
+		this->setSender(status, "", this->fileHandler(path));
+	}
+	else
+		throw http_error("Resource is neither a directory or a regular file", 422);
 }
 
 void Response::setErrorSender(int status)
 {
 	const VirtualServer *vServer = this->request.getVServer();
 
-	if (vServer && vServer->getErrorPages().count(status))
+	if (vServer && this->request.getLocation() && vServer->getErrorPages().count(status))
 	{
 		const std::string &path = vServer->getErrorPages().at(status);
-		this->setStat(path);
-		if (this->setFileSender(path, status))
+		try
+		{
+			this->setResourceSender(path, status);
 			return;
+		}
+		catch (const http_error &e)
+		{
+			std::cerr << e.what() << '\n';
+		}
 	}
 	std::string body = generateErrorBody(status);
-	this->addHeader("Content-Type", "text/body");
+	this->addHeader("Content-Type", "text/html");
 	if (!body.empty())
 		this->addHeader("Content-Length", body.size());
-	std::string header = this->generateHeader(status);
-	this->sender = new Sender(this->request.getClientFd(), header + body);
+	this->setSender(status, body, this->request.getClientFd());
 }
 
 std::string Response::generateHeader(int status) const
@@ -81,7 +137,7 @@ std::string Response::generateHeader(int status) const
 	header << "Server: Webserv_42" << CRLF;
 	header << "Date: " << getDateString() << CRLF;
 
-	for (std::map<std::string, std::string>::const_iterator i = headers.begin(); i != headers.begin(); i++)
+	for (std::map<std::string, std::string>::const_iterator i = this->headers.begin(); i != this->headers.end(); i++)
 	{
 		header << i->first << ": " << i->second << CRLF;
 	}
@@ -93,21 +149,21 @@ std::string Response::generateHeader(int status) const
 // Setters
 // ********************************************************************
 
-void Response::setStat(const std::string &path)
-{
-	if (stat(path.c_str(), &this->statBuffer) == -1)
-		throw http_error("stat: " + std::string(strerror(errno)), 500);
-}
-
 void Response::addHeader(std::string key, std::string value)
 {
-	headers[key] = value;
+	this->headers[key] = value;
 }
 void Response::addHeader(std::string key, unsigned long value)
 {
-	headers[key] = ulong_to_str(value);
+	this->headers[key] = ulong_to_str(value);
 }
 void Response::addHeader(std::string key, long value)
 {
-	headers[key] = long_to_str(value);
+	this->headers[key] = long_to_str(value);
+}
+
+void Response::setSender(int status, const std::string &content, int resourceFd)
+{
+	std::string header = this->generateHeader(status);
+	this->sender = new Sender(this->request.getClientFd(), header + content, resourceFd);
 }

@@ -1,30 +1,22 @@
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <vector>
-#include "dirent.h"
-#include "sys/stat.h"
+#include "webserv.hpp"
 
 struct s_entrie {
 	std::string name;
 	std::string path;
-	std::string uri;
 	off_t size;
 };
 
 void initDirectoryEntries(
-	const std::string& root,
 	const std::string& path,
 	std::vector<struct s_entrie>& folders,
 	std::vector<struct s_entrie>& files)
 {
-	std::string dirPath = root + path;
 	DIR* dirp;
 	dirent *dp;
 	struct stat statBuffer;
 	struct s_entrie ent;
-	
-	dirp = opendir(dirPath.c_str());
+
+	dirp = opendir(path.c_str());
 	if (!dirp)
 		return ;
 	while ((dp = readdir(dirp)))
@@ -32,8 +24,7 @@ void initDirectoryEntries(
 		ent.name = dp->d_name;
 		if (ent.name == ".")
 			continue;
-		ent.path = dirPath + "/" + ent.name;
-		ent.uri = path + "/" + ent.name;
+		ent.path = path + "/" + ent.name;
 		if (stat(ent.path.c_str(), &statBuffer) == -1)
 			continue;
 		ent.size = statBuffer.st_size;
@@ -48,34 +39,35 @@ void initDirectoryEntries(
 	closedir(dirp);
 }
 
-std::string getIndexHtml(const std::string &root, const std::string &path)
+std::string getAutoIndexHtml(const std::string &path, const std::string &root)
 {
 	std::stringstream html;
 	std::vector<struct s_entrie> folders;
 	std::vector<struct s_entrie> files;
-
-	initDirectoryEntries(root, path, folders, files);
+	std::string loc = path.substr(root.size());
+	
+	initDirectoryEntries(path, folders, files);
 	html << "<!DOCTYPE html>";
 	html << "<html lang=\"en\">";
 	html << "<head>";
 	html << "<meta charset=\"UTF-8\">";
 	html << "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
-	html << "<title>Index of " << path << "</title>";
+	html << "<title>Index of " << loc << "</title>";
 	html << "</head>";
 	html << "</body>";
 	html << "<div style=\"display: flex; flex-direction: column; gap: .2rem; max-width: 40rem; margin: auto;\">";
-	html << "<h1>Index of " << path << "</h1>";
+	html << "<h1>Index of " << loc << "</h1>";
 
 	for (std::vector<struct s_entrie>::const_iterator it = folders.begin(); it != folders.end(); it++)
 	{
-		html << "<a href=\"" << it->uri << "\">";
+		html << "<a href=\"" << it->name << "\">";
 		html << "<span>" << "📂" << "</span>";
 		html << "<span class=\"entrie-name\">" << it->name << "</span>";
 		html << "</a>";
 	}
 	for (std::vector<struct s_entrie>::const_iterator it = files.begin(); it != files.end(); it++)
 	{
-		html << "<a href=\"" << it->uri << "\">";
+		html << "<a href=\"" << it->name << "\">";
 		html << "<span>" << "📄" << "</span>";
 		html << "<span class=\"entrie-name\">" << it->name << "</span>";
 		html << "<span>" << it->size << "</span>";
@@ -104,12 +96,4 @@ std::string getIndexHtml(const std::string &root, const std::string &path)
 	html << "</html>";
 	
 	return html.str();
-}
-
-int main()
-{
-	std::string root = "/app";
-
-	std::string html = getIndexHtml(root, "/tests");
-	std::cout << html << std::endl;
 }

@@ -252,7 +252,7 @@ int main(int argc, char **argv)
 		int fd_in = open(request_path.c_str(), O_RDONLY);
 		int fd_out = open("./logs/cgi-out.log", O_CREAT | O_TRUNC | O_WRONLY); 
 
-		CgiHandler req((CgiHandler::t_req_init) {
+		CgiHandler cgiHandler((CgiHandler::t_req_init) {
 			.location = location,
 			.server = server,
 			.method = POST,
@@ -261,13 +261,13 @@ int main(int argc, char **argv)
 			.bodyFd = fd_in,
 		});
 
-		if (!req.isCgiResource())
+		if (!cgiHandler.isCgiResource())
 		{
 			std::cout << "CgiHandler don't match with CGI extension" << std::endl;
 			return 1;
 		}
 
-		pid_t pid = req.cgiExecution(fd_out);
+		pid_t pid = cgiHandler.cgiExecution(fd_out);
 		std::cout << "TODO: wait timeout on :" << pid << " ?" << std::endl;
 	}
 	catch (const std::exception &e)

@@ -17,6 +17,7 @@ RUN apt-get install -y jq
 RUN apt-get install -y php-cgi
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 RUN unset DEBIAN_FRONTEND
+RUN mkdir -p /app/logs/nginx
 WORKDIR /app
 
 ENTRYPOINT [ "/bin/zsh" ]

@@ -12,17 +12,24 @@ private:
 	const Request &request;
 	std::map<std::string, std::string> headers;
 	Sender *sender;
-	struct stat statBuffer;
+
+	// Setters
+	void setSender(int status, const std::string &content = 0, int resourceFd = -1);
 	std::string generateHeader(int status) const;
+	std::string getIndexPage(const std::string &path);
 	
-	public:
+	//
+	int fileHandler(const std::string &path) const;
+	
+public:
 	Response(const Request &request);
 	~Response();
+
+	// Setters
 	void addHeader(std::string key, std::string value);
 	void addHeader(std::string key, unsigned long value);
 	void addHeader(std::string key, long value);
-	void setStat(const std::string &path);
-	bool setFileSender(const std::string &path, int status);
+	void setResourceSender(const std::string &path, int status = 200);
 	void setErrorSender(int status);
 	bool send() const;
 };
