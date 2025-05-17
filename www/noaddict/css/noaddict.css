@@ -1,0 +1,556 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
+/*font-family: 'Roboto', sans-serif;*/
+
+@keyframes float {
+	0% {
+		
+		transform: translatey(0px);
+	}
+	
+	
+
+50% {
+		
+		transform: translatey(-20px);
+	}
+	100% {
+		
+		transform: translatey(0px);
+	}
+}
+
+@font-face{
+	font-family: "Bradford LL Black";
+		src: url("../font/BradfordLLTT-Black.woff") format("woff2");
+}
+
+/*-------------------------------------------------------------------------------------------------------------------------BODY--*/
+body { 
+background-color:#FDFDF4;
+margin: auto;
+padding: 0;}
+
+.conteneur_general {width: 1600px;
+margin: auto;}
+
+/*font*/
+h1 {font-size: 138px;
+	font-family: "Bradford LL Black";}
+
+h2 {font-size: 42px;
+	font-family: "Bradford LL Black";}
+
+h3 {font-size: 25px;
+	font-family: "Bradford LL Black";}
+
+nav a {font-size: 25px;
+	font-family: "Bradford LL Black";}
+
+p{font-family: 'Roboto', sans-serif;
+font-weight: bold;
+font-size: 20px;}
+
+#index p {text-align: center}
+
+a {text-decoration: none;
+color: black;
+}
+ul {color: #FDFDF4;}
+/*font*/
+/*-------------------------------------------------------------------------------------------------------------------------BODY--*/
+
+/*-------------------------------------------------------------------------------------------------------------------------header--*/
+
+
+#index header{text-align: center}
+#cannabis header {text-align: center}
+#alcool header {text-align: center}
+#tabac header {text-align: center}
+#jeuxvideos header {text-align: center}
+#signes header {text-align: center}
+
+.text_overlay {position: relative; top: 50px; right: 50px;}
+
+.calltoaction {position: relative; bottom: 253px;}
+
+.nav_header{position:fixed;
+	border-bottom: 5px solid black;
+	width:1600px;
+	background-color:#FDFDF4;
+	top: 0;
+	display: flex;
+	justify-content: space-between;
+	padding: 0px 0px 0px 0px;
+	z-index: 99}
+
+nav {display: flex; 
+	position: relative; top: 15px}
+
+.nav_list { display: flex;
+	justify-content: space-between;
+	width: 692px}
+
+.logo {position: relative; top:25px;}
+
+header ul {display: flex;
+			justify-content: space-between;}
+
+nav .bleu:hover {color: #448FF2}
+nav .rouge:hover {color: #F21616}
+nav .jaune:hover {color: #F2CB05}
+nav .vert:hover {color: #04BF20}
+nav .gris:hover {color:#B7B7B2}
+
+.illu_principale {display: flex;
+				justify-content: center;
+				align-items: baseline;
+				position: relative; bottom: 200px;}
+
+.titre a {box-shadow: 5px 5px 0px black;
+border: solid 5px black;
+border-radius: 5px;
+padding: 15px 24px 15px 24px;
+width: 240px;
+font-family: 'Roboto', sans-serif;
+font-size: 25px;
+text-align: center;}
+
+#index h1{margin-bottom: 10px;
+margin-top: 70px;
+text-transform: uppercase;}
+
+#alcool h1 {text-shadow: 10px 10px 0px #fce480}
+#alcool .titre a {background-color:#fce480;}
+#alcool .titre a:hover {color:#FDFDF4;
+background-color: black;
+box-shadow: 0px 0px 0px black;}
+#alcool .titre {margin: 130px 0px 0px 0px }
+
+#cannabis h1 {text-shadow: 10px 10px 0px #85e280}
+#cannabis .titre a {background-color:#85e280;
+z-index: 50}
+#cannabis .titre a:hover {color:#FDFDF4;
+background-color: black;
+box-shadow: 0px 0px 0px black;
+z-index: 53}
+
+
+#tabac h1 {text-shadow: 10px 10px 0px #85acf7}
+#tabac .titre a {background-color:#85acf7;}
+#tabac .titre a:hover {color:#FDFDF4;
+background-color: black;
+box-shadow: 0px 0px 0px black;}
+
+
+#jeuxvideos h1 {text-shadow: 10px 10px 0px #fe8580}
+#jeuxvideos .titre a {background-color: #fe8580;}
+#jeuxvideos .titre a:hover {color:#FDFDF4;
+background-color: black;
+box-shadow: 0px 0px 0px black;}
+
+#signes h1 {text-shadow: 10px 10px 0px #B7B7B2}
+#signes .titre a {background-color: #B7B7B2;}
+#signes .titre a:hover {color:#FDFDF4;
+background-color: black;
+box-shadow: 0px 0px 0px black;}
+
+#signes .art6 a {background-color: #B7B7B2;
+box-shadow: 5px 5px 0px black;
+border: solid 5px black;
+border-radius: 5px;
+padding: 15px 24px 15px 24px;
+width: 240px;
+font-family: 'Roboto', sans-serif;
+font-size: 25px;
+text-align: center;
+margin-top: 51px;}
+#signes .art6 a:hover {color:#FDFDF4;
+background-color: black;
+box-shadow: 0px 0px 0px black;}
+#signes .titre .conact {display: flex;
+flex-direction: column;
+align-items: center;}
+#signes .titre a {width: 300px;
+margin: 10px 0px 10px 0px ;}
+
+
+h1{margin-bottom: 0px;
+margin-top: 150px;
+text-transform: uppercase;
+}
+
+header h2 {margin-top: -10px;}
+/*--------------------------------------------------java-survole--*/
+
+.card_01 {
+        width: 433px;
+        height: 426px;
+        position: relative;
+        display: inline-block;
+        margin: 50px;
+    }
+    .card_01 .img-top {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 98;
+    }
+    .card_01:hover .img-top {
+        display: inline;
+    }
+
+.card_01 {position: relative;
+left: 130px;}
+
+.card_02 {
+        width: 405px;
+        height: 539px;
+        position: relative;
+        display: inline-block;
+        margin: 50px;
+    }
+    .card_02 .img-top {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 98;
+    }
+    .card_02:hover .img-top {
+        display: inline;
+    }
+
+.card_02{position: relative;
+right: 00px;}
+
+.card_03 {
+        width: 344px;
+        height: 573px;
+        position: relative;
+        display: inline-block;
+        margin: 50px;
+    }
+    .card_03 .img-top {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 98;
+    }
+    .card_03:hover .img-top {
+        display: inline;
+    }
+
+.card_03 {position: relative;
+right: 80px;}
+
+.card_04 {
+        width: 351px;
+        height: 363px;
+        position: relative;
+        display: inline-block;
+        margin: 50px;
+    }
+    .card_04 .img-top {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 98;
+    }
+    .card_04:hover .img-top {
+        display: inline;
+    }
+
+.card_04 {position: relative;
+right: 220px;}
+/*--------------------------------------------------java-survole--*/
+
+
+
+.calltoaction{display: flex;
+justify-content: center;
+align-content: center;
+}
+/*-------------------------------------------------------------------------------------------------------------------------header--*/
+
+/*-------------------------------------------------------------------------------------------------------------------------article--*/
+#index article  {text-align: center;
+padding: 0px 0px 100px 0px;
+margin-top: -200px}
+
+
+#index article a  {border: solid 5px black;
+border-radius: 5px;
+padding: 15px 55px 15px 55px;
+font-family: 'Roboto', sans-serif;
+font-size: 25px;
+box-shadow: 5px  5px 0px black;}
+#index article a:hover  {border: solid 5px black;
+border-radius: 5px;
+background-color: black;
+color:#FDFDF4;
+box-shadow: 0px  0px 0px black;}
+
+#index article h3 {margin-top: 51px;}
+/*--------------------------------------alcool--*/
+
+.art1 {margin: auto;width: 1600px;}
+.art1_1 {display: flex;
+flex-direction: row;
+justify-content: space-around;
+align-items: center;
+position: relative;
+top:170px;
+margin-top: -130px}
+.art1_2 {display: flex;
+flex-direction: row-reverse;
+justify-content: space-around;
+align-items: center;}
+
+.art2 {text-align: center;
+width: 724px;
+margin: auto;
+padding: 45px 0px 70px 0px;
+border-bottom: solid 5px black;
+border-top: solid 5px black;
+margin-top: 100px;
+margin-bottom: 150px}
+
+.art3 {text-align: center;
+margin: auto;
+margin-bottom: 300px;}
+.art3 h2 {margin-bottom: -470px}
+.art3 div {border: solid 5px black;
+box-shadow:15px 15px 0px #fce480;
+background-color:#FDFDF4;
+margin: auto;
+padding: 0px 16px 0px 16px}
+ .art3_1 {width: 373px;
+position: relative;
+left: 306px;
+top: 550px}
+.art3_2 {width: 470px;
+position: relative;
+right: 480px;
+top: 550px}
+.art3_3 {width: 500px;
+position: relative;
+left:480px;
+top: 550px}
+.art3_4 {width: 252px;
+position: relative;
+right: 480px;
+top: 750px}
+.art3_5 {width: 370px;
+position: relative;
+left: 230px;
+top: 700px;}
+
+.art4 {text-align: center;
+width: 724px;
+margin: auto;
+padding: 45px 0px 70px 0px;
+border-bottom: solid 5px black;
+border-top: solid 5px black;}
+.art5 {text-align: center;
+margin: auto;
+margin-top: 150px;}
+.art5 h2 {margin-bottom: -150px}
+.art5 div {border: solid 5px black;
+box-shadow:15px 15px 0px #fce480;
+background-color:#FDFDF4;
+margin: auto;
+z-index: 1;
+padding: 0px 16px 0px 16px}
+.art5_1 {width: 472px;
+position: relative;
+right: 450px;
+top: 300px;}
+.art5_2 {width: 370px;
+position: relative;
+left: 470px;
+top: 450px;}
+.art5 img {position: relative;
+right: 90px}
+
+/*--------------------------------------cannabis--*/
+
+#cannabis .art1_1 {display: flex;
+flex-direction: row-reverse;
+justify-content: space-around;
+margin-top: -300px;
+z-index: -2}
+#cannabis .art1_1 img {position: relative;
+top:200px;left:100px;}
+#cannabis .art1_2 {display: flex;
+flex-direction: row;
+justify-content: space-around;
+align-items: center;
+margin: 200px 0px 100px 0px;}
+
+#cannabis .art3 {margin: 100px 0px 300px 0px;}
+#cannabis .art3 img {position: relative;
+top:200px;}
+#cannabis .art3_1 {width: 472px;
+position: relative; left:450px;}
+#cannabis .art3_2 {position: relative;top:700px; }
+
+#cannabis .art5 img {position: relative; left:0px;}
+#cannabis .art5_1 {position: relative; top: 150px;}
+#cannabis .art5_2 {position: relative; top: 250px;}
+#cannabis .art5 h2 {padding-bottom: 100px;}
+#cannabis .art3 div {box-shadow:15px 15px 0px #85e280}
+#cannabis .art5 div {box-shadow:15px 15px 0px #85e280}
+/*--------------------------------------tabac--*/
+#tabac .art3 div {box-shadow:15px 15px 0px #85acf7}
+#tabac .art3 img {position: relative; top: 200px;}
+#tabac .art3_1 {position: relative; left: 400px; width: 472px;}
+#tabac .art3_2 {position: relative; top: 700px;}
+#tabac .art5 div {box-shadow:15px 15px 0px #85acf7}
+#tabac .art5 img {position: relative; top: 100px;}
+/*--------------------------------------jeux--*/
+#jeuxvideos .art1_1 {flex-direction: row-reverse;
+justify-content: space-around;
+align-items: center;}
+#jeuxvideos .art1_2 {flex-direction: row;
+justify-content: space-around;
+align-items: center;
+margin-top: 50px;}
+#jeuxvideos .art1_2 img {position: relative;
+top: 80px;}
+#jeuxvideos .art3 div {box-shadow:15px 15px 0px #fe8580}
+#jeuxvideos .art3 img {position: relative;
+top: 350px;}
+#jeuxvideos .art3_2 {position: relative; top:800px;}
+#jeuxvideos .art3 {margin-bottom: 500px;}
+#jeuxvideos .art5 div {box-shadow:15px 15px 0px #fe8580}
+#jeuxvideos .art5_1 {position: relative; left: 400px; top: 250px}
+#jeuxvideos .art5_8 {position: relative; right: 500px; top: 400px;
+width: 472px;}
+/*--------------------------------------depandance--*/
+
+.art6 {margin: 100px 0px 100px 0px;}
+.art6 a  {position: relative; top: 31px}
+
+article img {transform: translatey(0px);
+ animation: float 4s ease-in-out infinite;}
+
+#alcool span {background-color:#fce480 }
+#cannabis span {background-color:#85e280 }
+#tabac span {background-color:#85acf7 }
+#jeuxvideos span {background-color:#fe8580}
+/*-------------------------------------------------------------------------------------------------------------------------article--*/
+
+/*-------------------------------------------------------------------------------------------------------------------------section--*/
+
+section a {background-color: #FDFDF4;
+border: solid 5px black;
+border-radius: 5px;
+padding: 15px 15px 15px 15px;
+box-shadow: 5px 5px 0px black;
+font-family: 'Roboto', sans-serif;
+font-size: 25px;}
+
+section a:hover {background-color: black;
+border: solid 5px black;
+color:#FDFDF4 ;
+border-radius: 5px;
+box-shadow: 0px 0px 0px black;
+font-family: 'Roboto', sans-serif;
+font-size: 25px;}
+
+#index section {text-align: center;
+padding: 0px 0px 115px 0px }
+
+#index section a {
+border: solid 5px black;
+border-radius: 5px;
+padding: 15px 0px 15px 0px;
+width: 240px}
+
+#index section a:hover {border: solid 5px black;
+border-radius: 5px;
+box-shadow: 0px 0px 0px;
+background-color: black;
+color:#FDFDF4;}
+
+.test {display: flex;
+justify-content: space-around;
+margin: auto;
+width: 1300px;
+padding-top: 30px;}
+
+#index section .bleu {background-color: #85acf7;
+box-shadow: 5px 5px 0px black;
+font-family: 'Roboto', sans-serif;
+font-size: 25px;}
+#index section .rouge {background-color: #fe8580;
+box-shadow: 5px 5px 0px black;
+font-family: 'Roboto', sans-serif;
+font-size: 25px;}
+#index section .jaune {background-color:#fce480;
+box-shadow: 5px 5px 0px black;
+font-family: 'Roboto', sans-serif;
+font-size: 25px;}
+#index section .vert {background-color: #85e280;
+box-shadow: 5px 5px 0px black;
+font-family: 'Roboto', sans-serif;
+font-size: 25px;}
+
+
+#alcool section {text-align: center;
+margin: 200px 0px 180px 0px }
+#cannabis section {text-align: center;
+margin: 200px 0px 180px 0px }
+#tabac section {text-align: center;
+margin: 200px 0px 180px 0px }
+#jeuxvideos section {text-align: center;
+margin: 200px 0px 180px 0px }
+
+#index h2 {margin-bottom: -15px;}
+/*-------------------------------------------------------------------------------------------------------------------------section--*/
+
+
+/*-------------------------------------------------------------------------------------------------------------------------footer--*/
+
+
+.foot_text {width: 1300px;
+display: flex;
+justify-content: space-between;
+margin: auto;}
+
+li {display: flex}
+
+.app {display: flex;
+justify-content: space-between;
+width: 135px}
+
+footer a {
+font-family: "Bradford LL Black";
+font-size: 25px;}
+
+footer a:hover {color: #FDFDF4;
+font-family: "Bradford LL Black";
+font-size: 25px;}
+
+.foot_nav {
+ line-height: 55px;}
+
+footer .bleu {color: #448FF2}
+footer .rouge {color: #F21616}
+footer .jaune {color: #F2CB05}
+footer .vert {color: #04BF20}
+footer .gris {color:#B7B7B2}
+
+footer {background-color: black;
+margin: auto;
+padding: 90px 0px 58px 0px;}
+
+
+
+
+/*-------------------------------------------------------------------------------------------------------------------------footer--*/
+
+

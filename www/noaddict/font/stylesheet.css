@@ -1,0 +1,18 @@
+@font-face {
+    font-family: 'Bradford LL TT';
+    src: url('BradfordLLTT-Black.woff2') format('woff2'),
+        url('BradfordLLTT-Black.woff') format('woff');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Bradford LL';
+    src: url('BradfordLL-Black.woff2') format('woff2'),
+        url('BradfordLL-Black.woff') format('woff');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
