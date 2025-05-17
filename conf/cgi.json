@@ -5,10 +5,11 @@
       "address": "127.0.0.1",
       "locations": [
         {
+          "method": ["GET", "POST"],
           "root": "/app/www",
           "path": "/",
           "cgi": {
-            ".php": "/bin/php-cgi"
+            ".php": "/usr/bin/php-cgi"
           }
         }
       ]

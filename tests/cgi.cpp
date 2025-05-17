@@ -136,7 +136,7 @@ static char *ft_strdup(const char* src)
 
 static char **mapToStringArray(std::map<std::string, std::string> map)
 {
-	char **arr = new char*[map.size() + 1]();
+	char **arr = new char*[map.size() + 1];
 	size_t index = 0;
 
 	for (std::map<std::string, std::string>::const_iterator it = map.begin(); it != map.end(); it++)
@@ -144,7 +144,16 @@ static char **mapToStringArray(std::map<std::string, std::string> map)
 		std::string value =  it->first + "=" + it->second;
 		arr[index++] = ft_strdup(value.c_str());
 	}
+	arr[index] = NULL;
 	return (arr);
+}
+
+static void deleteArray(char **arr)
+{
+	char **a = arr;
+	while(*arr)
+		delete[] arr++;
+	delete[] a;
 }
 
 char **CgiHandler::getCgiEnv()
@@ -215,14 +224,13 @@ pid_t CgiHandler::cgiExecution(int fd_out)
 		return pid;
 	}
 	connect_fd(fd_in, STDIN_FILENO);
-	close(fd_out);
-	// connect_fd(fd_out, STDOUT_FILENO);
+	connect_fd(fd_out, STDOUT_FILENO);
 	char **envp = this->getCgiEnv();
 	char **argv = this->getCgiArgv();
 	if (execve(this->cgiPath.c_str(), argv, envp) == -1)
 	{
-		delete[] envp;
-		delete[] argv;
+		deleteArray(envp);
+		deleteArray(argv);
 		throw std::runtime_error("execv failed");
 	}
 	return 0;
@@ -247,10 +255,10 @@ int main(int argc, char **argv)
 		std::map<std::string, std::string> headers;
 		headers["Host"] = "localhost";
 		headers["Content-Type"] = "application/json";
-		headers["Content-Length"] = "20";
+		headers["Content-Length"] = "18";
 
 		int fd_in = open(request_path.c_str(), O_RDONLY);
-		int fd_out = open("./logs/cgi-out.log", O_CREAT | O_TRUNC | O_WRONLY); 
+		int fd_out = open("./cgi-out.log", O_CREAT | O_TRUNC | O_WRONLY); 
 
 		CgiHandler cgiHandler((CgiHandler::t_req_init) {
 			.location = location,

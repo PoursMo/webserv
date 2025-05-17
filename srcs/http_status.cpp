@@ -42,7 +42,7 @@ void http_status::init()
 	http_status::statuses[402] = "Payment Required";
 	http_status::statuses[403] = "Forbidden";
 	http_status::statuses[404] = "Not Found";
-	http_status::statuses[405] = "Method Not Allowed";
+	http_status::statuses[405] = "Not Allowed";
 	http_status::statuses[406] = "Not Acceptable";
 	http_status::statuses[407] = "Proxy Authentication Required";
 	http_status::statuses[408] = "Request Timeout";
@@ -50,7 +50,7 @@ void http_status::init()
 	http_status::statuses[410] = "Gone";
 	http_status::statuses[411] = "Length Required";
 	http_status::statuses[412] = "Precondition Failed";
-	http_status::statuses[413] = "Payload Too Large";
+	http_status::statuses[413] = "Request Entity Too Large";
 	http_status::statuses[414] = "URI Too Long";
 	http_status::statuses[415] = "Unsupported Media Type";
 	http_status::statuses[416] = "Range Not Satisfiable";

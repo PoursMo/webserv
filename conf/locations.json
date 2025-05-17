@@ -2,6 +2,7 @@
 	"$schema": "./_schema.json",
 	"servers": [
 		{
+			"client_max_body_size": 10000,
 			"server_names": [
 				"webserv.com",
 				"www.webserv.com"
@@ -10,18 +11,30 @@
 			"locations": [
 				{
 					"path": "/",
-					"root": "/app/www"
+					"root": "/app/www",
+					"autoindex": true
 				},
 				{
 					"path": "/pomme",
-					"root": "/app/www"
+					"root": "/app/www",
+					"index": ["index.html", "page.html"]
 				},
 				{
 					"path": "/pomme/banane",
-					"root": "/app/www"
+					"root": "/app/www",
+					"autoindex": true
 				},
 				{
 					"path": "/pomme/orange",
+					"root": "/app/www"
+				},
+				{
+					"path": "a",
+					"root": "/app/www",
+					"autoindex": true
+				},
+				{
+					"path": "/pomme/banane/kiwi",
 					"root": "/app/www"
 				}
 			]

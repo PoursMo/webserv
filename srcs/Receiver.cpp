@@ -60,9 +60,7 @@ bool Receiver::receive()
 		fillBuffer(HEADER);
 		flushHeaderBuffers();
 		if (!readingHeader && (bodyBytesRecvd >= bodySize || bodySize == 0))
-		{
 			return false;
-		}
 	}
 	else
 	{

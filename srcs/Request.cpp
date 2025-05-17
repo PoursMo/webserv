@@ -45,6 +45,7 @@ void Request::processRequest()
 {
 	this->vServer = selectVServer();
 	this->locationData = vServer->getLocation(resource);
+	// TODO: check / in resource
 	if (!this->locationData)
 		throw http_error("Resource not found in location data", 404);
 	// TODO: handleReturn(this->locationData->getReturnPair());
@@ -132,6 +133,7 @@ Method Request::setMethod(char *lstart, char *lend)
 
 bool isValidProtocol(char **lstart, char *lend)
 {
+	// TODO explain
 	size_t i = 0;
 	std::string protocol = "HTTP/1.1";
 	while (*lstart != lend && i < protocol.size() && **lstart != '\r')
@@ -217,8 +219,15 @@ void Request::parseRequestLine(char *lstart, char *lend)
 		throw http_error("Empty request line", 400);
 	if (checkEmptyline(lstart, lend))
 	{
-		// TODO
-		bodyFd = open("./logs/body.out", O_CREAT | O_WRONLY | O_TRUNC, 0644); // tmp
+		// TODO procces request here
+
+		// 1. pipe -> cgi
+		//	remonter le cgi.pid pour le kill dans ~Request
+
+		// 2. upload_file open(/upload/my-file)
+
+		// 3.
+		bodyFd = open("/dev/null", O_CREAT | O_WRONLY | O_TRUNC, 0644); // tmp
 		if (bodyFd == -1)													  // tmp
 			throw http_error("open: " + std::string(strerror(errno)), 500);	  // tmp
 		return;

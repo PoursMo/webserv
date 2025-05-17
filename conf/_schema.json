@@ -47,7 +47,7 @@
             "minimum": 0,
             "maximum": 9223372036854775807,
             "type": "number",
-            "default": 1024
+            "default": 104857600
           },
           "locations": {
             "title": "Route configuration",

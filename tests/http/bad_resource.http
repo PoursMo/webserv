@@ -1,0 +1,3 @@
+GET raisin HTTP/1.1
+Host: webserv.com
+

@@ -14,7 +14,7 @@ private:
 	Sender *sender;
 
 	// Setters
-	void setSender(int status, const std::string &content = 0, int resourceFd = -1);
+	void setSender(int status, const std::string &content = "", int resourceFd = -1);
 	std::string generateHeader(int status) const;
 	std::string getIndexPage(const std::string &path);
 	
