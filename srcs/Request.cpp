@@ -45,10 +45,16 @@ void Request::processRequest()
 {
 	this->vServer = selectVServer();
 	this->locationData = vServer->getLocation(resource);
-	// TODO: check / in resource
+	if (resource[0] != '/')
+		throw http_error("No '/' in resource", 400);
 	if (!this->locationData)
 		throw http_error("Resource not found in location data", 404);
-	// TODO: handleReturn(this->locationData->getReturnPair());
+	const std::pair<int, std::string> &returnPair = this->locationData->getReturnPair();
+	if (returnPair.first != -1)
+	{
+		this->response.handleReturn(returnPair);
+		return;
+	}
 	if (!isInVector(this->locationData->getMethods(), this->method))
 		throw http_error("Method not in location data", 403);
 	if (this->method == POST && !headers.count("content-length"))
@@ -133,7 +139,6 @@ Method Request::setMethod(char *lstart, char *lend)
 
 bool isValidProtocol(char **lstart, char *lend)
 {
-	// TODO explain
 	size_t i = 0;
 	std::string protocol = "HTTP/1.1";
 	while (*lstart != lend && i < protocol.size() && **lstart != '\r')
@@ -227,9 +232,9 @@ void Request::parseRequestLine(char *lstart, char *lend)
 		// 2. upload_file open(/upload/my-file)
 
 		// 3.
-		bodyFd = open("/dev/null", O_CREAT | O_WRONLY | O_TRUNC, 0644); // tmp
-		if (bodyFd == -1)													  // tmp
-			throw http_error("open: " + std::string(strerror(errno)), 500);	  // tmp
+		bodyFd = open("/dev/null", O_CREAT | O_WRONLY | O_TRUNC, 0644);		// tmp
+		if (bodyFd == -1)													// tmp
+			throw http_error("open: " + std::string(strerror(errno)), 500); // tmp
 		return;
 	}
 	if (!this->firstLineParsed)

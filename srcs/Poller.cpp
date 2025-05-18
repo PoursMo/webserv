@@ -4,7 +4,8 @@
 #include "Receiver.hpp"
 
 Connection::Connection(int clientFd, const std::vector<VirtualServer *> &vServers)
-	: request(clientFd, vServers),
+	: creationTime(std::time(NULL)),
+	  request(clientFd, vServers),
 	  receiver(clientFd, request)
 {
 }
@@ -56,9 +57,9 @@ void Poller::mod(int fd, uint32_t events)
 		throw std::runtime_error("epoll_ctl mod: " + std::string(strerror(errno)));
 }
 
-int Poller::waitEvents()
+int Poller::waitEvents(int timeout)
 {
-	int nready = epoll_wait(epollFd, events.data(), events.size(), -1);
+	int nready = epoll_wait(epollFd, events.data(), events.size(), timeout);
 	if (nready == -1)
 		throw std::runtime_error("epoll_wait: " + std::string(strerror(errno)));
 	return nready;
@@ -140,8 +141,33 @@ void Poller::loop()
 {
 	while (1)
 	{
+		// TODO Setup timeout
+		//  int timeout = WS_CONNECTION_TIMEOUT_TIMER;
+		//  if (!connections.empty())
+		//  {
+		//  	std::vector<int> terminators;
+		//  	time_t currentTime = std::time(NULL);
+		//  	time_t highestElapsedTime = WS_CONNECTION_TIMEOUT_TIMER;
+		//  	for (std::map<int, Connection *>::iterator i = connections.begin(); i != connections.end(); i++)
+		//  	{
+		//  		time_t elapsedTime = currentTime - i->second->creationTime;
+		//  		std::cout << "CreationTime :" << i->second->creationTime << std::endl;
+		//  		std::cout << "TerminationTime :" << currentTime << std::endl;
+		//  		if (elapsedTime > WS_CONNECTION_TIMEOUT_TIMER)
+		//  			terminators.push_back(i->first);
+		//  		if (elapsedTime < highestElapsedTime)
+		//  			highestElapsedTime = elapsedTime;
+		//  		++i;
+		//  	}
+		//  	timeout = WS_CONNECTION_TIMEOUT_TIMER - highestElapsedTime;
+		//  	for (std::vector<int>::iterator i = terminators.begin(); i != terminators.end(); i++)
+		//  	{
+		//  		terminateConnection(*i);
+		//  	}
+		//  }
 		std::cout << "Polling..." << std::endl; // debug
-		int nb_ready = this->waitEvents();
+		// int nb_ready = this->waitEvents(timeout * 1000);
+		int nb_ready = this->waitEvents(-1);
 		for (int i = 0; i < nb_ready; i++)
 		{
 			struct epoll_event event = events.at(i);

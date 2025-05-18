@@ -9,7 +9,7 @@ class VirtualServer;
 
 struct Connection
 {
-	// TODO: timer
+	const time_t creationTime;
 	Request request;
 	Receiver receiver;
 
@@ -26,7 +26,7 @@ private:
 
 	void add(int fd, uint32_t events);
 	void del(int fd);
-	int waitEvents();
+	int waitEvents(int timeout);
 
 	void terminateConnection(int fd);
 	bool isServerFd(int fd);

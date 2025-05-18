@@ -31,16 +31,19 @@ bool Response::send() const
 	return this->sender->handleSend();
 }
 
-// static void handleReturn(const std::pair<int, std::string> &returnPair)
-// {
-// 	// TODO
-// 	if (returnPair.first != -1)
-// 	{
-// 		if (returnPair.first >= 400 && returnPair.first < 600)
-// 			throw http_error("Returned error", returnPair.first);
-// 		// < 400
-// 	}
-// }
+void Response::handleReturn(const std::pair<int, std::string> &returnPair)
+{
+	if (returnPair.first == 301 || returnPair.first == 302 || returnPair.first == 303 || returnPair.first == 307)
+	{
+		this->addHeader("Location", returnPair.second);
+		this->setErrorSender(returnPair.first);
+	}
+	else
+	{
+		this->addHeader("Content-Type", "text/plain");
+		this->setSender(returnPair.first, returnPair.second);
+	}
+}
 
 std::string Response::getIndexPage(const std::string &path)
 {
@@ -123,8 +126,6 @@ void Response::setErrorSender(int status)
 	}
 	std::string body = generateErrorBody(status);
 	this->addHeader("Content-Type", "text/html");
-	if (!body.empty())
-		this->addHeader("Content-Length", body.size());
 	this->setSender(status, body, this->request.getClientFd());
 }
 
@@ -164,6 +165,12 @@ void Response::addHeader(std::string key, long value)
 
 void Response::setSender(int status, const std::string &content, int resourceFd)
 {
-	std::string header = this->generateHeader(status);
+	std::string header = "";
+	if (this->request.getVServer())
+	{
+		if (!content.empty())
+			this->addHeader("Content-Length", content.size());
+		header = this->generateHeader(status);
+	}
 	this->sender = new Sender(this->request.getClientFd(), header + content, resourceFd);
 }

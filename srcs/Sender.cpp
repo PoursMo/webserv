@@ -64,12 +64,11 @@ bool Sender::handleSend()
 // 		if ((size_t)bytesSent == content.size())
 // 		{
 // 			this->contentSent = true;
-//			bytesSent = 0;
+// 			bytesSent = 0;
 // 			return this->resourceFd != -1;
 // 		}
 // 		return true;
 // 	}
-
 // 	ssize_t rest = bytesRead - bytesSent;
 // 	if (rest)
 // 	{
