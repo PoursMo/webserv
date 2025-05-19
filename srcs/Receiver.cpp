@@ -139,8 +139,6 @@ void Receiver::flushHeaderBuffers()
 		{
 			bodyBytesRecvd = lbuffer->last - lbuffer->pos + 1;
 			std::cout << "Receiver: writing header buffer in body fd " << request.getBodyFd() << std::endl;
-			std::cout << "buffer content:";
-			debug_print(lbuffer->pos, lbuffer->last);
 			write(request.getBodyFd(), lbuffer->pos, std::min(bodyBytesRecvd, bodySize));
 			delete[] lbuffer->first;
 			delete lbuffer;

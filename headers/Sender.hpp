@@ -14,8 +14,11 @@ private:
 	ssize_t bytesRead;
 	bool contentSent;
 
+	ssize_t trySend(const char *buffer, size_t len);
+
 public:
 	Sender(int clientFd, const std::string &content, int resourceFd = -1);
+	~Sender();
 
 	bool handleSend();
 };

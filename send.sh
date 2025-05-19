@@ -1,1 +1,1 @@
-(cat $1; sleep 0.1) | telnet 127.0.0.1 8000
+(cat $1; sleep 0.2) | telnet 127.0.0.1 8000

@@ -182,8 +182,6 @@ void Response::addHeader(std::string key, long value)
 	this->headers[key] = long_to_str(value);
 }
 
-
-// TODO overload
 void Response::setSender(int status, const std::string &content)
 {
 	std::string header = "";

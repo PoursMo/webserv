@@ -75,7 +75,6 @@ void Request::setBodyFd(int fd)
 	this->bodyFd = fd;
 }
 
-
 std::string Request::setResource(char **lstart, char *lend)
 {
 	std::string resource;
