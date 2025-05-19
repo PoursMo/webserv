@@ -20,6 +20,7 @@ SRCS = $(SRCDIR)/ft_json.cpp \
 	$(SRCDIR)/Request.cpp \
 	$(SRCDIR)/Response.cpp \
 	$(SRCDIR)/Sender.cpp \
+	$(SRCDIR)/CgiHandler.cpp \
 
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))
 

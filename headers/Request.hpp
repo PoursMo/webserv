@@ -39,11 +39,12 @@ public:
 	~Request();
 
 	// Line received parsing
-	void parseRequestLine(char *lstart, char *lend);
+	bool parseRequestLine(char *lstart, char *lend);
 
 	// Processing
 	void processRequest();
-
+	// Setter
+	void setBodyFd(int fd);
 	// Getters
 	std::string getResource() const;
 	std::string getHeaderValue(const std::string key) const;

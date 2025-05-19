@@ -8,14 +8,17 @@
 #include "Sender.hpp"
 #include "VirtualServer.hpp"
 
-Response::Response(const Request &request)
+Response::Response(Request &request)
 	: request(request),
-	  sender(NULL)
+	  sender(NULL),
+	  cgiPid(0),
+	  isCGI(false)
 {
 }
 
 Response::~Response()
 {
+	// TODO: kill cgiPid;
 	if (this->sender)
 		delete this->sender;
 }
@@ -57,13 +60,28 @@ std::string Response::getIndexPage(const std::string &path)
 	return "";
 }
 
-int Response::fileHandler(const std::string &path) const
+int Response::fileHandler(const std::string &path)
 {
-	// isCGI ?
-	int fd = open(path.c_str(), O_RDONLY);
-	if (fd == -1)
-		throw http_error("error page open: " + std::string(strerror(errno)), 500);
-	return fd;
+	
+	CgiHandler cgi(this->request);
+	int fdIn;
+	int fdOut;
+	this->isCGI = cgi.isCgiResource();
+	if (this->isCGI)
+	{
+		this->cgiPid = cgi.cgiExecution();
+		fdIn = cgi.getFdIn();
+		fdOut = cgi.getFdOut();
+	}
+	else
+	{
+		fdIn = open("/dev/null", O_CREAT | O_WRONLY | O_TRUNC, 0644);
+		fdOut = open(path.c_str(), O_RDONLY);
+		if (fdIn == -1 || fdOut == -1)
+			throw http_error("open: " + std::string(strerror(errno)), 500);
+	}
+	this->request.setBodyFd(fdIn);
+	return fdOut;
 }
 
 void Response::setResourceSender(const std::string &path, int status)
@@ -99,9 +117,9 @@ void Response::setResourceSender(const std::string &path, int status)
 	}
 	else if (S_ISREG(statBuffer.st_mode))
 	{
-		this->addHeader("Last-Modified", getDateString(statBuffer.st_mtim.tv_sec));
-		this->addHeader("Content-Length", statBuffer.st_size);
-		this->setSender(status, "", this->fileHandler(path));
+		// this->addHeader("Last-Modified", getDateString(statBuffer.st_mtim.tv_sec));
+		// this->addHeader("Content-Length", statBuffer.st_size);
+		this->setSender(status, this->fileHandler(path));
 	}
 	else
 		throw http_error("Resource is neither a directory or a regular file", 422);
@@ -126,7 +144,7 @@ void Response::setErrorSender(int status)
 	}
 	std::string body = generateErrorBody(status);
 	this->addHeader("Content-Type", "text/html");
-	this->setSender(status, body, this->request.getClientFd());
+	this->setSender(status, body);
 }
 
 std::string Response::generateHeader(int status) const
@@ -142,7 +160,8 @@ std::string Response::generateHeader(int status) const
 	{
 		header << i->first << ": " << i->second << CRLF;
 	}
-	header << CRLF;
+	if (!this->isCGI)
+		header << CRLF;
 	return header.str();
 }
 
@@ -163,14 +182,23 @@ void Response::addHeader(std::string key, long value)
 	this->headers[key] = long_to_str(value);
 }
 
-void Response::setSender(int status, const std::string &content, int resourceFd)
+
+// TODO overload
+void Response::setSender(int status, const std::string &content)
 {
 	std::string header = "";
 	if (this->request.getVServer())
 	{
-		if (!content.empty())
-			this->addHeader("Content-Length", content.size());
+		this->addHeader("Content-Length", content.size());
 		header = this->generateHeader(status);
 	}
-	this->sender = new Sender(this->request.getClientFd(), header + content, resourceFd);
+	this->sender = new Sender(this->request.getClientFd(), header + content);
+}
+
+void Response::setSender(int status, int resourceFd)
+{
+	std::string header = "";
+	if (this->request.getVServer())
+		header = this->generateHeader(status);
+	this->sender = new Sender(this->request.getClientFd(), header, resourceFd);
 }

@@ -2,6 +2,7 @@
 #define RESPONSE_HPP
 
 #include "webserv.hpp"
+#include "CgiHandler.hpp"
 
 class Request;
 class Sender;
@@ -9,20 +10,20 @@ class Sender;
 class Response
 {
 private:
-	const Request &request;
+	Request &request;
 	std::map<std::string, std::string> headers;
 	Sender *sender;
+	pid_t cgiPid;
+	bool isCGI;
 
 	// Setters
-	void setSender(int status, const std::string &content = "", int resourceFd = -1);
+	void setSender(int status, const std::string &content);
+	void setSender(int status, int resourceFd);
 	std::string generateHeader(int status) const;
 	std::string getIndexPage(const std::string &path);
-
-	//
-	int fileHandler(const std::string &path) const;
-
+	int fileHandler(const std::string &path);
 public:
-	Response(const Request &request);
+	Response(Request &request);
 	~Response();
 
 	// Setters

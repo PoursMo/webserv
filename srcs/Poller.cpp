@@ -114,10 +114,7 @@ void Poller::handleInput(int fd)
 	try
 	{
 		if (!connections.at(fd)->receiver.receive())
-		{
-			connections.at(fd)->request.processRequest();
 			this->mod(fd, EPOLLOUT);
-		}
 	}
 	catch (const http_error &e)
 	{

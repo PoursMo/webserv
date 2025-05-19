@@ -57,11 +57,11 @@ void Request::processRequest()
 	}
 	if (!isInVector(this->locationData->getMethods(), this->method))
 		throw http_error("Method not in location data", 403);
+	// TODO: method == GET and body exist without content-length
 	if (this->method == POST && !headers.count("content-length"))
 		throw http_error("No content-length in POST request", 411);
 	if (this->getBodySize() > vServer->getClientMaxBodySize())
 		throw http_error("Body size > Client max body size", 413);
-
 	std::string fullPath = locationData->getRoot() + resource;
 	this->response.setResourceSender(fullPath);
 }
@@ -69,6 +69,12 @@ void Request::processRequest()
 // ********************************************************************
 // Setters
 // ********************************************************************
+
+void Request::setBodyFd(int fd)
+{
+	this->bodyFd = fd;
+}
+
 
 std::string Request::setResource(char **lstart, char *lend)
 {
@@ -218,29 +224,20 @@ bool Request::checkEmptyline(char *lstart, char *lend)
 	return false;
 }
 
-void Request::parseRequestLine(char *lstart, char *lend)
+bool Request::parseRequestLine(char *lstart, char *lend)
 {
 	if (lstart == NULL || lend == NULL || *lend != '\n')
 		throw http_error("Empty request line", 400);
 	if (checkEmptyline(lstart, lend))
 	{
-		// TODO procces request here
-
-		// 1. pipe -> cgi
-		//	remonter le cgi.pid pour le kill dans ~Request
-
-		// 2. upload_file open(/upload/my-file)
-
-		// 3.
-		bodyFd = open("/dev/null", O_CREAT | O_WRONLY | O_TRUNC, 0644);		// tmp
-		if (bodyFd == -1)													// tmp
-			throw http_error("open: " + std::string(strerror(errno)), 500); // tmp
-		return;
+		this->processRequest();
+		return false;
 	}
 	if (!this->firstLineParsed)
 		parseFirstLine(lstart, lend);
 	else
 		parseHeaderLine(lstart, lend);
+	return true;
 }
 
 // ********************************************************************
@@ -276,6 +273,7 @@ int Request::getClientFd() const
 
 int32_t Request::getBodySize() const
 {
+	// TODO: handle transfert encoding
 	std::string str = getHeaderValue("content-length");
 	long res = std::strtoul(str.c_str(), 0, 10);
 	if (res > UINT32_MAX)

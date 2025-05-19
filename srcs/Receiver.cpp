@@ -69,7 +69,9 @@ bool Receiver::receive()
 		Buffer *buffer = buffers.back();
 		if ((size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
 		{
-			std::cout << "Receiver: writing buffer in fd " << request.getBodyFd() << std::endl;
+			std::cout << "Receiver: writing body buffer in body fd " << request.getBodyFd() << std::endl;
+			std::cout << "buffer content:";
+			debug_print(buffer->pos, buffer->last);
 			write(request.getBodyFd(), buffer->first, buffer->capacity);
 		}
 		if (bodyBytesRecvd > bodySize)													// should never happen
@@ -111,23 +113,17 @@ void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 		line.append(lbuffer->pos, lf + 1);
 		std::cout << "Receiver: stitched line of size " << line.size() << ": "; // debug
 		debug_print(&line[0], &line[line.size() - 1]);							// debug
-		this->request.parseRequestLine(&line[0], &line[line.size() - 1]);
-		if (line == "\n" || line == "\r\n")
-		{
+		readingHeader = this->request.parseRequestLine(&line[0], &line[line.size() - 1]);
+		if (!readingHeader)
 			bodySize = request.getBodySize();
-			readingHeader = false;
-		}
 	}
 	else
 	{
 		std::cout << "Receiver: non-stitched line of size " << lf - lbuffer->pos + 1 << ": "; // debug
 		debug_print(lbuffer->pos, lf);														  // debug
-		this->request.parseRequestLine(lbuffer->pos, lf);
-		if (!std::strncmp(lbuffer->pos, "\n", 1) || !std::strncmp(lbuffer->pos, "\r\n", 2))
-		{
+		readingHeader = this->request.parseRequestLine(lbuffer->pos, lf);
+		if (!readingHeader)
 			bodySize = request.getBodySize();
-			readingHeader = false;
-		}
 	}
 }
 
@@ -142,7 +138,9 @@ void Receiver::flushHeaderBuffers()
 		if (!readingHeader && lbuffer->last != lf)
 		{
 			bodyBytesRecvd = lbuffer->last - lbuffer->pos + 1;
-			std::cout << "Receiver: writing buffer in fd " << request.getBodyFd() << std::endl;
+			std::cout << "Receiver: writing header buffer in body fd " << request.getBodyFd() << std::endl;
+			std::cout << "buffer content:";
+			debug_print(lbuffer->pos, lbuffer->last);
 			write(request.getBodyFd(), lbuffer->pos, std::min(bodyBytesRecvd, bodySize));
 			delete[] lbuffer->first;
 			delete lbuffer;

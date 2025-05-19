@@ -12,9 +12,13 @@
 			"address": "0.0.0.0",
 			"locations": [
 				{
+					"method": ["GET", "POST"],
 					"root": "/app/www",
 					"path": "/",
-					"autoindex": true
+					"autoindex": true,
+					"cgi": {
+						".php": "/bin/php-cgi"
+					}
 				}
 			]
 		}
