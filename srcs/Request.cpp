@@ -183,6 +183,12 @@ void Request::parseFirstLine(char *lstart, char *lend)
 	this->firstLineParsed = true;
 }
 
+std::string trimTrailingWhitespaces(std::string value)
+{
+	value.erase(value.find_last_not_of(" ") + 1);
+	return value;
+}
+
 void Request::parseHeaderLine(char *lstart, char *lend)
 {
 	std::string key;
@@ -196,13 +202,14 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 	if (*lstart != ':')
 		throw http_error("No ':' in header line", 400);
 	lstart++;
-	if (*lstart == ' ')
+	while (*lstart == ' ')
 		lstart++;
 	while (lstart != lend && *lstart != '\r')
 	{
 		value = value + *lstart;
 		lstart++;
 	}
+	value = trimTrailingWhitespaces(value);
 	if (*lstart != '\r' && lstart != lend)
 		throw http_error("Header line not correctly ended", 400);
 	if (*lstart == '\r' && *(lstart + 1) != '\n')
