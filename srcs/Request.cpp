@@ -185,7 +185,7 @@ void Request::parseFirstLine(char *lstart, char *lend)
 
 std::string trimTrailingWhitespaces(std::string value)
 {
-	value.erase(value.find_last_not_of(" ") + 1);
+	value.erase(value.find_last_not_of(" \t") + 1);
 	return value;
 }
 
@@ -202,10 +202,12 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 	if (*lstart != ':')
 		throw http_error("No ':' in header line", 400);
 	lstart++;
-	while (*lstart == ' ')
+	while (*lstart == ' ' || *lstart == '\t')
 		lstart++;
 	while (lstart != lend && *lstart != '\r')
 	{
+		if (!std::isprint(*lstart) && *lstart != '\t')
+			throw http_error("Invalid character in header value", 400);
 		value = value + *lstart;
 		lstart++;
 	}
@@ -214,7 +216,14 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 		throw http_error("Header line not correctly ended", 400);
 	if (*lstart == '\r' && *(lstart + 1) != '\n')
 		throw http_error("Header line not correctly ended", 400);
-	this->addHeader(key, value);
+	if (this->getHeaderValue(str_to_lower(key)).empty())
+	{
+		this->addHeader(key, value);
+	}
+	else
+	{
+		this->headers.at(key) = this->headers.at(key) + ", " + value;
+	}
 }
 
 bool Request::checkEmptyline(char *lstart, char *lend)
