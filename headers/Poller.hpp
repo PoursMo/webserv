@@ -33,7 +33,7 @@ private:
 	void handleNewConnection(int fd);
 	void handleInput(int fd);
 	void handleOutput(int fd);
-	void timeoutTerminator(int *timeout);
+	void timeoutTerminator(int &timeout);
 
 public:
 	Poller(const std::map<int, std::vector<VirtualServer *> > &servers);

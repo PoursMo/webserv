@@ -25,15 +25,8 @@ private:
 	size_t bodySize;
 	size_t bodyBytesRecvd;
 
-	enum BufferType
-	{
-		HEADER,
-		BODY
-	};
-
 	void sendLineToParsing(const Buffer *lbuffer, char *lf);
 	void flushHeaderBuffers();
-	void flushBodyBuffer();
 	Buffer *createHeaderBuffer();
 	void fillHeaderBuffer();
 	ssize_t handleRecv(void *buf, size_t len);

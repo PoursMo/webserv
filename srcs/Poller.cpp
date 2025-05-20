@@ -134,11 +134,11 @@ void Poller::handleOutput(int fd)
 	}
 }
 
-void Poller::timeoutTerminator(int *timeout)
+void Poller::timeoutTerminator(int &timeout)
 {
 	std::vector<int> timedOuts;
 	time_t currentTime = std::time(NULL);
-	time_t highestElapsedTime = WS_CONNECTION_TIMEOUT_TIMER;
+	time_t highestElapsedTime = 0;
 	for (std::map<int, Connection *>::iterator i = connections.begin(); i != connections.end(); i++)
 	{
 		time_t elapsedTime = currentTime - i->second->creationTime;
@@ -147,7 +147,7 @@ void Poller::timeoutTerminator(int *timeout)
 		if (elapsedTime > highestElapsedTime)
 			highestElapsedTime = elapsedTime;
 	}
-	*timeout = WS_CONNECTION_TIMEOUT_TIMER - highestElapsedTime;
+	timeout = WS_CONNECTION_TIMEOUT_TIMER - highestElapsedTime;
 	for (std::vector<int>::iterator i = timedOuts.begin(); i != timedOuts.end(); i++)
 	{
 		std::cout << "Timeout: socket " << *i << ", connection terminated after timeout of " << WS_CONNECTION_TIMEOUT_TIMER << " seconds." << std::endl;
@@ -161,8 +161,8 @@ void Poller::loop()
 	{
 		int timeout = WS_CONNECTION_TIMEOUT_TIMER;
 		if (!connections.empty())
-			timeoutTerminator(&timeout);
-		//std::cout << "Polling..." << std::endl; // debug
+			timeoutTerminator(timeout);
+		std::cout << "Polling..." << std::endl; // debug
 		int nb_ready = this->waitEvents(timeout * 1000);
 		for (int i = 0; i < nb_ready; i++)
 		{

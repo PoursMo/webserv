@@ -162,7 +162,7 @@ ssize_t Receiver::handleRecv(void *buf, size_t len)
 	ssize_t bytesReceived = recv(fd, buf, len, 0);
 	std::cout << "Receiver: recved " << bytesReceived << " bytes" << std::endl;
 	if (bytesReceived == -1)
-		throw http_error(std::strerror(errno), 500);
+		throw http_error("recv: " + std::string(strerror(errno)), 500);
 	else if (bytesReceived == 0)
 		throw std::runtime_error("Client disconnected or sent an unfinished request");
 	return bytesReceived;
