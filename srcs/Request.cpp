@@ -186,7 +186,7 @@ void Request::parseFirstLine(char *lstart, char *lend)
 void Request::parseHeaderLine(char *lstart, char *lend)
 {
 	std::string key;
-	std::string value;
+	std::string value = "";
 
 	while (lstart != lend && *lstart != '\r' && *lstart != ':')
 	{
@@ -196,9 +196,8 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 	if (*lstart != ':')
 		throw http_error("No ':' in header line", 400);
 	lstart++;
-	if (*lstart != ' ' || lstart == lend)
-		throw http_error("No space between key and value in header line", 400);
-	lstart++;
+	if (*lstart == ' ')
+		lstart++;
 	while (lstart != lend && *lstart != '\r')
 	{
 		value = value + *lstart;
