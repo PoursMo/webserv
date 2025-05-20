@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <sys/wait.h>
 
 #include <cstring>
 #include <cerrno>
@@ -24,6 +25,7 @@
 #include <list>
 #include <map>
 #include <vector>
+#include <csignal>
 
 #define WS_MAX_CLIENT_MAX_BODY_SIZE 104857600 // Maximum allowed clientMaxBodySize
 #define WS_MAX_URI_SIZE 6144				  // Maximum allowed URI size

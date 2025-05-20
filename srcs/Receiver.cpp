@@ -40,13 +40,13 @@ Receiver::Receiver(int fd, Request &request)
 
 Receiver::~Receiver()
 {
-	for (std::list<Buffer *>::iterator i = buffers.begin(); i != buffers.end();)
+	for (std::list<Buffer *>::iterator i = headerBuffers.begin(); i != headerBuffers.end();)
 	{
 		std::list<Buffer *>::iterator tmp = i;
 		++i;
 		delete[] (*tmp)->first;
 		delete (*tmp);
-		buffers.erase(tmp);
+		headerBuffers.erase(tmp);
 	}
 }
 
@@ -57,26 +57,22 @@ bool Receiver::receive()
 		std::cout << "Receiver: recving header" << std::endl; // debug
 		if (headerBufferCount >= 4)
 			throw http_error("Header too large", 400);
-		fillBuffer(HEADER);
+		fillHeaderBuffer();
 		flushHeaderBuffers();
-		if (!readingHeader && (bodyBytesRecvd >= bodySize || bodySize == 0))
+		if (!readingHeader && (bodyBytesRecvd == bodySize || bodySize == 0))
 			return false;
 	}
 	else
 	{
 		std::cout << "Receiver: recving body" << std::endl; // debug
-		fillBuffer(BODY);
-		Buffer *buffer = buffers.back();
-		if ((size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
-		{
-			std::cout << "Receiver: writing body buffer in body fd " << request.getBodyFd() << std::endl;
-			std::cout << "buffer content:";
-			debug_print(buffer->pos, buffer->last);
-			write(request.getBodyFd(), buffer->first, buffer->capacity);
-		}
-		if (bodyBytesRecvd > bodySize)													// should never happen
-			std::cout << "Receiver: WARNING !: bodyBytesRecvd > bodySize" << std::endl; // should never happen
-		if (bodyBytesRecvd >= bodySize)
+		char buffer[WS_CLIENT_BODY_BUFFER_SIZE];
+		ssize_t bytesRecvd = handleRecv(buffer, WS_CLIENT_BODY_BUFFER_SIZE);
+		bodyBytesRecvd += bytesRecvd;
+		if (bodyBytesRecvd > bodySize)
+			throw http_error("bodyBytesRecvd > bodySize", 400);
+		std::cout << "Receiver: writing body buffer in body fd " << request.getBodyFd() << std::endl;
+		write(request.getBodyFd(), buffer, bytesRecvd);
+		if (bodyBytesRecvd == bodySize)
 			return false;
 	}
 	return true;
@@ -98,17 +94,17 @@ char *Receiver::ws_strchr(char *first, const char *const last, char c)
 
 void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 {
-	if (lbuffer != buffers.front())
+	if (lbuffer != headerBuffers.front())
 	{
 		std::string line;
-		for (std::list<Buffer *>::iterator j = buffers.begin(); *j != lbuffer;)
+		for (std::list<Buffer *>::iterator j = headerBuffers.begin(); *j != lbuffer;)
 		{
 			line.append((*j)->pos, (*j)->last + 1);
 			std::list<Buffer *>::iterator tmp = j;
 			++j;
 			delete[] (*tmp)->first;
 			delete (*tmp);
-			buffers.erase(tmp);
+			headerBuffers.erase(tmp);
 		}
 		line.append(lbuffer->pos, lf + 1);
 		std::cout << "Receiver: stitched line of size " << line.size() << ": "; // debug
@@ -129,7 +125,7 @@ void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 
 void Receiver::flushHeaderBuffers()
 {
-	Buffer *const lbuffer = buffers.back();
+	Buffer *const lbuffer = headerBuffers.back();
 	char *lf;
 	while ((lf = ws_strchr(lbuffer->pos, lbuffer->last, '\n')))
 	{
@@ -138,11 +134,13 @@ void Receiver::flushHeaderBuffers()
 		if (!readingHeader && lbuffer->last != lf)
 		{
 			bodyBytesRecvd = lbuffer->last - lbuffer->pos + 1;
-			std::cout << "Receiver: writing header buffer in body fd " << request.getBodyFd() << std::endl;
-			write(request.getBodyFd(), lbuffer->pos, std::min(bodyBytesRecvd, bodySize));
+			if (bodyBytesRecvd > bodySize)
+				throw http_error("bodyBytesRecvd > bodySize", 400);
+			std::cout << "Receiver: writing remains of header buffer in body fd " << request.getBodyFd() << std::endl;
+			write(request.getBodyFd(), lbuffer->pos, bodyBytesRecvd);
 			delete[] lbuffer->first;
 			delete lbuffer;
-			buffers.clear();
+			headerBuffers.clear();
 			break;
 		}
 		else if (lf == lbuffer->last)
@@ -151,36 +149,11 @@ void Receiver::flushHeaderBuffers()
 			{
 				delete[] lbuffer->first;
 				delete lbuffer;
-				buffers.clear();
+				headerBuffers.clear();
 			}
 			break;
 		}
 	}
-}
-
-Buffer *Receiver::createBuffer(BufferType type)
-{
-	std::cout << "Receiver: creating new buffer of size "; // debug
-	Buffer *buffer = new Buffer;
-	switch (type)
-	{
-	case HEADER:
-		headerBufferCount++;
-		buffer->first = new char[WS_CLIENT_HEADER_BUFFER_SIZE];
-		buffer->capacity = WS_CLIENT_HEADER_BUFFER_SIZE;
-		std::cout << WS_CLIENT_HEADER_BUFFER_SIZE << std::endl; // debug
-		break;
-	case BODY:
-		buffer->first = new char[std::min(bodySize - bodyBytesRecvd, (unsigned long)WS_CLIENT_BODY_BUFFER_SIZE)];
-		buffer->capacity = std::min(bodySize - bodyBytesRecvd, (unsigned long)WS_CLIENT_BODY_BUFFER_SIZE);
-		std::cout << WS_CLIENT_BODY_BUFFER_SIZE << std::endl; // debug
-		break;
-	default:
-		break;
-	}
-	buffer->pos = buffer->first;
-	buffers.push_back(buffer);
-	return buffer;
 }
 
 ssize_t Receiver::handleRecv(void *buf, size_t len)
@@ -195,25 +168,27 @@ ssize_t Receiver::handleRecv(void *buf, size_t len)
 	return bytesReceived;
 }
 
-void Receiver::fillBuffer(BufferType type)
+Buffer *Receiver::createHeaderBuffer()
 {
-	Buffer *buffer = buffers.back();
+	std::cout << "Receiver: creating new buffer of size "; // debug
+	Buffer *buffer = new Buffer;
+	headerBufferCount++;
+	buffer->first = new char[WS_CLIENT_HEADER_BUFFER_SIZE];
+	buffer->capacity = WS_CLIENT_HEADER_BUFFER_SIZE;
+	std::cout << WS_CLIENT_HEADER_BUFFER_SIZE << std::endl; // debug
+	buffer->pos = buffer->first;
+	headerBuffers.push_back(buffer);
+	return buffer;
+}
+
+void Receiver::fillHeaderBuffer()
+{
+	Buffer *buffer = headerBuffers.back();
 	ssize_t bytesReceived = 0;
-	if (buffers.empty() || (size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
+	if (headerBuffers.empty() || (size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
 	{
-		buffer = createBuffer(type);
-		switch (type)
-		{
-		case HEADER:
-			bytesReceived = handleRecv(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
-			break;
-		case BODY:
-			bytesReceived = handleRecv(buffer->first, std::min(bodySize - bodyBytesRecvd, (unsigned long)WS_CLIENT_BODY_BUFFER_SIZE));
-			bodyBytesRecvd += bytesReceived;
-			break;
-		default:
-			break;
-		}
+		buffer = createHeaderBuffer();
+		bytesReceived = handleRecv(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
 		buffer->last = buffer->first + bytesReceived - 1;
 	}
 	else

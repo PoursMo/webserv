@@ -19,7 +19,7 @@ class Receiver
 private:
 	int fd;
 	Request &request;
-	std::list<Buffer *> buffers;
+	std::list<Buffer *> headerBuffers;
 	size_t headerBufferCount;
 	bool readingHeader;
 	size_t bodySize;
@@ -33,9 +33,10 @@ private:
 
 	void sendLineToParsing(const Buffer *lbuffer, char *lf);
 	void flushHeaderBuffers();
-	Buffer *createBuffer(BufferType type);
+	void flushBodyBuffer();
+	Buffer *createHeaderBuffer();
+	void fillHeaderBuffer();
 	ssize_t handleRecv(void *buf, size_t len);
-	void fillBuffer(BufferType type);
 
 	static char *ws_strchr(char *first, const char *const last, char c);
 

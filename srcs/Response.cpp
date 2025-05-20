@@ -18,7 +18,11 @@ Response::Response(Request &request)
 
 Response::~Response()
 {
-	// TODO: kill cgiPid;
+	if (this->cgiPid)
+	{
+		kill(this->cgiPid, SIGKILL);
+		waitpid(this->cgiPid, NULL, 0);
+	}
 	if (this->sender)
 		delete this->sender;
 }
@@ -62,7 +66,7 @@ std::string Response::getIndexPage(const std::string &path)
 
 int Response::fileHandler(const std::string &path)
 {
-	
+
 	CgiHandler cgi(this->request);
 	int fdIn;
 	int fdOut;
@@ -122,7 +126,7 @@ void Response::setResourceSender(const std::string &path, int status)
 		this->setSender(status, this->fileHandler(path));
 	}
 	else
-		throw http_error("Resource is neither a directory or a regular file", 422);
+		throw http_error("Resource is neither a directory nor a regular file", 422);
 }
 
 void Response::setErrorSender(int status)
