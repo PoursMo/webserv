@@ -11,31 +11,32 @@
 			"locations": [
 				{
 					"path": "/",
-					"root": "/app/www",
-					"autoindex": true
+					"index": [
+						"index.html"
+					],
+					"root": "/app/www"
 				},
 				{
-					"path": "/pomme",
-					"root": "/app/www",
-					"index": ["index.html", "page.html"]
+					"path": "/autoindex_on",
+					"autoindex": true,
+					"root": "/app/www"
 				},
 				{
-					"path": "/pomme/banane",
+					"path": "/autoindex_on/dir",
 					"root": "/app/www",
-					"autoindex": true
+					"index": [
+						"index.html",
+						"file.html"
+					]
 				},
 				{
-					"path": "/pomme/orange",
+					"path": "/autoindex_off",
 					"root": "/app/www"
 				},
 				{
 					"path": "a",
 					"root": "/app/www",
 					"autoindex": true
-				},
-				{
-					"path": "/pomme/banane/kiwi",
-					"root": "/app/www"
 				}
 			]
 		}
