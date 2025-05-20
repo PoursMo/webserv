@@ -34,7 +34,7 @@
 #define WS_EPOLL_NB_EVENTS 512				  // Epoll maximum number of events returned by epoll_wait
 #define WS_BACKLOG 511						  // Listening socket backlog size
 #define WS_SENDER_BUFFER_SIZE 32768			  // Sender buffer size
-#define WS_CONNECTION_TIMEOUT_TIMER 5		  // Time for connection timeout
+#define WS_CONNECTION_TIMEOUT_TIMER 60		  // Time for connection timeout
 #define CRLF "\r\n"							  // CRLF
 
 enum Method
