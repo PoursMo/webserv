@@ -1,7 +1,7 @@
 #include "Connection.hpp"
 
-Connection::Connection(int clientFd, const std::vector<VirtualServer *> &vServers)
-	: request(clientFd, vServers),
+Connection::Connection(int clientFd, const std::vector<VirtualServer *> &vServers, const Poller &poller)
+	: request(clientFd, vServers, poller),
 	  receiver(clientFd, request)
 {
 	this->updateTime();

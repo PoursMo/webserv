@@ -1,6 +1,7 @@
 #include "Poller.hpp"
 #include "http_error.hpp"
 #include "Connection.hpp"
+#include "VirtualServer.hpp"
 
 /*
 edge-trigerred mode: Epoll_wait will return only when a new event is enqueued with the epoll object.
@@ -97,7 +98,7 @@ void Poller::handleNewConnection(int fd)
 	if (clientFd == -1)
 		throw std::runtime_error("accept: " + std::string(strerror(errno)));
 	std::cout << "New connection on socket " << fd << ", created socket fd: " << clientFd << std::endl;
-	connections[clientFd] = new Connection(clientFd, servers.at(fd));
+	connections[clientFd] = new Connection(clientFd, servers.at(fd), *this);
 	this->add(clientFd, EPOLLIN);
 }
 
@@ -190,17 +191,24 @@ void Poller::loop()
 				std::cerr << e.what() << '\n';
 				terminateConnection(event.data.fd);
 			}
-			catch (const execve_error &e)
+			catch (const child_accident &e)
 			{
 				std::cerr << e.what() << '\n';
-				for (std::map<int, Connection *>::iterator i = connections.begin(); i != connections.end(); i++)
-				{
-					delete i->second;
-					close(i->first);
-				}
-				close(this->epollFd);
 				return;
 			}
 		}
+	}
+}
+
+void Poller::closeAll() const
+{
+	for (std::map<int, Connection *>::const_iterator i = connections.begin(); i != connections.end(); i++)
+	{
+		close(i->first);
+	}
+	close(this->epollFd);
+	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = servers.begin(); i != servers.end(); i++)
+	{
+		close(i->first);
 	}
 }

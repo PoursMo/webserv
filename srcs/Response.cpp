@@ -163,7 +163,7 @@ std::string Response::generateHeader(int status) const
 	{
 		header << i->first << ": " << i->second << CRLF;
 	}
-	if (!this->isCGI)
+	if (!this->isCGI || status >= 300)
 		header << CRLF;
 	return header.str();
 }

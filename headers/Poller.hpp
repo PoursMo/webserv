@@ -31,6 +31,7 @@ public:
 	~Poller();
 
 	void loop();
+	void closeAll() const;
 };
 
 #endif

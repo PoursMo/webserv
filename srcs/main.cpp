@@ -52,13 +52,5 @@ int main(int argc, char **argv)
 	Poller poller(servers);
 	poller.loop();
 
-	// this is never reached
-	for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
-	{
-		for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
-		{
-			delete (*j);
-		}
-		close(i->first);
-	}
+	return 0;
 }

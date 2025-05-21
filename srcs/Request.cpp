@@ -5,12 +5,13 @@
 #include "utils.hpp"
 #include "http_error.hpp"
 
-Request::Request(int clientFd, const std::vector<VirtualServer *> &vServers)
+Request::Request(int clientFd, const std::vector<VirtualServer *> &vServers, const Poller &poller)
 	: bodyFd(-1),
 	  clientFd(clientFd),
 	  firstLineParsed(false),
 	  vServers(vServers),
 	  vServer(0),
+	  poller(poller),
 	  response(*this)
 {
 }
@@ -57,7 +58,6 @@ void Request::processRequest()
 	}
 	if (!isInVector(this->locationData->getMethods(), this->method))
 		throw http_error("Method not in location data", 403);
-	// TODO: method == GET and body exist without content-length
 	if (this->method == POST && !headers.count("content-length"))
 		throw http_error("No content-length in POST request", 411);
 	if (this->getBodySize() > vServer->getClientMaxBodySize())
@@ -194,7 +194,7 @@ void Request::parseHeaderLine(char *lstart, char *lend)
 	std::string key;
 	std::string value = "";
 
-	while (lstart != lend && *lstart != '\r' && *lstart != ':')
+	while (lstart != lend && *lstart != '\r' && *lstart != ':' && *lstart != ' ' && *lstart != '\t')
 	{
 		key = key + *lstart;
 		lstart++;
@@ -287,11 +287,11 @@ int Request::getClientFd() const
 
 int32_t Request::getBodySize() const
 {
-	// TODO: handle transfert encoding
+	// TODO: handle transfert encoding ??????? or maybe not lol
 	std::string str = getHeaderValue("content-length");
 	long res = std::strtoul(str.c_str(), 0, 10);
 	if (res > UINT32_MAX)
-		throw http_error("content-length > UINT32_MAX", 413);
+		throw http_error("content-length > UINT32_MAX", 413); 
 	return res;
 }
 
@@ -303,4 +303,9 @@ const VirtualServer *Request::getVServer() const
 const LocationData *Request::getLocation() const
 {
 	return this->locationData;
+}
+
+const Poller &Request::getPoller() const
+{
+	return this->poller;
 }

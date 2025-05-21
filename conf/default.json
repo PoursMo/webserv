@@ -17,7 +17,7 @@
 					"path": "/",
 					"autoindex": true,
 					"cgi": {
-						".php": "/bin/php-cgi"
+						".php": "/bin/php-cgi-prout"
 					}
 				}
 			]

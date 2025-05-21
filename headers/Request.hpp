@@ -6,6 +6,7 @@
 
 class VirtualServer;
 class LocationData;
+class Poller;
 
 class Request
 {
@@ -20,6 +21,7 @@ private:
 	const std::vector<VirtualServer *> &vServers;
 	const VirtualServer *vServer;
 	const LocationData *locationData;
+	const Poller &poller;
 
 	// Line received parsing
 	void parseFirstLine(char *lstart, char *lend);
@@ -35,7 +37,7 @@ private:
 	const VirtualServer *selectVServer();
 
 public:
-	Request(int clientFd, const std::vector<VirtualServer *> &vServers);
+	Request(int clientFd, const std::vector<VirtualServer *> &vServers, const Poller &poller);
 	~Request();
 
 	// Line received parsing
@@ -54,6 +56,7 @@ public:
 	int32_t getBodySize() const;
 	const VirtualServer *getVServer() const;
 	const LocationData *getLocation() const;
+	const Poller &getPoller() const;
 
 	Response response;
 };

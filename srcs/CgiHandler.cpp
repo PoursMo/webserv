@@ -2,6 +2,8 @@
 #include "Request.hpp"
 #include "VirtualServer.hpp"
 #include "LocationData.hpp"
+#include "http_error.hpp"
+#include "Poller.hpp"
 
 CgiHandler::CgiHandler(const Request &request) : request(request),
 												 resource(request.getResource()),
@@ -74,7 +76,7 @@ static void connect_fd(int fd, int stdFd)
 	if (dup2(fd, stdFd) == -1)
 	{
 		close(fd);
-		throw std::runtime_error("dup2:" + std::string(strerror(errno)));
+		throw child_accident();
 	}
 	close(fd);
 }
@@ -104,7 +106,7 @@ static void deleteArray(char **arr)
 {
 	char **a = arr;
 	while (*arr)
-		delete[] arr++;
+		delete[] *(arr++);
 	delete[] a;
 }
 
@@ -168,8 +170,9 @@ int CgiHandler::cgiExecution()
 	t_pipe pipefd_out;
 
 	if (this->cgiPath == "")
-		throw std::runtime_error("cgi path is not defined");
-
+		throw http_error("cgi path is not defined", 500);
+	if (access(this->cgiPath.c_str(), X_OK) == -1)
+		throw http_error("non existant cgi binary", 500);
 	std::cout << "resource:\t" << this->resource << std::endl;
 	std::cout << "query:\t\t" << this->query << std::endl;
 	std::cout << "content-type:\t" << this->request.getHeaderValue("content-type") << std::endl;
@@ -180,18 +183,13 @@ int CgiHandler::cgiExecution()
 	std::cout << "method:\t" << this->getMethodString() << std::endl;
 
 	if (pipe(pipefd_in.fds) == -1)
-		throw std::runtime_error("pipe: " + std::string(strerror(errno)));
+		throw http_error("pipe: " + std::string(strerror(errno)), 500);
 	if (pipe(pipefd_out.fds) == -1)
-		throw std::runtime_error("pipe: " + std::string(strerror(errno)));
-
-	std::cout << "pipefd_in.in: " << pipefd_in.in << std::endl;
-	std::cout << "pipefd_in.out: " << pipefd_in.out << std::endl;
-	std::cout << "pipefd_out.in: " << pipefd_out.in << std::endl;
-	std::cout << "pipefd_out.out: " << pipefd_out.out << std::endl;
+		throw http_error("pipe: " + std::string(strerror(errno)), 500);
 
 	int pid = fork();
 	if (pid == -1)
-		throw std::runtime_error("fork: " + std::string(strerror(errno)));
+		throw http_error("fork: " + std::string(strerror(errno)), 500);
 	if (pid)
 	{
 		close(pipefd_in.out);
@@ -200,6 +198,7 @@ int CgiHandler::cgiExecution()
 		this->fdOut = pipefd_out.out;
 		return pid;
 	}
+	this->request.getPoller().closeAll();
 	close(pipefd_in.in);
 	close(pipefd_out.out);
 	connect_fd(pipefd_in.out, STDIN_FILENO);
@@ -211,7 +210,7 @@ int CgiHandler::cgiExecution()
 	{
 		deleteArray(envp);
 		deleteArray(argv);
-		throw execve_error();
+		throw child_accident();
 	}
 	return 0;
 }
@@ -231,7 +230,7 @@ bool CgiHandler::isCgiResource() const
 	return (this->cgiPath != "");
 }
 
-const char *execve_error::what() const throw()
+const char *child_accident::what() const throw()
 {
-	return "execve failed";
+	return "child error";
 }

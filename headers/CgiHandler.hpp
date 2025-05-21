@@ -30,7 +30,7 @@ public:
 	int getFdOut() const;
 };
 
-class execve_error : public std::exception
+class child_accident : public std::exception
 {
 public:
 	const char *what() const throw();
