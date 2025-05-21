@@ -51,7 +51,6 @@ void CgiHandler::initCgi()
 	}
 
 	std::cout << "RESOURCE IS NOT CGI:" << this->resource << std::endl;
-
 }
 
 std::string CgiHandler::getMethodString() const
@@ -69,7 +68,6 @@ std::string CgiHandler::getMethodString() const
 		break;
 	}
 }
-
 
 static void connect_fd(int fd, int stdFd)
 {
@@ -154,9 +152,11 @@ char **CgiHandler::getCgiArgv()
 	return argv;
 }
 
-union t_pipe {
+union t_pipe
+{
 	int fds[2];
-	struct {
+	struct
+	{
 		int out;
 		int in;
 	};
@@ -180,9 +180,9 @@ int CgiHandler::cgiExecution()
 	std::cout << "method:\t" << this->getMethodString() << std::endl;
 
 	if (pipe(pipefd_in.fds) == -1)
-		throw std::runtime_error("pipe:" + std::string(strerror(errno)));
+		throw std::runtime_error("pipe: " + std::string(strerror(errno)));
 	if (pipe(pipefd_out.fds) == -1)
-		throw std::runtime_error("pipe:" + std::string(strerror(errno)));
+		throw std::runtime_error("pipe: " + std::string(strerror(errno)));
 
 	std::cout << "pipefd_in.in: " << pipefd_in.in << std::endl;
 	std::cout << "pipefd_in.out: " << pipefd_in.out << std::endl;
@@ -191,7 +191,7 @@ int CgiHandler::cgiExecution()
 
 	int pid = fork();
 	if (pid == -1)
-		throw std::runtime_error("fork:" + std::string(strerror(errno)));
+		throw std::runtime_error("fork: " + std::string(strerror(errno)));
 	if (pid)
 	{
 		close(pipefd_in.out);
@@ -211,20 +211,19 @@ int CgiHandler::cgiExecution()
 	{
 		deleteArray(envp);
 		deleteArray(argv);
-		// TODO terminate process
-		throw std::runtime_error("execv failed");
+		throw execve_error();
 	}
 	return 0;
 }
 
 int CgiHandler::getFdIn() const
 {
-    return this->fdIn;
+	return this->fdIn;
 }
 
 int CgiHandler::getFdOut() const
 {
-    return this->fdOut;
+	return this->fdOut;
 }
 
 bool CgiHandler::isCgiResource() const
@@ -232,3 +231,7 @@ bool CgiHandler::isCgiResource() const
 	return (this->cgiPath != "");
 }
 
+const char *execve_error::what() const throw()
+{
+	return "execve failed";
+}

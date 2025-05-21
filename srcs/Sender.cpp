@@ -19,7 +19,7 @@ Sender::~Sender()
 
 ssize_t Sender::trySend(const char *buffer, size_t len)
 {
-	ssize_t bytesSent = send(this->clientFd, buffer, len, 0);
+	ssize_t bytesSent = send(this->clientFd, buffer, len, MSG_NOSIGNAL);
 	if (bytesSent == -1)
 		throw std::runtime_error("send: " + std::string(strerror(errno)));
 	std::cout << "Sender: bytesSent: " << bytesSent << std::endl;

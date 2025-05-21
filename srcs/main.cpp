@@ -59,5 +59,6 @@ int main(int argc, char **argv)
 		{
 			delete (*j);
 		}
+		close(i->first);
 	}
 }

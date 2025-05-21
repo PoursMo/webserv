@@ -1,14 +1,6 @@
 #include "Poller.hpp"
 #include "http_error.hpp"
-#include "Request.hpp"
-#include "Receiver.hpp"
-
-Connection::Connection(int clientFd, const std::vector<VirtualServer *> &vServers)
-	: creationTime(std::time(NULL)),
-	  request(clientFd, vServers),
-	  receiver(clientFd, request)
-{
-}
+#include "Connection.hpp"
 
 /*
 edge-trigerred mode: Epoll_wait will return only when a new event is enqueued with the epoll object.
@@ -77,6 +69,7 @@ bool Poller::isServerFd(int fd)
 
 void Poller::terminateConnection(int fd)
 {
+	std::cout << "Terminating socket: " << fd << std::endl;
 	try
 	{
 		delete connections.at(fd);
@@ -115,6 +108,13 @@ void Poller::handleInput(int fd)
 	{
 		if (!connections.at(fd)->receiver.receive())
 			this->mod(fd, EPOLLOUT);
+		else
+		{
+			if (connections.at(fd)->receiver.getBytesRecvd() == 0)
+				this->mod(fd, EPOLLET);
+			else
+				this->mod(fd, EPOLLIN);
+		}
 	}
 	catch (const http_error &e)
 	{
@@ -129,7 +129,6 @@ void Poller::handleOutput(int fd)
 	std::cout << "Out operations on socket " << fd << ":" << std::endl;
 	if (!connections.at(fd)->request.response.send())
 	{
-		std::cout << "Terminating socket: " << fd << std::endl;
 		terminateConnection(fd);
 	}
 }
@@ -141,10 +140,10 @@ void Poller::timeoutTerminator(int &timeout)
 	time_t highestElapsedTime = 0;
 	for (std::map<int, Connection *>::iterator i = connections.begin(); i != connections.end(); i++)
 	{
-		time_t elapsedTime = currentTime - i->second->creationTime;
+		time_t elapsedTime = currentTime - i->second->lastEventTime;
 		if (elapsedTime >= WS_CONNECTION_TIMEOUT_TIMER)
 			timedOuts.push_back(i->first);
-		if (elapsedTime > highestElapsedTime)
+		else if (elapsedTime > highestElapsedTime)
 			highestElapsedTime = elapsedTime;
 	}
 	timeout = WS_CONNECTION_TIMEOUT_TIMER - highestElapsedTime;
@@ -175,6 +174,7 @@ void Poller::loop()
 				}
 				else
 				{
+					connections.at(event.data.fd)->updateTime();
 					if (event.events & EPOLLIN)
 					{
 						handleInput(event.data.fd);
@@ -185,10 +185,21 @@ void Poller::loop()
 					}
 				}
 			}
-			catch (const std::exception &e)
+			catch (const std::runtime_error &e)
 			{
 				std::cerr << e.what() << '\n';
 				terminateConnection(event.data.fd);
+			}
+			catch (const execve_error &e)
+			{
+				std::cerr << e.what() << '\n';
+				for (std::map<int, Connection *>::iterator i = connections.begin(); i != connections.end(); i++)
+				{
+					delete i->second;
+					close(i->first);
+				}
+				close(this->epollFd);
+				return;
 			}
 		}
 	}

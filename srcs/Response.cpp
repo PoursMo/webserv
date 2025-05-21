@@ -66,7 +66,6 @@ std::string Response::getIndexPage(const std::string &path)
 
 int Response::fileHandler(const std::string &path)
 {
-
 	CgiHandler cgi(this->request);
 	int fdIn;
 	int fdOut;
@@ -194,6 +193,8 @@ void Response::setSender(int status, const std::string &content)
 		this->addHeader("Content-Length", content.size());
 		header = this->generateHeader(status);
 	}
+	if (this->sender)
+		delete this->sender;
 	this->sender = new Sender(this->request.getClientFd(), header + content);
 }
 
@@ -202,5 +203,7 @@ void Response::setSender(int status, int resourceFd)
 	std::string header = "";
 	if (this->request.getVServer())
 		header = this->generateHeader(status);
+	if (this->sender)
+		delete this->sender;
 	this->sender = new Sender(this->request.getClientFd(), header, resourceFd);
 }

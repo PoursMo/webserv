@@ -1,6 +1,7 @@
 #include "Receiver.hpp"
 #include "http_error.hpp"
 #include "Poller.hpp"
+#include "Request.hpp"
 
 // ********************************************************************
 // Debug
@@ -57,8 +58,8 @@ bool Receiver::receive()
 		std::cout << "Receiver: recving header" << std::endl; // debug
 		if (headerBufferCount >= 4)
 			throw http_error("Header too large", 400);
-		fillHeaderBuffer();
-		flushHeaderBuffers();
+		if (fillHeaderBuffer())
+			flushHeaderBuffers();
 		if (!readingHeader && (bodyBytesRecvd == bodySize || bodySize == 0))
 			return false;
 	}
@@ -66,12 +67,12 @@ bool Receiver::receive()
 	{
 		std::cout << "Receiver: recving body" << std::endl; // debug
 		char buffer[WS_CLIENT_BODY_BUFFER_SIZE];
-		ssize_t bytesRecvd = handleRecv(buffer, WS_CLIENT_BODY_BUFFER_SIZE);
-		bodyBytesRecvd += bytesRecvd;
+		handleRecv(buffer, WS_CLIENT_BODY_BUFFER_SIZE);
+		bodyBytesRecvd += this->bytesRecvd;
 		if (bodyBytesRecvd > bodySize)
 			throw http_error("bodyBytesRecvd > bodySize", 400);
 		std::cout << "Receiver: writing body buffer in body fd " << request.getBodyFd() << std::endl;
-		write(request.getBodyFd(), buffer, bytesRecvd);
+		write(request.getBodyFd(), buffer, this->bytesRecvd);
 		if (bodyBytesRecvd == bodySize)
 			return false;
 	}
@@ -159,13 +160,11 @@ void Receiver::flushHeaderBuffers()
 ssize_t Receiver::handleRecv(void *buf, size_t len)
 {
 	std::cout << "Receiver: recving for " << len << " bytes" << std::endl; // debug
-	ssize_t bytesReceived = recv(fd, buf, len, 0);
-	std::cout << "Receiver: recved " << bytesReceived << " bytes" << std::endl;
-	if (bytesReceived == -1)
+	this->bytesRecvd = recv(fd, buf, len, 0);
+	std::cout << "Receiver: recved " << this->bytesRecvd << " bytes" << std::endl;
+	if (this->bytesRecvd == -1)
 		throw http_error("recv: " + std::string(strerror(errno)), 500);
-	else if (bytesReceived == 0)
-		throw std::runtime_error("Client disconnected or sent an unfinished request");
-	return bytesReceived;
+	return this->bytesRecvd;
 }
 
 Buffer *Receiver::createHeaderBuffer()
@@ -181,24 +180,33 @@ Buffer *Receiver::createHeaderBuffer()
 	return buffer;
 }
 
-void Receiver::fillHeaderBuffer()
+bool Receiver::fillHeaderBuffer()
 {
 	Buffer *buffer = headerBuffers.back();
-	ssize_t bytesReceived = 0;
 	if (headerBuffers.empty() || (size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
 	{
 		buffer = createHeaderBuffer();
-		bytesReceived = handleRecv(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
-		buffer->last = buffer->first + bytesReceived - 1;
+		handleRecv(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
+		if (this->bytesRecvd == 0)
+			return false;
+		buffer->last = buffer->first + this->bytesRecvd - 1;
 	}
 	else
 	{
 		std::cout << "Receiver: adding to existing buffer" << std::endl; // debug
 		char *buf = buffer->last + 1;
 		size_t readSize = buffer->capacity - (buffer->last - buffer->first) - 1;
-		bytesReceived = handleRecv(buf, readSize);
-		buffer->last += bytesReceived;
+		handleRecv(buf, readSize);
+		if (this->bytesRecvd == 0)
+			return false;
+		buffer->last += this->bytesRecvd;
 	}
 	std::cout << "Receiver: buffer: ";		  // debug
 	debug_print(buffer->first, buffer->last); // debug
+	return true;
+}
+
+ssize_t Receiver::getBytesRecvd() const
+{
+	return this->bytesRecvd;
 }

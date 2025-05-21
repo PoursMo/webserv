@@ -2,19 +2,9 @@
 #define POLLER_HPP
 
 #include "webserv.hpp"
-#include "Request.hpp"
-#include "Receiver.hpp"
 
 class VirtualServer;
-
-struct Connection
-{
-	const time_t creationTime;
-	Request request;
-	Receiver receiver;
-
-	Connection(int clientFd, const std::vector<VirtualServer *> &vServers);
-};
+class Connection;
 
 class Poller
 {
