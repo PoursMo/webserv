@@ -15,6 +15,8 @@ std::string getDateString();
 
 std::string getDateString(time_t time);
 
+int str_to_int(const std::string str, const std::string base = "0123456789ABCDEF", int value = 0);
+
 template <typename T>
 bool isInVector(const std::vector<T> &vector, const T &value)
 {

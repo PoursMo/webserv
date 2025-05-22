@@ -86,7 +86,7 @@ send_all_request() {
 send() {
 	
 	# NETCAT MODE
-	# nc -q 1 $2 $3 < $1
+	# nc -q 0 $2 $3 < $1
 	# if [ $? -ne 0 ] ; then
 	# 	echo "NO RESPONSE FROM $2:$3"
 	# 	return 1

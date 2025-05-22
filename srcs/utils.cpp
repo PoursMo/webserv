@@ -93,3 +93,11 @@ std::string getDateString(time_t time)
 	std::string formatted_time(buffer);
 	return (formatted_time);
 }
+
+int str_to_int(const std::string str, const std::string base, int value)
+{
+	std::size_t digit = base.find(str[0]);
+	if (digit == std::string::npos)
+		return value;
+	return (str_to_int(str.data() + 1, base, (value * base.length()) + digit));
+}
