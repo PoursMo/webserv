@@ -1,24 +1,16 @@
-#include "webserv.hpp"
-#include "utils.hpp"
-
-
-std::string decodeUri(const std::string &src)
-{
-    std::stringstream decoded;
-
-    decoded << "value: ";
-    decoded << str_to_int(src);
-
-    return decoded.str();
-}
+#include "uri.hpp"
 
 int main(int ac, char **av)
 {
-
     if (ac != 2)
-        return (1);
+    {
+        std::cout << "Please, provide an uri to decode" << std::endl;
+        return 1;
+    }
     std::string uri = av[1];
-    std::cout << "Encoded:" << uri << std::endl;
-    std::cout << "Decoded:" << decodeUri(uri) << std::endl;
-
+    std::string decoded = decodeUri(uri);
+    std::cout << "Encoded: `" << uri << "'" << std::endl;
+    std::cout << "Decoded: `" << decoded << "'" << std::endl;
+    std::cout << "Encoded: `" << encodeUri(decoded) << "'" << std::endl;
+    return 0;
 }

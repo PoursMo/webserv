@@ -86,7 +86,7 @@ std::string Request::setResource(char **lstart, char *lend)
 	}
 	if (resource == "")
 		throw http_error("Empty resource in header-field line", 400);
-	return (resource);
+	return (decodeUri(resource));
 }
 
 void Request::addHeader(std::string key, std::string value)

@@ -3,6 +3,7 @@
 
 #include "webserv.hpp"
 #include "Response.hpp"
+#include "uri.hpp"
 
 class VirtualServer;
 class LocationData;

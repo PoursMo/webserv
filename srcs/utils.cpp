@@ -1,6 +1,6 @@
 #include "utils.hpp"
 
-std::string int_to_str(int num)
+std::string int_to_str(int num, const std::string& base)
 {
 	bool isNegative = (num < 0);
 	if (isNegative)
@@ -8,8 +8,9 @@ std::string int_to_str(int num)
 	std::string result;
 	do
 	{
-		result += '0' + (num % 10);
-		num /= 10;
+		int digit = num % base.length();
+		result += base[digit];
+		num /= base.length();
 	} while (num > 0);
 	if (isNegative)
 		result += '-';
@@ -94,7 +95,7 @@ std::string getDateString(time_t time)
 	return (formatted_time);
 }
 
-int str_to_int(const std::string str, const std::string base, int value)
+int str_to_int(const std::string str, const std::string& base, int value)
 {
 	std::size_t digit = base.find(str[0]);
 	if (digit == std::string::npos)

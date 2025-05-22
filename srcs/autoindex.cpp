@@ -1,7 +1,9 @@
 #include "webserv.hpp"
+#include "uri.hpp"
 
 struct s_entrie {
 	std::string name;
+	std::string href;
 	std::string path;
 	off_t size;
 };
@@ -24,6 +26,7 @@ void initDirectoryEntries(
 		ent.name = dp->d_name;
 		if (ent.name == ".")
 			continue;
+		ent.href = encodeUri(ent.name);
 		ent.path = path + "/" + ent.name;
 		if (stat(ent.path.c_str(), &statBuffer) == -1)
 			continue;
@@ -31,6 +34,7 @@ void initDirectoryEntries(
 		if (statBuffer.st_mode & S_IFDIR)
 		{
 			ent.name += "/";
+			ent.href += "/";
 			folders.push_back(ent);
 			continue;
 		}
@@ -60,14 +64,14 @@ std::string getAutoIndexHtml(const std::string &path, const std::string &root)
 
 	for (std::vector<struct s_entrie>::const_iterator it = folders.begin(); it != folders.end(); it++)
 	{
-		html << "<a href=\"" << it->name << "\">";
+		html << "<a href=\"" << it->href << "\">";
 		html << "<span>" << "📂" << "</span>";
 		html << "<span class=\"entrie-name\">" << it->name << "</span>";
 		html << "</a>";
 	}
 	for (std::vector<struct s_entrie>::const_iterator it = files.begin(); it != files.end(); it++)
 	{
-		html << "<a href=\"" << it->name << "\">";
+		html << "<a href=\"" << it->href << "\">";
 		html << "<span>" << "📄" << "</span>";
 		html << "<span class=\"entrie-name\">" << it->name << "</span>";
 		html << "<span>" << it->size << "</span>";
