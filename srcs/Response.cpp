@@ -78,6 +78,8 @@ int Response::fileHandler(const std::string &path)
 	}
 	else
 	{
+		if (this->request.getMethod() != GET)
+			throw http_error("Only GET method can be handled without CGI", 405);
 		fdIn = open("/dev/null", O_CREAT | O_WRONLY | O_TRUNC, 0644);
 		fdOut = open(path.c_str(), O_RDONLY);
 		if (fdIn == -1 || fdOut == -1)

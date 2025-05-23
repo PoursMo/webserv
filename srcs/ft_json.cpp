@@ -310,7 +310,7 @@ ft_json::JsonValue ft_json::parse_json(std::string file_content)
 	}
 	catch (const std::exception &e)
 	{
-		throw std::runtime_error("line " + int_to_str(line) + ": " + e.what());
+		throw std::runtime_error("JSON parsing: line " + int_to_str(line) + ": " + e.what());
 	}
 }
 

@@ -14,10 +14,7 @@ bool init(const char *config_path, std::map<int, std::vector<VirtualServer *> > 
 	}
 	try
 	{
-		std::cout << "\033[1m\033[31m" << "json:" << "\033[0m" << std::endl;
 		ft_json::JsonValue json = ft_json::parse_json(file);
-		std::cout << json << std::endl
-				  << std::endl;
 		std::cout << "\033[1m\033[31m" << "servers:" << "\033[0m" << std::endl;
 		create_servers(json, servers);
 		for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
