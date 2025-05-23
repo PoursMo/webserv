@@ -15,10 +15,7 @@
 					"method": ["GET", "POST"],
 					"root": "/app/www",
 					"path": "/",
-					"autoindex": true,
-					"cgi": {
-						".php": "/bin/php-cgi-prout"
-					}
+					"autoindex": true
 				}
 			]
 		}

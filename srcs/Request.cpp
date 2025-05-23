@@ -29,8 +29,6 @@ Request::~Request()
 const VirtualServer *Request::selectVServer()
 {
 	const std::string &hostName = this->getHeaderValue("host");
-	if (hostName.empty())
-		throw http_error("No host header field-line in request", 400);
 	for (std::vector<VirtualServer *>::const_iterator i = vServers.begin(); i != vServers.end(); i++)
 	{
 		for (std::vector<std::string>::const_iterator j = (*i)->getServerNames().begin(); j != (*i)->getServerNames().end(); j++)
@@ -44,7 +42,11 @@ const VirtualServer *Request::selectVServer()
 
 void Request::processRequest()
 {
+	if (!this->headers.count("host"))
+		throw http_error("No host header field-line in request", 400);
 	this->vServer = selectVServer();
+	if (this->headers.at("host").empty())
+		throw http_error("Empty host header", 400);
 	this->locationData = vServer->getLocation(resource);
 	if (resource[0] != '/')
 		throw http_error("No '/' in resource", 400);
@@ -291,7 +293,7 @@ int32_t Request::getBodySize() const
 	std::string str = getHeaderValue("content-length");
 	long res = std::strtoul(str.c_str(), 0, 10);
 	if (res > UINT32_MAX)
-		throw http_error("content-length > UINT32_MAX", 413); 
+		throw http_error("content-length > UINT32_MAX", 413);
 	return res;
 }
 

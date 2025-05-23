@@ -16,6 +16,7 @@ RUN apt-get install -y make
 RUN apt-get install -y jq
 RUN apt-get install -y php-cgi
 RUN apt-get install -y siege
+RUN apt-get install -y python3.10
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 RUN unset DEBIAN_FRONTEND
 RUN mkdir -p /app/logs/nginx
