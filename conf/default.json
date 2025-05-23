@@ -1,5 +1,6 @@
 {
 	"$schema": "./_schema.json",
+	"debug": false,
 	"servers": [
 		{
 			"error_page": {

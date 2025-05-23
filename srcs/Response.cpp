@@ -7,6 +7,7 @@
 #include "autoindex.hpp"
 #include "Sender.hpp"
 #include "VirtualServer.hpp"
+#include "Logger.hpp"
 
 Response::Response(Request &request)
 	: request(request),
@@ -91,7 +92,7 @@ int Response::fileHandler(const std::string &path)
 
 void Response::setResourceSender(const std::string &path, int status)
 {
-	std::cout << "accessing path: " << path << std::endl;
+	logger.log() << "accessing path: " << path << std::endl;
 	if (access(path.c_str(), R_OK) == -1)
 		throw http_error("access: " + std::string(strerror(errno)), 404);
 	struct stat statBuffer;

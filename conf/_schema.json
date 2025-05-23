@@ -4,6 +4,10 @@
   "type": "object",
   "properties": {
     "$schema": true,
+    "debug": {
+      "type": "boolean",
+      "default": true
+    },
     "servers": {
       "type": "array",
       "minItems": 1,

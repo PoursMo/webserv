@@ -4,6 +4,7 @@
 #include "LocationData.hpp"
 #include "http_error.hpp"
 #include "Poller.hpp"
+#include "Logger.hpp"
 
 CgiHandler::CgiHandler(const Request &request) : request(request),
 												 resource(request.getResource()),
@@ -30,7 +31,7 @@ void CgiHandler::initQuery()
 
 void CgiHandler::initCgi()
 {
-	std::cout << "Init CGI HANDLER" << std::endl;
+	logger.log() << "Init CGI HANDLER" << std::endl;
 
 	std::map<std::string, std::string> cgiConfig = this->request.getLocation()->getCgiConfig();
 	for (std::map<std::string, std::string>::const_iterator it = cgiConfig.begin(); it != cgiConfig.end(); it++)
@@ -52,7 +53,7 @@ void CgiHandler::initCgi()
 		}
 	}
 
-	std::cout << "RESOURCE IS NOT CGI:" << this->resource << std::endl;
+	logger.log() << "RESOURCE IS NOT CGI:" << this->resource << std::endl;
 }
 
 std::string CgiHandler::getMethodString() const
@@ -173,14 +174,14 @@ int CgiHandler::cgiExecution()
 		throw http_error("cgi path is not defined", 500);
 	if (access(this->cgiPath.c_str(), X_OK) == -1)
 		throw http_error("non existant cgi binary", 500);
-	std::cout << "resource:\t" << this->resource << std::endl;
-	std::cout << "query:\t\t" << this->query << std::endl;
-	std::cout << "content-type:\t" << this->request.getHeaderValue("content-type") << std::endl;
-	std::cout << "content-length:\t" << this->request.getHeaderValue("content-length") << std::endl;
-	std::cout << "cgi extension:\t" << this->cgiExtension << std::endl;
-	std::cout << "cgi path:\t" << this->cgiPath << std::endl;
-	std::cout << "cgi pathinfo:\t" << this->cgiPathInfo << std::endl;
-	std::cout << "method:\t" << this->getMethodString() << std::endl;
+	logger.log() << "resource:\t" << this->resource << std::endl;
+	logger.log() << "query:\t\t" << this->query << std::endl;
+	logger.log() << "content-type:\t" << this->request.getHeaderValue("content-type") << std::endl;
+	logger.log() << "content-length:\t" << this->request.getHeaderValue("content-length") << std::endl;
+	logger.log() << "cgi extension:\t" << this->cgiExtension << std::endl;
+	logger.log() << "cgi path:\t" << this->cgiPath << std::endl;
+	logger.log() << "cgi pathinfo:\t" << this->cgiPathInfo << std::endl;
+	logger.log() << "method:\t" << this->getMethodString() << std::endl;
 
 	if (pipe(pipefd_in.fds) == -1)
 		throw http_error("pipe: " + std::string(strerror(errno)), 500);

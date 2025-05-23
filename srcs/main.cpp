@@ -3,6 +3,9 @@
 #include "VirtualServer.hpp"
 #include "Poller.hpp"
 #include "http_status.hpp"
+#include "Logger.hpp"
+
+Logger logger;
 
 bool init(const char *config_path, std::map<int, std::vector<VirtualServer *> > &servers)
 {
@@ -15,17 +18,19 @@ bool init(const char *config_path, std::map<int, std::vector<VirtualServer *> > 
 	try
 	{
 		ft_json::JsonValue json = ft_json::parse_json(file);
-		std::cout << "\033[1m\033[31m" << "servers:" << "\033[0m" << std::endl;
+		if (json.asObject().count("debug"))
+			logger.setEnabled(json.asObject().at("debug").asBoolean());
+		logger.log() << "\033[1m\033[31m" << "servers:" << "\033[0m" << std::endl;
 		create_servers(json, servers);
 		for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
 		{
-			std::cout << "Socket: " << i->first << std::endl;
+			logger.log() << "Socket: " << i->first << std::endl;
 			for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
 			{
-				std::cout << *(*j);
+				logger.log() << *(*j);
 			}
 		}
-		std::cout << std::endl;
+		logger.log() << std::endl;
 		http_status::init();
 	}
 	catch (const std::exception &e)
@@ -45,7 +50,7 @@ int main(int argc, char **argv)
 	if (!init(config_path, servers))
 		return 1;
 
-	std::cout << "\033[1m\033[31m" << "poll loop:" << "\033[0m" << std::endl;
+	logger.log() << "\033[1m\033[31m" << "poll loop:" << "\033[0m" << std::endl;
 	Poller poller(servers);
 	poller.loop();
 

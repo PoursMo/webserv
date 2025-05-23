@@ -2,6 +2,7 @@
 #include "http_error.hpp"
 #include "Connection.hpp"
 #include "VirtualServer.hpp"
+#include "Logger.hpp"
 
 /*
 edge-trigerred mode: Epoll_wait will return only when a new event is enqueued with the epoll object.
@@ -70,7 +71,7 @@ bool Poller::isServerFd(int fd)
 
 void Poller::terminateConnection(int fd)
 {
-	std::cout << "Terminating socket: " << fd << std::endl;
+	logger.log() << "Terminating socket: " << fd << std::endl;
 	try
 	{
 		delete connections.at(fd);
@@ -97,14 +98,14 @@ void Poller::handleNewConnection(int fd)
 	int clientFd = accept(fd, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
 	if (clientFd == -1)
 		throw std::runtime_error("accept: " + std::string(strerror(errno)));
-	std::cout << "New connection on socket " << fd << ", created socket fd: " << clientFd << std::endl;
+	logger.log() << "New connection on socket " << fd << ", created socket fd: " << clientFd << std::endl;
 	connections[clientFd] = new Connection(clientFd, servers.at(fd), *this);
 	this->add(clientFd, EPOLLIN);
 }
 
 void Poller::handleInput(int fd)
 {
-	std::cout << "In operations on socket " << fd << ":" << std::endl;
+	logger.log() << "In operations on socket " << fd << ":" << std::endl;
 	try
 	{
 		if (!connections.at(fd)->receiver.receive())
@@ -127,7 +128,7 @@ void Poller::handleInput(int fd)
 
 void Poller::handleOutput(int fd)
 {
-	std::cout << "Out operations on socket " << fd << ":" << std::endl;
+	logger.log() << "Out operations on socket " << fd << ":" << std::endl;
 	if (!connections.at(fd)->request.response.send())
 	{
 		terminateConnection(fd);
@@ -150,7 +151,7 @@ void Poller::timeoutTerminator(int &timeout)
 	timeout = WS_CONNECTION_TIMEOUT_TIMER - highestElapsedTime;
 	for (std::vector<int>::iterator i = timedOuts.begin(); i != timedOuts.end(); i++)
 	{
-		std::cout << "Timeout: socket " << *i << ", connection terminated after timeout of " << WS_CONNECTION_TIMEOUT_TIMER << " seconds." << std::endl;
+		logger.log() << "Timeout: socket " << *i << ", connection terminated after timeout of " << WS_CONNECTION_TIMEOUT_TIMER << " seconds." << std::endl;
 		terminateConnection(*i);
 	}
 }
@@ -162,7 +163,7 @@ void Poller::loop()
 		int timeout = WS_CONNECTION_TIMEOUT_TIMER;
 		if (!connections.empty())
 			timeoutTerminator(timeout);
-		std::cout << "Polling..." << std::endl; // debug
+		logger.log() << "Polling..." << std::endl; // debug
 		int nb_ready = this->waitEvents(timeout * 1000);
 		for (int i = 0; i < nb_ready; i++)
 		{

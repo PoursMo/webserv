@@ -25,7 +25,7 @@ int main()
 	test_request.parseRequestLine(first, last);
 	test_request.parseRequestLine(first2, last2);
 	std::string target = "Content-Size";
-	std::cout << "valid first line" << std::endl;
-	std::cout << "Header Value of " << target << " is : " << test_request.getHeaderValue(target) << std::endl;
+	logger.log() << "valid first line" << std::endl;
+	logger.log() << "Header Value of " << target << " is : " << test_request.getHeaderValue(target) << std::endl;
 	return 0;
 }

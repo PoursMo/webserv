@@ -1,4 +1,5 @@
 #include "Sender.hpp"
+#include "Logger.hpp"
 
 Sender::Sender(int clientFd, const std::string &content, int resourceFd)
 	: clientFd(clientFd),
@@ -8,7 +9,7 @@ Sender::Sender(int clientFd, const std::string &content, int resourceFd)
 	  bytesRead(0),
 	  contentSent(content.empty())
 {
-	std::cout << "Sender: new sender with content size: " << content.size() << ", resourceFd: " << resourceFd << std::endl;
+	logger.log() << "Sender: new sender with content size: " << content.size() << ", resourceFd: " << resourceFd << std::endl;
 }
 
 Sender::~Sender()
@@ -22,7 +23,7 @@ ssize_t Sender::trySend(const char *buffer, size_t len)
 	ssize_t bytesSent = send(this->clientFd, buffer, len, MSG_NOSIGNAL);
 	if (bytesSent == -1)
 		throw std::runtime_error("send: " + std::string(strerror(errno)));
-	std::cout << "Sender: bytesSent: " << bytesSent << std::endl;
+	logger.log() << "Sender: bytesSent: " << bytesSent << std::endl;
 	return bytesSent;
 }
 
@@ -32,7 +33,7 @@ bool Sender::handleSend()
 		return false;
 	if (!this->contentSent)
 	{
-		std::cout << "Sender: sending content" << std::endl;
+		logger.log() << "Sender: sending content" << std::endl;
 		this->bytesSent += trySend(this->content.c_str() + this->bytesSent, this->content.size() - this->bytesSent);
 		if ((size_t)this->bytesSent == this->content.size())
 		{
@@ -43,7 +44,7 @@ bool Sender::handleSend()
 	}
 	else
 	{
-		std::cout << "Sender: sending buffer" << std::endl;
+		logger.log() << "Sender: sending buffer" << std::endl;
 		ssize_t rest = this->bytesRead - this->bytesSent;
 		if (rest)
 		{
