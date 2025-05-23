@@ -1,26 +1,7 @@
 #include "utils.hpp"
 
-std::string int_to_str(int num, const std::string& base)
+std::string int_to_str(int num, const std::string base)
 {
-	bool isNegative = (num < 0);
-	if (isNegative)
-		num = -num;
-	std::string result;
-	do
-	{
-		int digit = num % base.length();
-		result += base[digit];
-		num /= base.length();
-	} while (num > 0);
-	if (isNegative)
-		result += '-';
-	std::reverse(result.begin(), result.end());
-	return result;
-}
-
-std::string int_to_str(int num)
-{
-	std::string base = "0123456789";
 	bool isNegative = (num < 0);
 	if (isNegative)
 		num = -num;
