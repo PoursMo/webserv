@@ -3,7 +3,8 @@
 
 #include "webserv.hpp"
 
-std::string int_to_str(int num, const std::string& base = "0123456789");
+std::string int_to_str(int num, const std::string& base);
+std::string int_to_str(int num);
 std::string long_to_str(long num);
 std::string ulong_to_str(unsigned long num);
 
