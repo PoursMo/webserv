@@ -5,12 +5,13 @@
       "address": "0.0.0.0",
       "locations": [
         {
+          "path": "/",
           "method": ["GET", "POST"],
           "root": "/app/www",
-          "path": "/",
           "autoindex": true,
           "cgi": {
-            ".php": "/usr/bin/php-cgi"
+            ".php": "/usr/bin/php-cgi",
+            ".py": "/usr/bin/python3.10"
           },
           "upload_store": "/upload"
         },

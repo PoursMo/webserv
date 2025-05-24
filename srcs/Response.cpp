@@ -114,6 +114,8 @@ void Response::setTargetSender(const std::string &path, int status)
 		{
 			if (!this->request.getLocation()->getAutoIndex())
 				throw http_error("This target is a dir not have index pages and autoindex is disabled", 404);
+			if (this->request.getMethod() != GET)
+				throw http_error("Only GET method is handled for autoindex", 405);
 			this->setSender(200, getAutoIndexHtml(path, this->request.getLocation()->getRoot()));
 		}
 		else
@@ -123,8 +125,6 @@ void Response::setTargetSender(const std::string &path, int status)
 	}
 	else if (S_ISREG(statBuffer.st_mode))
 	{
-		// this->addHeader("Last-Modified", getDateString(statBuffer.st_mtim.tv_sec));
-		// this->addHeader("Content-Length", statBuffer.st_size);
 		this->setSender(status, this->fileHandler(path));
 	}
 	else

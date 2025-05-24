@@ -43,6 +43,48 @@
 					"autoindex": true
 				}
 			]
+		},
+		{
+			"client_max_body_size": 10000,
+			"server_names": [
+				"webserv.com",
+				"www.webserv.com"
+			],
+			"address": "127.0.0.2",
+			"port": 8000,
+			"locations": [
+				{
+					"method": ["GET", "POST"],
+					"path": "/",
+					"index": [
+						"index.html"
+					],
+					"root": "/app/www",
+					"autoindex": true
+				},
+				{
+					"path": "/autoindex_on",
+					"autoindex": true,
+					"root": "/app/www"
+				},
+				{
+					"path": "/autoindex_on/dir",
+					"root": "/app/www",
+					"index": [
+						"index.html",
+						"file.html"
+					]
+				},
+				{
+					"path": "/autoindex_off",
+					"root": "/app/www"
+				},
+				{
+					"path": "a",
+					"root": "/app/www",
+					"autoindex": true
+				}
+			]
 		}
 	]
 }
