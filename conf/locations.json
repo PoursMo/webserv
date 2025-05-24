@@ -1,5 +1,6 @@
 {
 	"$schema": "./_schema.json",
+	"debug": true,
 	"servers": [
 		{
 			"client_max_body_size": 10000,
@@ -8,13 +9,16 @@
 				"www.webserv.com"
 			],
 			"address": "127.0.0.1",
+			"port": 8000,
 			"locations": [
 				{
+					"method": ["GET", "POST"],
 					"path": "/",
 					"index": [
 						"index.html"
 					],
-					"root": "/app/www"
+					"root": "/app/www",
+					"autoindex": true
 				},
 				{
 					"path": "/autoindex_on",

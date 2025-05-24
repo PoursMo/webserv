@@ -1,4 +1,4 @@
-POST / HTTP/1.1
+GET / HTTP/1.1
 Host: webserv.com
 Content-Length: 4294967296
 

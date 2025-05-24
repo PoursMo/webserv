@@ -192,10 +192,8 @@ void Response::setSender(int status, const std::string &content)
 {
 	std::string header = "";
 	if (this->request.getVServer())
-	{
 		this->addHeader("Content-Length", content.size());
-		header = this->generateHeader(status);
-	}
+	header = this->generateHeader(status);
 	if (this->sender)
 		delete this->sender;
 	this->sender = new Sender(this->request.getClientFd(), header + content);
@@ -204,8 +202,7 @@ void Response::setSender(int status, const std::string &content)
 void Response::setSender(int status, int targetFd)
 {
 	std::string header = "";
-	if (this->request.getVServer())
-		header = this->generateHeader(status);
+	header = this->generateHeader(status);
 	if (this->sender)
 		delete this->sender;
 	this->sender = new Sender(this->request.getClientFd(), header, targetFd);

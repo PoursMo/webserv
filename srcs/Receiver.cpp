@@ -57,8 +57,6 @@ bool Receiver::receive()
 	if (readingHeader)
 	{
 		logger.log() << "Receiver: recving header" << std::endl; // debug
-		if (headerBufferCount >= 4)
-			throw http_error("Header too large", 400);
 		if (fillHeaderBuffer())
 			flushHeaderBuffers();
 		if (!readingHeader && (bodyBytesRecvd == bodySize || bodySize == 0))
@@ -110,7 +108,7 @@ void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 		}
 		line.append(lbuffer->pos, lf + 1);
 		logger.log() << "Receiver: stitched line of size " << line.size() << ": "; // debug
-		debug_print(&line[0], &line[line.size() - 1]);							// debug
+		debug_print(&line[0], &line[line.size() - 1]);							   // debug
 		readingHeader = this->request.parseRequestLine(&line[0], &line[line.size() - 1]);
 		if (!readingHeader)
 			bodySize = request.getBodySize();
@@ -118,7 +116,7 @@ void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 	else
 	{
 		logger.log() << "Receiver: non-stitched line of size " << lf - lbuffer->pos + 1 << ": "; // debug
-		debug_print(lbuffer->pos, lf);														  // debug
+		debug_print(lbuffer->pos, lf);															 // debug
 		readingHeader = this->request.parseRequestLine(lbuffer->pos, lf);
 		if (!readingHeader)
 			bodySize = request.getBodySize();
@@ -170,6 +168,8 @@ ssize_t Receiver::handleRecv(void *buf, size_t len)
 
 Buffer *Receiver::createHeaderBuffer()
 {
+	if (headerBufferCount >= 4)
+		throw http_error("Header too large", 400);
 	logger.log() << "Receiver: creating new buffer of size "; // debug
 	Buffer *buffer = new Buffer;
 	headerBufferCount++;
@@ -202,7 +202,7 @@ bool Receiver::fillHeaderBuffer()
 			return false;
 		buffer->last += this->bytesRecvd;
 	}
-	logger.log() << "Receiver: buffer: ";		  // debug
+	logger.log() << "Receiver: buffer: ";	  // debug
 	debug_print(buffer->first, buffer->last); // debug
 	return true;
 }

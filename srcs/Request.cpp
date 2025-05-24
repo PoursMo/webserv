@@ -132,7 +132,7 @@ Method Request::setMethod(char *lstart, char *lend)
 		}
 	}
 	if (method == "")
-		throw http_error("Method not available in HTTP/1.1", 400);
+		throw http_error("Method not available in HTTP/1.1", 405);
 	if (method == "GET")
 		return GET;
 	else if (method == "POST")
