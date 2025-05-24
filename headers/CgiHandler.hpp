@@ -9,15 +9,13 @@ class CgiHandler
 {
 private:
 	const Request &request;
-	std::string resource;
-	std::string query;
-	std::string cgiExtension;
-	std::string cgiPath;
-	std::string cgiPathInfo;
+	std::string extension;
+	std::string pathExecutable;
+	std::string pathFile;
+	std::string pathFileAbsolute;
+	std::string pathInfo;
 	char **getCgiEnv();
 	char **getCgiArgv();
-	void initQuery();
-	void initCgi();
 	int fdIn;
 	int fdOut;
 

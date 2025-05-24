@@ -18,7 +18,7 @@ private:
 
 	// Setters
 	void setSender(int status, const std::string &content);
-	void setSender(int status, int resourceFd);
+	void setSender(int status, int targetFd);
 	std::string generateHeader(int status) const;
 	std::string getIndexPage(const std::string &path);
 	int fileHandler(const std::string &path);
@@ -30,7 +30,7 @@ public:
 	void addHeader(std::string key, std::string value);
 	void addHeader(std::string key, unsigned long value);
 	void addHeader(std::string key, long value);
-	void setResourceSender(const std::string &path, int status = 200);
+	void setTargetSender(const std::string &path, int status = 200);
 	void setErrorSender(int status);
 	bool send() const;
 

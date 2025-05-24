@@ -3,18 +3,18 @@
 
 #include "webserv.hpp"
 #include "Response.hpp"
-#include "uri.hpp"
 
 class VirtualServer;
 class LocationData;
 class Poller;
+class Uri;
 
 class Request
 {
 private:
 	// Attributes
 	Method method;
-	std::string resource;
+	std::string target;
 	std::map<std::string, std::string> headers;
 	int bodyFd;
 	int clientFd;
@@ -23,6 +23,7 @@ private:
 	const VirtualServer *vServer;
 	const LocationData *locationData;
 	const Poller &poller;
+	Uri *uri;
 
 	// Line received parsing
 	void parseFirstLine(char *lstart, char *lend);
@@ -30,7 +31,7 @@ private:
 	void parseHeaderLine(char *lstart, char *lend);
 
 	// Setters
-	std::string setResource(char **lstart, char *lend);
+	std::string setTarget(char **lstart, char *lend);
 	void addHeader(std::string key, std::string value);
 	Method setMethod(char *lstart, char *lend);
 
@@ -43,14 +44,15 @@ public:
 
 	// Line received parsing
 	bool parseRequestLine(char *lstart, char *lend);
-
 	// Processing
 	void processRequest();
 	// Setter
 	void setBodyFd(int fd);
 	// Getters
-	std::string getResource() const;
-	std::string getHeaderValue(const std::string key) const;
+	const std::string &getTarget() const;
+	const std::string &getPath() const;
+	const std::string &getQuery() const;
+	const std::string getHeaderValue(const std::string key) const;
 	enum Method getMethod() const;
 	int getBodyFd() const;
 	int getClientFd() const;

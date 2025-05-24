@@ -1,21 +1,21 @@
 #include "Sender.hpp"
 #include "Logger.hpp"
 
-Sender::Sender(int clientFd, const std::string &content, int resourceFd)
+Sender::Sender(int clientFd, const std::string &content, int targetFd)
 	: clientFd(clientFd),
-	  resourceFd(resourceFd),
+	  targetFd(targetFd),
 	  content(content),
 	  bytesSent(0),
 	  bytesRead(0),
 	  contentSent(content.empty())
 {
-	logger.log() << "Sender: new sender with content size: " << content.size() << ", resourceFd: " << resourceFd << std::endl;
+	logger.log() << "Sender: new sender with content size: " << content.size() << ", targetFd: " << targetFd << std::endl;
 }
 
 Sender::~Sender()
 {
-	if (resourceFd != -1)
-		close(resourceFd);
+	if (targetFd != -1)
+		close(targetFd);
 }
 
 ssize_t Sender::trySend(const char *buffer, size_t len)
@@ -29,7 +29,7 @@ ssize_t Sender::trySend(const char *buffer, size_t len)
 
 bool Sender::handleSend()
 {
-	if (this->resourceFd == -1 && this->contentSent)
+	if (this->targetFd == -1 && this->contentSent)
 		return false;
 	if (!this->contentSent)
 	{
@@ -39,7 +39,7 @@ bool Sender::handleSend()
 		{
 			this->contentSent = true;
 			this->bytesSent = 0;
-			return this->resourceFd != -1;
+			return this->targetFd != -1;
 		}
 	}
 	else
@@ -51,7 +51,7 @@ bool Sender::handleSend()
 			bytesSent += trySend(this->buffer + this->bytesSent, rest);
 			return true;
 		}
-		this->bytesRead = read(resourceFd, this->buffer, WS_SENDER_BUFFER_SIZE);
+		this->bytesRead = read(targetFd, this->buffer, WS_SENDER_BUFFER_SIZE);
 		if (this->bytesRead == 0)
 			return false;
 		if (this->bytesRead == -1)
@@ -63,7 +63,7 @@ bool Sender::handleSend()
 
 // bool Sender::handleSend()
 // {
-// 	if (!this->contentSent && this->resourceFd == -1)
+// 	if (!this->contentSent && this->targetFd == -1)
 // 		return false;
 // 	if (!this->contentSent)
 // 	{
@@ -72,7 +72,7 @@ bool Sender::handleSend()
 // 		{
 // 			this->contentSent = true;
 // 			bytesSent = 0;
-// 			return this->resourceFd != -1;
+// 			return this->targetFd != -1;
 // 		}
 // 		return true;
 // 	}
@@ -82,7 +82,7 @@ bool Sender::handleSend()
 // 		bytesSent += trySend(clientFd, buffer + bytesSent, rest);
 // 		return true;
 // 	}
-// 	bytesRead = read(resourceFd, buffer, WS_SENDER_BUFFER_SIZE);
+// 	bytesRead = read(targetFd, buffer, WS_SENDER_BUFFER_SIZE);
 // 	if (bytesRead == 0)
 // 		return false;
 // 	if (bytesRead == -1)

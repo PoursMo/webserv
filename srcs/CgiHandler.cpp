@@ -7,53 +7,37 @@
 #include "Logger.hpp"
 
 CgiHandler::CgiHandler(const Request &request) : request(request),
-												 resource(request.getResource()),
-												 query(""),
-												 cgiExtension(""),
-												 cgiPath(""),
-												 cgiPathInfo(""),
+												 extension(""),
+												 pathExecutable(""),
+												 pathFile(""),
+												 pathFileAbsolute(""),
+												 pathInfo(""),
 												 fdIn(-1),
 												 fdOut(-1)
 {
-	this->initQuery();
-	this->initCgi();
-}
-
-void CgiHandler::initQuery()
-{
-	std::size_t query_index = this->resource.find("?");
-	if (query_index != std::string::npos)
-	{
-		this->query = this->resource.substr(query_index + 1);
-		this->resource = this->resource.substr(0, query_index);
-	}
-}
-
-void CgiHandler::initCgi()
-{
 	logger.log() << "Init CGI HANDLER" << std::endl;
-
+	const std::string& path = this->request.getPath();
 	std::map<std::string, std::string> cgiConfig = this->request.getLocation()->getCgiConfig();
+
 	for (std::map<std::string, std::string>::const_iterator it = cgiConfig.begin(); it != cgiConfig.end(); it++)
 	{
 		std::string ext = it->first;
-		std::size_t index = this->resource.find(ext); // TODO: findlast() ?
+		std::size_t index = path.rfind(ext);
 		if (index != std::string::npos)
 		{
 			std::size_t end = index + ext.length();
-			if (!this->resource[end] || this->resource[end] == '/')
+			if (!path[end] || path[end] == '/')
 			{
-				// TODO: pathinfo = root + upload_store + path_info
-				this->cgiPathInfo = this->resource.substr(end);
-				this->resource = this->resource.substr(0, end);
-				this->cgiExtension = it->first;
-				this->cgiPath = it->second;
+				this->extension = it->first;
+				this->pathExecutable = it->second;
+				this->pathFile = path.substr(0, end);
+				this->pathFileAbsolute = this->request.getLocation()->getRoot() + this->pathFile;
+				this->pathInfo = request.getLocation()->getUploadStore() + path.substr(end);
 				return;
 			}
 		}
 	}
-
-	logger.log() << "RESOURCE IS NOT CGI:" << this->resource << std::endl;
+	logger.log() << "TARGET IS NOT CGI:" << this->pathFile << std::endl;
 }
 
 std::string CgiHandler::getMethodString() const
@@ -124,10 +108,10 @@ char **CgiHandler::getCgiEnv()
 	env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	env["SERVER_PORT"] = this->request.getVServer()->getPort();
 	env["REQUEST_METHOD"] = this->getMethodString();
-	env["PATH_INFO"] = this->cgiPathInfo;
-	env["PATH_TRANSLATED"] = this->request.getLocation()->getRoot() + this->resource;
-	env["SCRIPT_NAME"] = this->resource;
-	env["QUERY_STRING"] = this->query;
+	env["PATH_INFO"] = this->pathInfo;
+	env["PATH_TRANSLATED"] = this->pathFileAbsolute;
+	env["SCRIPT_NAME"] = this->pathFile;
+	env["QUERY_STRING"] = this->request.getQuery();
 	// env["REMOTE_HOST"]
 	// env["REMOTE_ADDR"]
 	// env["AUTH_TYPE"]
@@ -149,8 +133,8 @@ char **CgiHandler::getCgiArgv()
 {
 	char **argv = new char *[3];
 
-	argv[0] = ft_strdup(this->cgiPath.c_str());
-	argv[1] = ft_strdup(std::string(this->request.getLocation()->getRoot() + this->resource).c_str());
+	argv[0] = ft_strdup(this->pathExecutable.c_str());
+	argv[1] = ft_strdup(this->pathFileAbsolute.c_str());
 	argv[2] = NULL;
 	return argv;
 }
@@ -170,17 +154,18 @@ int CgiHandler::cgiExecution()
 	t_pipe pipefd_in;
 	t_pipe pipefd_out;
 
-	if (this->cgiPath == "")
+	if (this->pathExecutable == "")
 		throw http_error("cgi path is not defined", 500);
-	if (access(this->cgiPath.c_str(), X_OK) == -1)
+	if (access(this->pathExecutable.c_str(), X_OK) == -1)
 		throw http_error("non existant cgi binary", 500);
-	logger.log() << "resource:\t" << this->resource << std::endl;
-	logger.log() << "query:\t\t" << this->query << std::endl;
+	logger.log() << "file:\t" << this->pathFile << std::endl;
+	logger.log() << "file absolute:\t" << this->pathFileAbsolute << std::endl;
+	logger.log() << "query:\t\t" << this->request.getQuery() << std::endl;
 	logger.log() << "content-type:\t" << this->request.getHeaderValue("content-type") << std::endl;
 	logger.log() << "content-length:\t" << this->request.getHeaderValue("content-length") << std::endl;
-	logger.log() << "cgi extension:\t" << this->cgiExtension << std::endl;
-	logger.log() << "cgi path:\t" << this->cgiPath << std::endl;
-	logger.log() << "cgi pathinfo:\t" << this->cgiPathInfo << std::endl;
+	logger.log() << "cgi extension:\t" << this->extension << std::endl;
+	logger.log() << "cgi path:\t" << this->pathExecutable << std::endl;
+	logger.log() << "cgi pathinfo:\t" << this->pathInfo << std::endl;
 	logger.log() << "method:\t" << this->getMethodString() << std::endl;
 
 	if (pipe(pipefd_in.fds) == -1)
@@ -207,7 +192,7 @@ int CgiHandler::cgiExecution()
 	char **envp = this->getCgiEnv();
 	char **argv = this->getCgiArgv();
 
-	if (execve(this->cgiPath.c_str(), argv, envp) == -1)
+	if (execve(this->pathExecutable.c_str(), argv, envp) == -1)
 	{
 		deleteArray(envp);
 		deleteArray(argv);
@@ -228,7 +213,7 @@ int CgiHandler::getFdOut() const
 
 bool CgiHandler::isCgiResource() const
 {
-	return (this->cgiPath != "");
+	return (this->pathExecutable != "");
 }
 
 const char *child_accident::what() const throw()

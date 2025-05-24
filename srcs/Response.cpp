@@ -90,11 +90,11 @@ int Response::fileHandler(const std::string &path)
 	return fdOut;
 }
 
-void Response::setResourceSender(const std::string &path, int status)
+void Response::setTargetSender(const std::string &path, int status)
 {
 	logger.log() << "accessing path: " << path << std::endl;
 	if (access(path.c_str(), R_OK) == -1)
-		throw http_error("access: " + std::string(strerror(errno)), 404);
+		throw http_error("access: " + path + ": " + std::string(strerror(errno)), 404);
 	struct stat statBuffer;
 	if (stat(path.c_str(), &statBuffer) == -1)
 		throw http_error("stat: " + std::string(strerror(errno)), 500);
@@ -113,12 +113,12 @@ void Response::setResourceSender(const std::string &path, int status)
 		if (indexPagePath.empty())
 		{
 			if (!this->request.getLocation()->getAutoIndex())
-				throw http_error("This resource is a dir not have index pages and autoindex is disabled", 404);
+				throw http_error("This target is a dir not have index pages and autoindex is disabled", 404);
 			this->setSender(200, getAutoIndexHtml(path, this->request.getLocation()->getRoot()));
 		}
 		else
 		{
-			this->setResourceSender(indexPagePath);
+			this->setTargetSender(indexPagePath);
 		}
 	}
 	else if (S_ISREG(statBuffer.st_mode))
@@ -128,7 +128,7 @@ void Response::setResourceSender(const std::string &path, int status)
 		this->setSender(status, this->fileHandler(path));
 	}
 	else
-		throw http_error("Resource is neither a directory nor a regular file", 422);
+		throw http_error("Target is neither a directory nor a regular file", 422);
 }
 
 void Response::setErrorSender(int status)
@@ -140,7 +140,7 @@ void Response::setErrorSender(int status)
 		const std::string &path = vServer->getErrorPages().at(status);
 		try
 		{
-			this->setResourceSender(path, status);
+			this->setTargetSender(path, status);
 			return;
 		}
 		catch (const http_error &e)
@@ -201,12 +201,12 @@ void Response::setSender(int status, const std::string &content)
 	this->sender = new Sender(this->request.getClientFd(), header + content);
 }
 
-void Response::setSender(int status, int resourceFd)
+void Response::setSender(int status, int targetFd)
 {
 	std::string header = "";
 	if (this->request.getVServer())
 		header = this->generateHeader(status);
 	if (this->sender)
 		delete this->sender;
-	this->sender = new Sender(this->request.getClientFd(), header, resourceFd);
+	this->sender = new Sender(this->request.getClientFd(), header, targetFd);
 }

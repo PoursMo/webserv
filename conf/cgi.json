@@ -2,16 +2,22 @@
   "$schema": "./_schema.json",
   "servers": [
     {
-      "address": "127.0.0.1",
+      "address": "0.0.0.0",
       "locations": [
         {
           "method": ["GET", "POST"],
           "root": "/app/www",
           "path": "/",
+          "autoindex": true,
           "cgi": {
             ".php": "/usr/bin/php-cgi"
-          }
-        }
+          },
+          "upload_store": "/upload"
+        },
+        {
+          "root": "/",
+          "path": "/upload"
+        }        
       ]
     }
   ]

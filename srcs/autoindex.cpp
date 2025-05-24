@@ -1,5 +1,5 @@
 #include "webserv.hpp"
-#include "uri.hpp"
+#include "Uri.hpp"
 
 struct s_entrie {
 	std::string name;
@@ -26,7 +26,7 @@ void initDirectoryEntries(
 		ent.name = dp->d_name;
 		if (ent.name == ".")
 			continue;
-		ent.href = encodeUri(ent.name);
+		ent.href = Uri::encode(ent.name);
 		ent.path = path + "/" + ent.name;
 		if (stat(ent.path.c_str(), &statBuffer) == -1)
 			continue;

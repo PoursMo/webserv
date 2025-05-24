@@ -153,25 +153,25 @@ const std::map<std::string, LocationData> &VirtualServer::getLocations() const
 	return locations;
 }
 
-static size_t locationMatchScore(const std::string &path, const std::string &resource)
+static size_t locationMatchScore(const std::string &path, const std::string &target)
 {
 	size_t score = 0;
 
-	while (path[score] && resource[score] && path[score] == resource[score])
+	while (path[score] && target[score] && path[score] == target[score])
 		score++;
 	if (path[score])
 		return (0);
 	return score;
 }
 
-const LocationData *VirtualServer::getLocation(const std::string &resource) const
+const LocationData *VirtualServer::getLocation(const std::string &target) const
 {
 	const LocationData *bestMatch = NULL;
 	size_t matchScore = 0;
 
 	for (std::map<std::string, LocationData>::const_iterator i = locations.begin(); i != locations.end(); i++)
 	{
-		size_t score = locationMatchScore(i->first, resource);
+		size_t score = locationMatchScore(i->first, target);
 		if (score > matchScore)
 		{
 			matchScore = score;

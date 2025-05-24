@@ -10,7 +10,6 @@ SRCS = $(SRCDIR)/ft_json.cpp \
 	$(SRCDIR)/config.cpp \
 	$(SRCDIR)/utils.cpp \
 	$(SRCDIR)/autoindex.cpp \
-	$(SRCDIR)/uri.cpp \
 	$(SRCDIR)/Request.cpp \
 	$(SRCDIR)/VirtualServer.cpp \
 	$(SRCDIR)/LocationData.cpp \
@@ -24,6 +23,7 @@ SRCS = $(SRCDIR)/ft_json.cpp \
 	$(SRCDIR)/CgiHandler.cpp \
 	$(SRCDIR)/Connection.cpp \
 	$(SRCDIR)/Logger.cpp \
+	$(SRCDIR)/Uri.cpp \
 
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))
 

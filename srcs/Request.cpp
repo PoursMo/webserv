@@ -4,6 +4,7 @@
 #include "Receiver.hpp"
 #include "utils.hpp"
 #include "http_error.hpp"
+#include "Uri.hpp"
 
 Request::Request(int clientFd, const std::vector<VirtualServer *> &vServers, const Poller &poller)
 	: bodyFd(-1),
@@ -12,14 +13,17 @@ Request::Request(int clientFd, const std::vector<VirtualServer *> &vServers, con
 	  vServers(vServers),
 	  vServer(0),
 	  poller(poller),
+	  uri(0),
 	  response(*this)
 {
 }
 
 Request::~Request()
 {
-	if (bodyFd != -1)
-		close(bodyFd);
+	if (this->bodyFd != -1)
+		close(this->bodyFd);
+	if (this->uri)
+		delete this->uri;
 }
 
 // ********************************************************************
@@ -47,11 +51,11 @@ void Request::processRequest()
 	this->vServer = selectVServer();
 	if (this->headers.at("host").empty())
 		throw http_error("Empty host header", 400);
-	this->locationData = vServer->getLocation(resource);
-	if (resource[0] != '/')
-		throw http_error("No '/' in resource", 400);
+	this->locationData = vServer->getLocation(this->getPath());
+	if (this->getPath()[0] != '/')
+		throw http_error("No '/' in path", 400);
 	if (!this->locationData)
-		throw http_error("Resource not found in location data", 404);
+		throw http_error("Target not found in location data", 404);
 	const std::pair<int, std::string> &returnPair = this->locationData->getReturnPair();
 	if (returnPair.first != -1)
 	{
@@ -64,8 +68,8 @@ void Request::processRequest()
 		throw http_error("No content-length in POST request", 411);
 	if (this->getBodySize() > vServer->getClientMaxBodySize())
 		throw http_error("Body size > Client max body size", 413);
-	std::string fullPath = locationData->getRoot() + resource;
-	this->response.setResourceSender(fullPath);
+	std::string fullPath = locationData->getRoot() + this->getPath();
+	this->response.setTargetSender(fullPath);
 }
 
 // ********************************************************************
@@ -77,18 +81,18 @@ void Request::setBodyFd(int fd)
 	this->bodyFd = fd;
 }
 
-std::string Request::setResource(char **lstart, char *lend)
+std::string Request::setTarget(char **lstart, char *lend)
 {
-	std::string resource;
+	std::string target;
 
 	while (**lstart != *lend && **lstart != ' ' && **lstart != '\r')
 	{
-		resource = resource + **lstart;
+		target = target + **lstart;
 		(*lstart)++;
 	}
-	if (resource == "")
-		throw http_error("Empty resource in header-field line", 400);
-	return (decodeUri(resource));
+	if (target == "")
+		throw http_error("Empty target in header-field line", 400);
+	return (target);
 }
 
 void Request::addHeader(std::string key, std::string value)
@@ -166,11 +170,12 @@ void Request::parseFirstLine(char *lstart, char *lend)
 	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
 		throw http_error("No space after method in header-field line", 400);
 	lstart++;
-	this->resource = setResource(&lstart, lend);
-	if (this->resource.size() > WS_MAX_URI_SIZE)
+	this->target = setTarget(&lstart, lend);
+	if (this->target.size() > WS_MAX_URI_SIZE)
 		throw http_error(414);
+	this->uri = new Uri(*this);
 	if (*lstart != ' ' || lstart == lend || *lstart == '\r')
-		throw http_error("No space after resource name in header-field line", 400);
+		throw http_error("No space after target name in header-field line", 400);
 	lstart++;
 	if (!isValidProtocol(&lstart, lend))
 		throw http_error("Invalid Protocol", 400);
@@ -260,12 +265,26 @@ bool Request::parseRequestLine(char *lstart, char *lend)
 // Getters
 // ********************************************************************
 
-std::string Request::getResource() const
+const std::string &Request::getTarget() const
 {
-	return (this->resource);
+	return (this->target);
 }
 
-std::string Request::getHeaderValue(const std::string key) const
+const std::string &Request::getPath() const
+{
+	if (!this->uri)
+		throw std::runtime_error("Uri is not defined");
+	return this->uri->getPath();
+}
+
+const std::string &Request::getQuery() const
+{
+	if (!this->uri)
+		throw std::runtime_error("Uri is not defined");
+	return this->uri->getQuery();
+}
+
+const std::string Request::getHeaderValue(const std::string key) const
 {
 	if (this->headers.count(key))
 		return this->headers.at(key);

@@ -1,2 +1,3 @@
 GET /prout?a=10&b=12 HTTP/1.1
+Host: localhost
 
