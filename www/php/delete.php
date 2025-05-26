@@ -11,10 +11,10 @@
 	if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
 		$resource = isset($_GET['resource']) ? $_GET['resource'] : null;
 		$targetDir = $_SERVER["PATH_INFO"];
-		$targetPath = $targetDir . '/files_to_delete/' . $resource;
-		echo "<p>resource:" . $resource . "</p>\n";
-		echo "<p>targetDir:" . $targetDir. "</p>\n";
-		echo "<p>targetPath" . $targetPath. "</p>\n";
+		$targetPath = $targetDir . '/' . $resource;
+		echo "resource:	" . $resource . "\n";
+		echo "targetDir:	" . $targetDir . "\n";
+		echo "targetPath	" . $targetPath . "\n";
 		if (file_exists($targetPath)) {
 			if (unlink($targetPath)) {
 				echo "deletion succeeded";

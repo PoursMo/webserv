@@ -6,19 +6,19 @@
       "address": "0.0.0.0",
       "locations": [
         {
+          "root": "/app/www",
           "path": "/",
           "method": ["GET", "POST", "DELETE"],
-          "root": "/app/www",
           "autoindex": true,
           "cgi": {
             ".php": "/usr/bin/php-cgi",
             ".py": "/usr/bin/python3.10"
           },
-          "upload_store": "/upload"
+          "upload_store": "/app/upload_store"
         },
         {
-          "root": "/",
-          "path": "/upload"
+          "root": "/app",
+          "path": "/upload_store"
         }
       ]
     }

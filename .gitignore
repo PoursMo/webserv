@@ -39,4 +39,5 @@ logs/*
 *.diff
 .vscode
 
+upload_store/*
 vgcore.*
