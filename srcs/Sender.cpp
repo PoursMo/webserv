@@ -9,6 +9,7 @@ Sender::Sender(int clientFd, const std::string &content, int targetFd)
 	  bytesRead(0),
 	  contentSent(content.empty())
 {
+
 	logger.log() << "Sender: new sender with content size: " << content.size() << ", targetFd: " << targetFd << std::endl;
 }
 
@@ -51,7 +52,9 @@ bool Sender::handleSend()
 			bytesSent += trySend(this->buffer + this->bytesSent, rest);
 			return true;
 		}
+		logger.log() << "Sender: read before" << std::endl;
 		this->bytesRead = read(targetFd, this->buffer, WS_SENDER_BUFFER_SIZE);
+		logger.log() << "Sender: read after" << std::endl;
 		if (this->bytesRead == 0)
 			return false;
 		if (this->bytesRead == -1)
@@ -60,33 +63,3 @@ bool Sender::handleSend()
 	}
 	return true;
 }
-
-// bool Sender::handleSend()
-// {
-// 	if (!this->contentSent && this->targetFd == -1)
-// 		return false;
-// 	if (!this->contentSent)
-// 	{
-// 		bytesSent += trySend(clientFd, content.c_str() + bytesSent, content.size() - bytesSent);
-// 		if ((size_t)bytesSent == content.size())
-// 		{
-// 			this->contentSent = true;
-// 			bytesSent = 0;
-// 			return this->targetFd != -1;
-// 		}
-// 		return true;
-// 	}
-// 	ssize_t rest = bytesRead - bytesSent;
-// 	if (rest)
-// 	{
-// 		bytesSent += trySend(clientFd, buffer + bytesSent, rest);
-// 		return true;
-// 	}
-// 	bytesRead = read(targetFd, buffer, WS_SENDER_BUFFER_SIZE);
-// 	if (bytesRead == 0)
-// 		return false;
-// 	if (bytesRead == -1)
-// 		throw std::runtime_error("read: " + std::string(strerror(errno)));
-// 	bytesSent = trySend(clientFd, buffer, bytesRead);
-// 	return true;
-// }

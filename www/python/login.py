@@ -19,6 +19,6 @@ def main():
 	print()
 	print("<h2>Connection reussie</h2>")
 	print("<p>Bonjour ", name, "</p>")
-	print('<a href="/python/user.py">Voir le tableau de bord</a>')
+	print('<script>window.onload = () => document.location = "/python/app.py"</script>')
 
 main()

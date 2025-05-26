@@ -1,5 +1,6 @@
 {
   "$schema": "./_schema.json",
+  "debug": true,
   "servers": [
     {
       "address": "0.0.0.0",
