@@ -98,8 +98,6 @@ void Response::setTargetSender(const std::string &path, int status)
 	struct stat statBuffer;
 	if (stat(path.c_str(), &statBuffer) == -1)
 		throw http_error("stat: " + std::string(strerror(errno)), 500);
-
-	// POST/DELETE
 	if (S_ISDIR(statBuffer.st_mode))
 	{
 		if (path[path.size() - 1] != '/')

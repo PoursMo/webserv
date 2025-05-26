@@ -176,12 +176,12 @@ void Poller::loop()
 				}
 				else
 				{
-					connections.at(event.data.fd)->updateTime();
-					if (event.events & EPOLLIN)
+					// connections.at(event.data.fd)->updateTime();
+					if (event.events & EPOLLIN) // soit socket pour receiver, soit fdout pour reader
 					{
 						handleInput(event.data.fd);
 					}
-					else if (event.events & EPOLLOUT)
+					else if (event.events & EPOLLOUT) // soit socket pour receiver, soit fdout pour reader
 					{
 						handleOutput(event.data.fd);
 					}
