@@ -1,6 +1,10 @@
-POST /php/test.php HTTP/1.1
+POST /php/form_data.php HTTP/1.1
 Host: webserv.com
 Content-Type: application/json
-Content-Length: 18
+Content-Length: 76
 
-{"name": "rototo"}
+{
+	"firstname": "John",
+	"lastname": "Doe",
+	"favouritefruit": "apple"
+}
