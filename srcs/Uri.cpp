@@ -1,6 +1,7 @@
 #include "Uri.hpp"
 #include "Request.hpp"
 #include "utils.hpp"
+#include "Logger.hpp"
 
 Uri::Uri(const Request &request)
 	: path(request.getTarget()),
@@ -12,6 +13,8 @@ Uri::Uri(const Request &request)
 	{
 		this->query = Uri::decode(path.substr(query_index + 1));
 		this->path = path.substr(0, query_index);
+		logger.log() << "path: " << this->path << std::endl;
+		logger.log() << "query: " << this->query << std::endl;
 	}
 	this->path = Uri::decode(this->path);
 }

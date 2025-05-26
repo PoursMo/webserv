@@ -1,12 +1,13 @@
 {
   "$schema": "./_schema.json",
+  "debug": true,
   "servers": [
     {
       "address": "0.0.0.0",
       "locations": [
         {
           "path": "/",
-          "method": ["GET", "POST"],
+          "method": ["GET", "POST", "DELETE"],
           "root": "/app/www",
           "autoindex": true,
           "cgi": {
@@ -18,7 +19,7 @@
         {
           "root": "/",
           "path": "/upload"
-        }        
+        }
       ]
     }
   ]

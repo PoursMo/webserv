@@ -1,2 +1,3 @@
 DELETE /php/delete.php?resource=delete_me.trash HTTP/1.1
 Host: webserv.com
+
