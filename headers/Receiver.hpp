@@ -17,25 +17,31 @@ struct Buffer
 class Receiver
 {
 private:
-	int fd;
+	enum BufferType
+	{
+		HEADER,
+		BODY
+	};
+
+	int clientFd;
 	Request &request;
-	std::list<Buffer *> headerBuffers;
+	std::list<Buffer *> buffers;
 	size_t headerBufferCount;
 	bool readingHeader;
 	size_t bodySize;
 	size_t bodyBytesRecvd;
 	ssize_t bytesRecvd;
 
-	void sendLineToParsing(const Buffer *lbuffer, char *lf);
+	void sendHeaderLineToParsing(const Buffer *lbuffer, char *lf);
 	void flushHeaderBuffers();
-	Buffer *createHeaderBuffer();
-	bool fillHeaderBuffer();
-	ssize_t handleRecv(void *buf, size_t len);
+	Buffer *createBuffer(BufferType type);
+	bool fillBuffer(BufferType type);
+	void handleRecv(void *buf, size_t len);
 
 	static char *ws_strchr(char *first, const char *const last, char c);
 
 public:
-	Receiver(int fd, Request &request);
+	Receiver(int clientFd, Request &request);
 	~Receiver();
 
 	ssize_t getBytesRecvd() const;

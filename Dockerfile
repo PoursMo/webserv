@@ -20,6 +20,7 @@ RUN apt-get install -y python3.10
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 RUN unset DEBIAN_FRONTEND
 RUN mkdir -p /app/logs/nginx
+RUN mkdir -p /app/upload
 WORKDIR /app
 
 ENTRYPOINT [ "/bin/zsh" ]

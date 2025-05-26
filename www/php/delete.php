@@ -7,13 +7,14 @@
 </head>
 <body>
 	<div>
+		<span>Method: <?php echo $_SERVER['REQUEST_METHOD']; ?></span>
 	<?php
-	if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-		$resource = isset($_GET['resource']) ? $_GET['resource'] : null;
-		$targetDir = $_SERVER["PATH_INFO"];
-		$targetPath = $targetDir . '/' . $resource;
-		echo "resource:	" . $resource . "\n";
-		echo "targetDir:	" . $targetDir . "\n";
+	if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
+		$file = $_GET['file'];
+		$uploadDir = $_SERVER["PATH_INFO"];
+		$targetPath = $uploadDir . '/' . $file;
+		echo "file:	" . $file . "\n";
+		echo "targetDir:	" . $uploadDir . "\n";
 		echo "targetPath	" . $targetPath . "\n";
 		if (file_exists($targetPath)) {
 			if (unlink($targetPath)) {

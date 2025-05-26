@@ -14,11 +14,11 @@
             ".php": "/usr/bin/php-cgi",
             ".py": "/usr/bin/python3.10"
           },
-          "upload_store": "/app/upload_store"
+          "upload_store": "/app/upload"
         },
         {
           "root": "/app",
-          "path": "/upload_store"
+          "path": "/upload"
         }
       ]
     }

@@ -30,8 +30,8 @@ void debug_print(const char *first, const char *const last)
 // ********************************************************************
 
 // Public
-Receiver::Receiver(int fd, Request &request)
-	: fd(fd),
+Receiver::Receiver(int clientFd, Request &request)
+	: clientFd(clientFd),
 	  request(request),
 	  headerBufferCount(0),
 	  readingHeader(true),
@@ -42,13 +42,13 @@ Receiver::Receiver(int fd, Request &request)
 
 Receiver::~Receiver()
 {
-	for (std::list<Buffer *>::iterator i = headerBuffers.begin(); i != headerBuffers.end();)
+	for (std::list<Buffer *>::iterator i = buffers.begin(); i != buffers.end();)
 	{
 		std::list<Buffer *>::iterator tmp = i;
 		++i;
 		delete[] (*tmp)->first;
 		delete (*tmp);
-		headerBuffers.erase(tmp);
+		buffers.erase(tmp);
 	}
 }
 
@@ -56,22 +56,16 @@ bool Receiver::receive()
 {
 	if (readingHeader)
 	{
-		logger.log() << "Receiver: recving header" << std::endl; // debug
-		if (fillHeaderBuffer())
+		logger.log() << "Receiver: recving header" << std::endl;
+		if (fillBuffer(HEADER))
 			flushHeaderBuffers();
 		if (!readingHeader && (bodyBytesRecvd == bodySize || bodySize == 0))
 			return false;
 	}
 	else
 	{
-		logger.log() << "Receiver: recving body" << std::endl; // debug
-		char buffer[WS_CLIENT_BODY_BUFFER_SIZE];
-		handleRecv(buffer, WS_CLIENT_BODY_BUFFER_SIZE);
-		bodyBytesRecvd += this->bytesRecvd;
-		if (bodyBytesRecvd > bodySize)
-			throw http_error("bodyBytesRecvd > bodySize", 400);
-		logger.log() << "Receiver: writing body buffer in body fd " << request.getBodyFd() << std::endl;
-		write(request.getBodyFd(), buffer, this->bytesRecvd);
+		logger.log() << "Receiver: recving body" << std::endl;
+		fillBuffer(BODY);
 		if (bodyBytesRecvd == bodySize)
 			return false;
 	}
@@ -92,32 +86,31 @@ char *Receiver::ws_strchr(char *first, const char *const last, char c)
 	return 0;
 }
 
-void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
+void Receiver::sendHeaderLineToParsing(const Buffer *lbuffer, char *lf)
 {
-	if (lbuffer != headerBuffers.front())
+	if (lbuffer != buffers.front())
 	{
 		std::string line;
-		for (std::list<Buffer *>::iterator j = headerBuffers.begin(); *j != lbuffer;)
+		for (std::list<Buffer *>::iterator j = buffers.begin(); *j != lbuffer;)
 		{
 			line.append((*j)->pos, (*j)->last + 1);
-			std::list<Buffer *>::iterator tmp = j;
+			delete[] (*j)->first;
+			delete (*j);
 			++j;
-			delete[] (*tmp)->first;
-			delete (*tmp);
-			headerBuffers.erase(tmp);
+			buffers.pop_front();
 		}
 		line.append(lbuffer->pos, lf + 1);
-		logger.log() << "Receiver: stitched line of size " << line.size() << ": "; // debug
-		debug_print(&line[0], &line[line.size() - 1]);							   // debug
-		readingHeader = this->request.parseRequestLine(&line[0], &line[line.size() - 1]);
+		logger.log() << "Receiver: stitched line of size " << line.size() << ": ";
+		debug_print(&line[0], &line[line.size() - 1]);
+		readingHeader = request.parseRequestLine(&line[0], &line[line.size() - 1]);
 		if (!readingHeader)
 			bodySize = request.getBodySize();
 	}
 	else
 	{
-		logger.log() << "Receiver: non-stitched line of size " << lf - lbuffer->pos + 1 << ": "; // debug
-		debug_print(lbuffer->pos, lf);															 // debug
-		readingHeader = this->request.parseRequestLine(lbuffer->pos, lf);
+		logger.log() << "Receiver: non-stitched line of size " << lf - lbuffer->pos + 1 << ": ";
+		debug_print(lbuffer->pos, lf);
+		readingHeader = request.parseRequestLine(lbuffer->pos, lf);
 		if (!readingHeader)
 			bodySize = request.getBodySize();
 	}
@@ -125,22 +118,23 @@ void Receiver::sendLineToParsing(const Buffer *lbuffer, char *lf)
 
 void Receiver::flushHeaderBuffers()
 {
-	Buffer *const lbuffer = headerBuffers.back();
+	Buffer *const lbuffer = buffers.back();
 	char *lf;
 	while ((lf = ws_strchr(lbuffer->pos, lbuffer->last, '\n')))
 	{
-		sendLineToParsing(lbuffer, lf);
+		sendHeaderLineToParsing(lbuffer, lf);
 		lbuffer->pos = lf + 1;
 		if (!readingHeader && lbuffer->last != lf)
 		{
 			bodyBytesRecvd = lbuffer->last - lbuffer->pos + 1;
 			if (bodyBytesRecvd > bodySize)
 				throw http_error("bodyBytesRecvd > bodySize", 400);
-			logger.log() << "Receiver: writing remains of header buffer in body fd " << request.getBodyFd() << std::endl;
-			write(request.getBodyFd(), lbuffer->pos, bodyBytesRecvd);
+			logger.log() << "Receiver: copying remains of header buffer in body buffer " << std::endl;
+			Buffer *bodyBuffer = createBuffer(BODY);
+			std::memcpy(bodyBuffer->first, lbuffer->pos, bodyBytesRecvd);
 			delete[] lbuffer->first;
 			delete lbuffer;
-			headerBuffers.clear();
+			buffers.pop_front();
 			break;
 		}
 		else if (lf == lbuffer->last)
@@ -149,65 +143,87 @@ void Receiver::flushHeaderBuffers()
 			{
 				delete[] lbuffer->first;
 				delete lbuffer;
-				headerBuffers.clear();
+				buffers.clear();
 			}
 			break;
 		}
 	}
 }
 
-ssize_t Receiver::handleRecv(void *buf, size_t len)
+void Receiver::handleRecv(void *buf, size_t len)
 {
-	logger.log() << "Receiver: recving for " << len << " bytes" << std::endl; // debug
-	this->bytesRecvd = recv(fd, buf, len, 0);
-	logger.log() << "Receiver: recved " << this->bytesRecvd << " bytes" << std::endl;
-	if (this->bytesRecvd == -1)
+	logger.log() << "Receiver: recving for " << len << " bytes" << std::endl;
+	bytesRecvd = recv(clientFd, buf, len, 0);
+	logger.log() << "Receiver: recved " << bytesRecvd << " bytes" << std::endl;
+	if (bytesRecvd == -1)
 		throw http_error("recv: " + std::string(strerror(errno)), 500);
-	return this->bytesRecvd;
 }
 
-Buffer *Receiver::createHeaderBuffer()
+Buffer *Receiver::createBuffer(BufferType type)
 {
-	if (headerBufferCount >= 4)
-		throw http_error("Header too large", 400);
-	logger.log() << "Receiver: creating new buffer of size "; // debug
 	Buffer *buffer = new Buffer;
-	headerBufferCount++;
-	buffer->first = new char[WS_CLIENT_HEADER_BUFFER_SIZE];
-	buffer->capacity = WS_CLIENT_HEADER_BUFFER_SIZE;
-	logger.log() << WS_CLIENT_HEADER_BUFFER_SIZE << std::endl; // debug
+	switch (type)
+	{
+	case HEADER:
+		if (headerBufferCount >= 4)
+			throw http_error("Header too large", 400);
+		headerBufferCount++;
+		buffer->first = new char[WS_CLIENT_HEADER_BUFFER_SIZE];
+		buffer->capacity = WS_CLIENT_HEADER_BUFFER_SIZE;
+		break;
+	case BODY:
+		buffer->first = new char[WS_CLIENT_BODY_BUFFER_SIZE];
+		buffer->capacity = WS_CLIENT_BODY_BUFFER_SIZE;
+		break;
+	default:
+		break;
+	}
+	logger.log() << "Receiver: created new buffer of size " << buffer->capacity;
 	buffer->pos = buffer->first;
-	headerBuffers.push_back(buffer);
+	buffers.push_back(buffer);
 	return buffer;
 }
 
-bool Receiver::fillHeaderBuffer()
+bool Receiver::fillBuffer(BufferType type)
 {
-	Buffer *buffer = headerBuffers.back();
-	if (headerBuffers.empty() || (size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
+	Buffer *buffer = buffers.back();
+	if (buffers.empty() || (size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
 	{
-		buffer = createHeaderBuffer();
-		handleRecv(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
-		if (this->bytesRecvd == 0)
+		buffer = createBuffer(type);
+		switch (type)
+		{
+		case HEADER:
+			handleRecv(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
+			break;
+		case BODY:
+			handleRecv(buffer->first, WS_CLIENT_BODY_BUFFER_SIZE);
+			bodyBytesRecvd += bytesRecvd;
+			if (bodyBytesRecvd > bodySize)
+				throw http_error("bodyBytesRecvd > bodySize", 400);
+			break;
+		default:
+			break;
+		}
+		if (bytesRecvd == 0)
 			return false;
-		buffer->last = buffer->first + this->bytesRecvd - 1;
+		buffer->last = buffer->first + bytesRecvd - 1;
 	}
 	else
 	{
-		logger.log() << "Receiver: adding to existing buffer" << std::endl; // debug
+		logger.log() << "Receiver: adding to existing buffer" << std::endl;
 		char *buf = buffer->last + 1;
 		size_t readSize = buffer->capacity - (buffer->last - buffer->first) - 1;
 		handleRecv(buf, readSize);
-		if (this->bytesRecvd == 0)
+		if (bytesRecvd == 0)
 			return false;
-		buffer->last += this->bytesRecvd;
+		buffer->last += bytesRecvd;
 	}
-	logger.log() << "Receiver: buffer: ";	  // debug
-	debug_print(buffer->first, buffer->last); // debug
+	logger.log() << "Receiver: buffer: ";
+	debug_print(buffer->first, buffer->last);
 	return true;
 }
 
 ssize_t Receiver::getBytesRecvd() const
 {
-	return this->bytesRecvd;
+	return bytesRecvd;
 }
