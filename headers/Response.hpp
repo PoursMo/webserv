@@ -7,7 +7,7 @@
 class Request;
 class Sender;
 
-class Response
+class Response: public AInputHandler, public AOutputHandler
 {
 private:
 	Request &request;

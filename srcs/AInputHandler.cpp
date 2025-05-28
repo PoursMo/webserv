@@ -1,51 +1,47 @@
 #include "AInputHandler.hpp"
 #include "Logger.hpp"
-
-// ********************************************************************
-// Debug
-// ********************************************************************
-
-static void debug_print(const char *first, const char *const last)
-{
-	while (1)
-	{
-		if (*first == '\n')
-			logger.log() << "\\n";
-		else if (*first == '\r')
-			logger.log() << "\\r";
-		else
-			logger.log() << *first;
-		if (first == last)
-			break;
-		first++;
-	}
-	logger.log() << std::endl;
-}
+#include "AIOHandler.hpp"
 
 // ********************************************************************
 // AInputHandler class
 // ********************************************************************
 
-AInputHandler::AInputHandler(int inputFd, void *parser)
-	: inputFd(inputFd),
-	parser(parser),
-	readingHeader(true),
-	bytesInput(0)
-{}
-
-AInputHandler::~AInputHandler()
+AInputHandler::AInputHandler()
+	: readingHeader(true),
+	bytesInput(0),
+	bodyBytesCount(0),
+	headerBufferCount(0)
 {
-	for (std::list<Buffer *>::iterator i = buffers.begin(); i != buffers.end(); i++;)
+}
+
+// ********************************************************************
+// AInputHandler public
+// ********************************************************************
+
+bool AInputHandler::handleInput()
+{
+	if (readingHeader)
 	{
-		delete[] (*i)->first;
-		delete (*i);
+		logger.log() << "AInputHandler: inputting header" << std::endl;
+		if (fillBuffer(HEADER))
+			flushHeaderBuffers();
 	}
+	else
+	{
+		logger.log() << "AInputHandler: inputting body" << std::endl;
+		fillBuffer(BODY);
+	}
+	return !this->isInputEnd();
 }
 
 ssize_t AInputHandler::getBytesInput() const
 {
 	return bytesInput;
 }
+
+// ********************************************************************
+// AInputHandler private
+// ********************************************************************
 
 char *AInputHandler::ws_strchr(char *first, const char *const last, char c)
 {
@@ -59,3 +55,130 @@ char *AInputHandler::ws_strchr(char *first, const char *const last, char c)
 	}
 	return 0;
 }
+
+void AInputHandler::sendHeaderLineToParsing(const Buffer *lbuffer, char *lf)
+{
+	if (lbuffer != buffers.front())
+	{
+		std::string line;
+		for (std::list<Buffer *>::iterator j = buffers.begin(); *j != lbuffer;)
+		{
+			line.append((*j)->pos, (*j)->last + 1);
+			delete[] (*j)->first;
+			delete (*j);
+			++j;
+			buffers.pop_front();
+		}
+		line.append(lbuffer->pos, lf + 1);
+		logger.log() << "AInputHandler: stitched line of size " << line.size() << ": ";
+		debugPrint(&line[0], &line[line.size() - 1]);
+		readingHeader = this->parseLine(&line[0], &line[line.size() - 1]);
+	}
+	else
+	{
+		logger.log() << "AInputHandler: non-stitched line of size " << lf - lbuffer->pos + 1 << ": ";
+		debugPrint(lbuffer->pos, lf);
+		readingHeader = this->parseLine(lbuffer->pos, lf);
+	}
+}
+
+void AInputHandler::addBodyBytes(size_t bytes)
+{
+	bodyBytesCount += bytes;
+	this->onUpdateBodyBytes();
+}
+
+void AInputHandler::flushHeaderBuffers()
+{
+	Buffer *const lbuffer = buffers.back();
+	char *lf;
+	while ((lf = ws_strchr(lbuffer->pos, lbuffer->last, '\n')))
+	{
+		sendHeaderLineToParsing(lbuffer, lf);
+		lbuffer->pos = lf + 1;
+		if (!readingHeader && lbuffer->last != lf)
+		{
+			this->addBodyBytes(lbuffer->last - lbuffer->pos + 1);
+			logger.log() << "AInputHandler: copying remains of header buffer in body buffer " << std::endl;
+			Buffer *bodyBuffer = createBuffer(BODY);
+			std::memcpy(bodyBuffer->first, lbuffer->pos, bodyBytesCount);
+			delete[] lbuffer->first;
+			delete lbuffer;
+			buffers.pop_front();
+			break;
+		}
+		else if (lf == lbuffer->last)
+		{
+			if (lbuffer->last == lbuffer->first + lbuffer->capacity - 1)
+			{
+				delete[] lbuffer->first;
+				delete lbuffer;
+				buffers.clear();
+			}
+			break;
+		}
+	}
+}
+
+AIOHandler::Buffer *AInputHandler::createBuffer(BufferType type)
+{
+	Buffer *buffer = new Buffer;
+	switch (type)
+	{
+	case HEADER:
+		this->onHeaderBufferCreation();
+		buffer->first = new char[WS_CLIENT_HEADER_BUFFER_SIZE];
+		buffer->capacity = WS_CLIENT_HEADER_BUFFER_SIZE;
+		headerBufferCount++;
+		break;
+	case BODY:
+		buffer->first = new char[WS_CLIENT_BODY_BUFFER_SIZE];
+		buffer->capacity = WS_CLIENT_BODY_BUFFER_SIZE;
+		break;
+	default:
+		break;
+	}
+	logger.log() << "AInputHandler: created new buffer of size " << buffer->capacity;
+	buffer->pos = buffer->first;
+	buffers.push_back(buffer);
+	return buffer;
+}
+
+bool AInputHandler::fillBuffer(BufferType type)
+{
+	Buffer *buffer = buffers.back();
+	if (buffers.empty() || (size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
+	{
+		logger.log() << "AInputHandler: filling new buffer" << std::endl;
+		buffer = createBuffer(type);
+		switch (type)
+		{
+		case HEADER:
+			this->bytesInput = this->handleInputSysCall(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
+			if (bytesInput == 0)
+				return false;
+			break;
+		case BODY:
+			this->bytesInput = this->handleInputSysCall(buffer->first, WS_CLIENT_BODY_BUFFER_SIZE);
+			this->addBodyBytes(bytesInput);
+			break;
+		default:
+			break;
+		}
+		buffer->last = buffer->first + bytesInput - 1;
+	}
+	else
+	{
+		logger.log() << "AInputHandler: filling existing buffer" << std::endl;
+		char *buf = buffer->last + 1;
+		size_t readSize = buffer->capacity - (buffer->last - buffer->first) - 1;
+		this->bytesInput = this->handleInputSysCall(buf, readSize);
+		if (bytesInput == 0)
+			return false;
+		buffer->last += bytesInput;
+	}
+	logger.log() << "AInputHandler: buffer: ";
+	debugPrint(buffer->first, buffer->last);
+	return true;
+}
+

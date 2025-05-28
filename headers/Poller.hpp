@@ -16,20 +16,20 @@ private:
 	std::map<int, Connection *> connections;
 	std::map<int, AInputHandler *> inputs;
 
-	void add(int fd, uint32_t events);
-	void del(int fd);
 	int waitEvents(int timeout);
-
+	
 	void terminateConnection(int fd);
 	bool isServerFd(int fd);
 	void handleNewConnection(int fd);
 	void handleInput(int fd);
 	void handleOutput(int fd);
 	void timeoutTerminator(int &timeout);
-
-public:
+	
+	public:
 	Poller(const std::map<int, std::vector<VirtualServer *> > &servers);
 	void mod(int fd, uint32_t events);
+	void add(int fd, uint32_t events);
+	void del(int fd);
 	~Poller();
 
 	void loop();

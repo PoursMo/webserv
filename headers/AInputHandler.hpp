@@ -1,42 +1,38 @@
-#ifndef AIPUTHANDLER_HPP
-#define AIPUTHANDLER_HPP
+#ifndef AINPUTHANDLER_HPP
+#define AINPUTHANDLER_HPP
 
+#include "AIOHandler.hpp"
 #include "webserv.hpp"
 
-class AInputHandler
+class AInputHandler: virtual public AIOHandler
 {
-	protected:
-		struct Buffer
-		{
-			char *first;
-			char *last;
-			char *pos;
-			size_t capacity;
-		};
-		enum BufferType
-		{
-			HEADER,
-			BODY
-		};
+	private:
+		static char *ws_strchr(char *first, const char *const last, char c);
 
-		int inputFd; //formerly clientFd;
-		void *parser; //formerly request;
-		std::list<Buffer *> buffers;
+		void sendHeaderLineToParsing(const Buffer *lbuffer, char *lf);
+		void addBodyBytes(size_t bytes);
+		void flushHeaderBuffers();
+		Buffer *createBuffer(BufferType type);
+		bool fillBuffer(BufferType type);
+		
+	protected:
 		bool readingHeader;
 		ssize_t bytesInput;
+		ssize_t bodyBytesCount;
+		size_t headerBufferCount;
 
-		virtual void sendHeaderLineToParsing(const Buffer *lbuffer, char *lf) = 0;
-		virtual void flushHeaderBuffers() = 0;
-		virtual void getInput(void *buf, size_t len) = 0;
-		virtual Buffer *createBuffer(BufferType type) = 0;
-		virtual bool fillBuffer(BufferType type) = 0;
-		AInputHandler(int inputFd, void *parser);
-		~AInputHandler();
+		virtual bool isInputEnd() = 0;
+		virtual bool parseLine(char *lstart, char *lend) = 0;
+		virtual void onUpdateBodyBytes() = 0;
+		virtual ssize_t handleInputSysCall(void *buf, size_t len) = 0;
+		virtual void onHeaderBufferCreation() = 0;
+
+		AInputHandler();
+
 	public:
-		virtual bool handleInput() = 0;
+		bool handleInput();
 		ssize_t getBytesInput() const;
 		//Utils
-		static char *ws_strchr(char *first, const char *const last, char c);
 };
 
 #endif

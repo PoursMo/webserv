@@ -16,7 +16,9 @@ SRCS = $(SRCDIR)/ft_json.cpp \
 	$(SRCDIR)/Poller.cpp \
 	$(SRCDIR)/http_error.cpp \
 	$(SRCDIR)/http_status.cpp \
-	$(SRCDIR)/Receiver.cpp \
+	$(SRCDIR)/AOuputHandler.cpp \
+	$(SRCDIR)/AIOHandler.cpp \
+	$(SRCDIR)/AInputHandler.cpp \
 	$(SRCDIR)/Request.cpp \
 	$(SRCDIR)/Response.cpp \
 	$(SRCDIR)/Sender.cpp \

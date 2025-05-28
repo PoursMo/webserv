@@ -1,7 +1,7 @@
 #include "Request.hpp"
 #include "VirtualServer.hpp"
 #include "LocationData.hpp"
-#include "Receiver.hpp"
+#include "Logger.hpp"
 #include "utils.hpp"
 #include "http_error.hpp"
 #include "Uri.hpp"
@@ -66,20 +66,25 @@ void Request::processRequest()
 		throw http_error("Method not in location data", 403);
 	if (this->method == POST && !headers.count("content-length"))
 		throw http_error("No content-length in POST request", 411);
-	if (this->getBodySize() > vServer->getClientMaxBodySize())
+	if (this->contentLength > vServer->getClientMaxBodySize())
 		throw http_error("Body size > Client max body size", 413);
 	std::string fullPath = locationData->getRoot() + this->getPath();
 	this->response.setTargetSender(fullPath);
 }
 
+void Request::setContentLength()
+{
+	// TODO: handle transfert encoding ??????? or maybe not lol
+	std::string str = getHeaderValue("content-length");
+	long res = std::strtoul(str.c_str(), 0, 10);
+	if (res > UINT32_MAX)
+		throw http_error("content-length > UINT32_MAX", 413);
+	contentLength = res;
+}
+
 // ********************************************************************
 // Setters
 // ********************************************************************
-
-void Request::setBodyFd(int fd)
-{
-	this->bodyFd = fd;
-}
 
 std::string Request::setTarget(char **lstart, char *lend)
 {
@@ -145,7 +150,54 @@ Method Request::setMethod(char *lstart, char *lend)
 }
 
 // ********************************************************************
-// Line received parsing
+// Input parsing virtual methods of AOutputHandler
+// ********************************************************************
+
+bool Request::parseLine(char *lstart, char *lend)
+{
+	if (lstart == NULL || lend == NULL || *lend != '\n')
+		throw http_error("Empty request line", 400);
+	if (checkEmptyline(lstart, lend))
+	{
+		this->processRequest();
+		this->setContentLength();
+		return false;
+	}
+	if (!this->firstLineParsed)
+		parseFirstLine(lstart, lend);
+	else
+		parseHeaderLine(lstart, lend);
+	return true;
+}
+
+ssize_t Request::handleInputSysCall(void *buf, size_t len)
+{
+	logger.log() << "Request: recving for " << len << " bytes" << std::endl;
+	ssize_t recved = recv(clientFd, buf, len, 0);
+	logger.log() << "Request: recved " << this->bytesInput << " bytes" << std::endl;
+	if (this->bytesInput == -1)
+		throw http_error("recv: " + std::string(strerror(errno)), 500);
+	return recved;
+}
+
+bool Request::isInputEnd()
+{
+	return (!this->readingHeader && this->bodyBytesCount == this->contentLength);
+}
+
+void Request::onUpdateBodyBytes() {
+	if (this->bodyBytesCount > this->contentLength)
+		throw http_error("bodyBytesCount > contentLength", 400);
+}
+
+void Request::onHeaderBufferCreation()
+{
+	if (this->headerBufferCount >= 4)
+		throw http_error("Header too large", 400);
+}
+
+// ********************************************************************
+// Input parsing
 // ********************************************************************
 
 bool isValidProtocol(char **lstart, char *lend)
@@ -245,22 +297,6 @@ bool Request::checkEmptyline(char *lstart, char *lend)
 	return false;
 }
 
-bool Request::parseRequestLine(char *lstart, char *lend)
-{
-	if (lstart == NULL || lend == NULL || *lend != '\n')
-		throw http_error("Empty request line", 400);
-	if (checkEmptyline(lstart, lend))
-	{
-		this->processRequest();
-		return false;
-	}
-	if (!this->firstLineParsed)
-		parseFirstLine(lstart, lend);
-	else
-		parseHeaderLine(lstart, lend);
-	return true;
-}
-
 // ********************************************************************
 // Getters
 // ********************************************************************
@@ -304,16 +340,6 @@ int Request::getBodyFd() const
 int Request::getClientFd() const
 {
 	return this->clientFd;
-}
-
-int32_t Request::getBodySize() const
-{
-	// TODO: handle transfert encoding ??????? or maybe not lol
-	std::string str = getHeaderValue("content-length");
-	long res = std::strtoul(str.c_str(), 0, 10);
-	if (res > UINT32_MAX)
-		throw http_error("content-length > UINT32_MAX", 413);
-	return res;
 }
 
 const VirtualServer *Request::getVServer() const

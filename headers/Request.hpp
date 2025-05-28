@@ -3,19 +3,22 @@
 
 #include "webserv.hpp"
 #include "Response.hpp"
+#include "AInputHandler.hpp"
+#include "AOutputHandler.hpp"
 
 class VirtualServer;
 class LocationData;
 class Poller;
 class Uri;
 
-class Request
+class Request: public AInputHandler, public AOutputHandler
 {
 private:
 	// Attributes
 	Method method;
 	std::string target;
 	std::map<std::string, std::string> headers;
+	int32_t contentLength;
 	int bodyFd;
 	int clientFd;
 	bool firstLineParsed;
@@ -37,17 +40,21 @@ private:
 
 	// Processing
 	const VirtualServer *selectVServer();
+	void processRequest();
+	void setContentLength();
 
 public:
 	Request(int clientFd, const std::vector<VirtualServer *> &vServers, const Poller &poller);
 	~Request();
 
-	// Line received parsing
-	bool parseRequestLine(char *lstart, char *lend);
-	// Processing
-	void processRequest();
+	// Input handling
+	bool isInputEnd();
+	bool parseLine(char *lstart, char *lend);
+	void onUpdateBodyBytes();
+	ssize_t handleInputSysCall(void *buf, size_t len);
+	void onHeaderBufferCreation();
 	// Setter
-	void setBodyFd(int fd);
+	// void setBodyFd(int fd);
 	// Getters
 	const std::string &getTarget() const;
 	const std::string &getPath() const;
@@ -56,7 +63,6 @@ public:
 	enum Method getMethod() const;
 	int getBodyFd() const;
 	int getClientFd() const;
-	int32_t getBodySize() const;
 	const VirtualServer *getVServer() const;
 	const LocationData *getLocation() const;
 	const Poller &getPoller() const;
