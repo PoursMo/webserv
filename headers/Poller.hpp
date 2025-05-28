@@ -5,6 +5,7 @@
 
 class VirtualServer;
 class Connection;
+class AInputHandler;
 
 class Poller
 {
@@ -13,6 +14,7 @@ private:
 	std::vector<struct epoll_event> events;
 	const std::map<int, std::vector<VirtualServer *> > &servers;
 	std::map<int, Connection *> connections;
+	std::map<int, AInputHandler *> inputs;
 
 	void add(int fd, uint32_t events);
 	void del(int fd);

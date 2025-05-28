@@ -5,38 +5,17 @@
 #include "Logger.hpp"
 
 // ********************************************************************
-// Debug
-// ********************************************************************
-
-void debug_print(const char *first, const char *const last)
-{
-	while (1)
-	{
-		if (*first == '\n')
-			logger.log() << "\\n";
-		else if (*first == '\r')
-			logger.log() << "\\r";
-		else
-			logger.log() << *first;
-		if (first == last)
-			break;
-		first++;
-	}
-	logger.log() << std::endl;
-}
-
-// ********************************************************************
 // Receiver class
 // ********************************************************************
 
 // Public
-Receiver::Receiver(int clientFd, Request &request)
+Receiver::Receiver(int clientFd, Request &request) //&request = lien vers headerParser
 	: clientFd(clientFd),
 	  request(request),
-	  headerBufferCount(0),
+	  headerBufferCount(0), //Not needed for reader (no 400)
 	  readingHeader(true),
-	  bodySize(0),
-	  bodyBytesRecvd(0)
+	  bodySize(0), //Not needed for reader
+	  bodyBytesRecvd(0) //Not needed for reader
 {
 }
 
@@ -52,41 +31,26 @@ Receiver::~Receiver()
 	}
 }
 
-bool Receiver::receive()
+bool Receiver::receive() //need to be modulate for child classes
 {
 	if (readingHeader)
 	{
 		logger.log() << "Receiver: recving header" << std::endl;
 		if (fillBuffer(HEADER))
 			flushHeaderBuffers();
-		if (!readingHeader && (bodyBytesRecvd == bodySize || bodySize == 0))
+		if (!readingHeader && (bodyBytesRecvd == bodySize || bodySize == 0)) //different for reader
 			return false;
 	}
 	else
 	{
 		logger.log() << "Receiver: recving body" << std::endl;
 		fillBuffer(BODY);
-		if (bodyBytesRecvd == bodySize)
+		if (bodyBytesRecvd == bodySize) //different for reader
 			return false;
 	}
 	return true;
 }
-
-// Private
-char *Receiver::ws_strchr(char *first, const char *const last, char c)
-{
-	while (1)
-	{
-		if (*first == c)
-			return first;
-		if (first == last)
-			break;
-		++first;
-	}
-	return 0;
-}
-
-void Receiver::sendHeaderLineToParsing(const Buffer *lbuffer, char *lf)
+void Receiver::sendHeaderLineToParsing(const Buffer *lbuffer, char *lf) //need to modulate
 {
 	if (lbuffer != buffers.front())
 	{
@@ -102,21 +66,21 @@ void Receiver::sendHeaderLineToParsing(const Buffer *lbuffer, char *lf)
 		line.append(lbuffer->pos, lf + 1);
 		logger.log() << "Receiver: stitched line of size " << line.size() << ": ";
 		debug_print(&line[0], &line[line.size() - 1]);
-		readingHeader = request.parseRequestLine(&line[0], &line[line.size() - 1]);
-		if (!readingHeader)
-			bodySize = request.getBodySize();
+		readingHeader = request.parseRequestLine(&line[0], &line[line.size() - 1]); //different for children
+		if (!readingHeader) //not needed in reader
+			bodySize = request.getBodySize();//not needed in reader
 	}
 	else
 	{
 		logger.log() << "Receiver: non-stitched line of size " << lf - lbuffer->pos + 1 << ": ";
 		debug_print(lbuffer->pos, lf);
-		readingHeader = request.parseRequestLine(lbuffer->pos, lf);
-		if (!readingHeader)
-			bodySize = request.getBodySize();
+		readingHeader = request.parseRequestLine(lbuffer->pos, lf);//different for children
+		if (!readingHeader)//not needed in reader
+			bodySize = request.getBodySize();//not needed in reader
 	}
 }
 
-void Receiver::flushHeaderBuffers()
+void Receiver::flushHeaderBuffers() //need to modulate
 {
 	Buffer *const lbuffer = buffers.back();
 	char *lf;
@@ -126,8 +90,8 @@ void Receiver::flushHeaderBuffers()
 		lbuffer->pos = lf + 1;
 		if (!readingHeader && lbuffer->last != lf)
 		{
-			bodyBytesRecvd = lbuffer->last - lbuffer->pos + 1;
-			if (bodyBytesRecvd > bodySize)
+			bodyBytesRecvd = lbuffer->last - lbuffer->pos + 1; //not needed in reader
+			if (bodyBytesRecvd > bodySize) //not needed in reader
 				throw http_error("bodyBytesRecvd > bodySize", 400);
 			logger.log() << "Receiver: copying remains of header buffer in body buffer " << std::endl;
 			Buffer *bodyBuffer = createBuffer(BODY);
@@ -150,7 +114,7 @@ void Receiver::flushHeaderBuffers()
 	}
 }
 
-void Receiver::handleRecv(void *buf, size_t len)
+void Receiver::handleRecv(void *buf, size_t len) //Need to modulate, handleRead()
 {
 	logger.log() << "Receiver: recving for " << len << " bytes" << std::endl;
 	bytesRecvd = recv(clientFd, buf, len, 0);
@@ -159,15 +123,16 @@ void Receiver::handleRecv(void *buf, size_t len)
 		throw http_error("recv: " + std::string(strerror(errno)), 500);
 }
 
-Buffer *Receiver::createBuffer(BufferType type)
+Buffer *Receiver::createBuffer(BufferType type)//Need to modulate
 {
+
 	Buffer *buffer = new Buffer;
 	switch (type)
 	{
 	case HEADER:
-		if (headerBufferCount >= 4)
-			throw http_error("Header too large", 400);
-		headerBufferCount++;
+		if (headerBufferCount >= 4) //not needed in reader
+			throw http_error("Header too large", 400); //not needed in reader
+		headerBufferCount++; //not needed in reader
 		buffer->first = new char[WS_CLIENT_HEADER_BUFFER_SIZE];
 		buffer->capacity = WS_CLIENT_HEADER_BUFFER_SIZE;
 		break;
@@ -184,7 +149,7 @@ Buffer *Receiver::createBuffer(BufferType type)
 	return buffer;
 }
 
-bool Receiver::fillBuffer(BufferType type)
+bool Receiver::fillBuffer(BufferType type) // Need to modulate
 {
 	Buffer *buffer = buffers.back();
 	if (buffers.empty() || (size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
@@ -197,15 +162,15 @@ bool Receiver::fillBuffer(BufferType type)
 			break;
 		case BODY:
 			handleRecv(buffer->first, WS_CLIENT_BODY_BUFFER_SIZE);
-			bodyBytesRecvd += bytesRecvd;
-			if (bodyBytesRecvd > bodySize)
-				throw http_error("bodyBytesRecvd > bodySize", 400);
+			bodyBytesRecvd += bytesRecvd; //not needed in reader
+			if (bodyBytesRecvd > bodySize) //not needed in reader
+				throw http_error("bodyBytesRecvd > bodySize", 400); //not needed in reader
 			break;
 		default:
 			break;
 		}
-		if (bytesRecvd == 0)
-			return false;
+		if (bytesRecvd == 0) //not needed in reader
+			return false; //not needed in reader
 		buffer->last = buffer->first + bytesRecvd - 1;
 	}
 	else
@@ -214,16 +179,11 @@ bool Receiver::fillBuffer(BufferType type)
 		char *buf = buffer->last + 1;
 		size_t readSize = buffer->capacity - (buffer->last - buffer->first) - 1;
 		handleRecv(buf, readSize);
-		if (bytesRecvd == 0)
-			return false;
+		if (bytesRecvd == 0) //not needed in reader
+			return false; //not needed in reader
 		buffer->last += bytesRecvd;
 	}
 	logger.log() << "Receiver: buffer: ";
 	debug_print(buffer->first, buffer->last);
 	return true;
-}
-
-ssize_t Receiver::getBytesRecvd() const
-{
-	return bytesRecvd;
 }
