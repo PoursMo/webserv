@@ -100,39 +100,32 @@ void Poller::handleNewConnection(int fd)
 		throw std::runtime_error("accept: " + std::string(strerror(errno)));
 	logger.log() << "New connection on socket " << fd << ", created socket fd: " << clientFd << std::endl;
 	connections[clientFd] = new Connection(clientFd, servers.at(fd), *this);
-	this->add(clientFd, EPOLLIN);
 }
 
-void Poller::handleInput(int fd)
+void Poller::handlePollout(int fd)
 {
 	logger.log() << "In operations on socket " << fd << ":" << std::endl;
 	try
 	{
-		if (!connections.at(fd)->receiver.receive())
-			this->mod(fd, EPOLLOUT);
-		else
-		{
-			if (connections.at(fd)->receiver.getBytesRecvd() == 0)
-				this->mod(fd, EPOLLET);
-			else
-				this->mod(fd, EPOLLIN);
-		}
+		ioHandlers.at(fd)->handleInput()
+		// dans handleInput
+		// if (!ioHandlers.at(fd). == 0)
+		// 	this->mod(fd, EPOLLET);
+		// else
+		// 	this->mod(fd, EPOLLIN);
 	}
 	catch (const http_error &e)
 	{
 		std::cerr << e.what() << '\n';
-		connections.at(fd)->request.response.setErrorSender(e.getStatusCode());
+		connections.at(fd)->response.setErrorSender(e.getStatusCode());
 		this->mod(fd, EPOLLOUT);
 	}
 }
 
-void Poller::handleOutput(int fd)
+void Poller::handlePollout(int fd)
 {
 	logger.log() << "Out operations on socket " << fd << ":" << std::endl;
-	if (!connections.at(fd)->request.response.send())
-	{
-		terminateConnection(fd);
-	}
+	ioHandlers.at(fd)->handleOutput();
 }
 
 void Poller::timeoutTerminator(int &timeout)
@@ -176,14 +169,15 @@ void Poller::loop()
 				}
 				else
 				{
-					// connections.at(event.data.fd)->updateTime();
-					if (event.events & EPOLLIN) // soit socket pour receiver, soit fdout pour reader
+					if (connections.count(event.data.fd))
+						connections.at(event.data.fd)->updateTime();
+					if (event.events & EPOLLIN)
 					{
-						handleInput(event.data.fd);
+						this->handlePollin(event.data.fd);
 					}
-					else if (event.events & EPOLLOUT) // soit socket pour receiver, soit fdout pour reader
+					else if (event.events & EPOLLOUT)
 					{
-						handleOutput(event.data.fd);
+						this->handlePollout(event.data.fd);
 					}
 				}
 			}

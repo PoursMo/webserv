@@ -1,27 +1,26 @@
 #include "Request.hpp"
 #include "VirtualServer.hpp"
+#include "Connection.hpp"
 #include "LocationData.hpp"
 #include "Logger.hpp"
 #include "utils.hpp"
 #include "http_error.hpp"
 #include "Uri.hpp"
 
-Request::Request(int clientFd, const std::vector<VirtualServer *> &vServers, const Poller &poller)
-	: bodyFd(-1),
-	  clientFd(clientFd),
+Request::Request(Connection &connection, const std::vector<VirtualServer *> &vServers, Poller &poller)
+	: AIOHandler(poller),
+	  contentLength(0),
 	  firstLineParsed(false),
 	  vServers(vServers),
-	  vServer(0),
-	  poller(poller),
-	  uri(0),
-	  response(*this)
+	  vServer(NULL),
+	  locationData(NULL),
+	  uri(NULL),
+	  connection(connection)
 {
 }
 
 Request::~Request()
 {
-	if (this->bodyFd != -1)
-		close(this->bodyFd);
 	if (this->uri)
 		delete this->uri;
 }
@@ -59,7 +58,7 @@ void Request::processRequest()
 	const std::pair<int, std::string> &returnPair = this->locationData->getReturnPair();
 	if (returnPair.first != -1)
 	{
-		this->response.handleReturn(returnPair);
+		this->connection.reponse.handleReturn(returnPair);
 		return;
 	}
 	if (!isInVector(this->locationData->getMethods(), this->method))
@@ -69,12 +68,11 @@ void Request::processRequest()
 	if (this->contentLength > vServer->getClientMaxBodySize())
 		throw http_error("Body size > Client max body size", 413);
 	std::string fullPath = locationData->getRoot() + this->getPath();
-	this->response.setTargetSender(fullPath);
+	this->connection.reponse.setTargetSender(fullPath);
 }
 
 void Request::setContentLength()
 {
-	// TODO: handle transfert encoding ??????? or maybe not lol
 	std::string str = getHeaderValue("content-length");
 	long res = std::strtoul(str.c_str(), 0, 10);
 	if (res > UINT32_MAX)
@@ -150,7 +148,7 @@ Method Request::setMethod(char *lstart, char *lend)
 }
 
 // ********************************************************************
-// Input parsing virtual methods of AOutputHandler
+// AInputHandler
 // ********************************************************************
 
 bool Request::parseLine(char *lstart, char *lend)
@@ -173,7 +171,7 @@ bool Request::parseLine(char *lstart, char *lend)
 ssize_t Request::handleInputSysCall(void *buf, size_t len)
 {
 	logger.log() << "Request: recving for " << len << " bytes" << std::endl;
-	ssize_t recved = recv(clientFd, buf, len, 0);
+	ssize_t recved = recv(this->inputFd, buf, len, 0);
 	logger.log() << "Request: recved " << this->bytesInput << " bytes" << std::endl;
 	if (this->bytesInput == -1)
 		throw http_error("recv: " + std::string(strerror(errno)), 500);
@@ -185,6 +183,10 @@ bool Request::isInputEnd()
 	return (!this->readingHeader && this->bodyBytesCount == this->contentLength);
 }
 
+void Request::onInputEnd()
+{
+}
+
 void Request::onUpdateBodyBytes() {
 	if (this->bodyBytesCount > this->contentLength)
 		throw http_error("bodyBytesCount > contentLength", 400);
@@ -194,6 +196,29 @@ void Request::onHeaderBufferCreation()
 {
 	if (this->headerBufferCount >= 4)
 		throw http_error("Header too large", 400);
+}
+
+// ********************************************************************
+// AOutputHandler
+// ********************************************************************
+
+ssize_t Request::handleOutputSysCall(const void *buf, size_t len)
+{
+	ssize_t written = write(this->outputFd, buf, len);
+	if (written == -1)
+		throw http_error("write: " + std::string(strerror(errno)), 500);
+	return written;
+}
+
+bool Request::isOutputEnd()
+{
+	return this->buffers.empty() && this->isInputEnd();
+}
+
+void Request::onOutputEnd()
+{
+	this->connection.reponse.setOutputFd(this->inputFd);
+	close(this->outputFd);
 }
 
 // ********************************************************************
@@ -330,16 +355,6 @@ const std::string Request::getHeaderValue(const std::string key) const
 enum Method Request::getMethod() const
 {
 	return this->method;
-}
-
-int Request::getBodyFd() const
-{
-	return this->bodyFd;
-}
-
-int Request::getClientFd() const
-{
-	return this->clientFd;
 }
 
 const VirtualServer *Request::getVServer() const

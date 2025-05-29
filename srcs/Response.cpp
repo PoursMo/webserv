@@ -1,5 +1,5 @@
 #include "Response.hpp"
-#include "Request.hpp"
+#include "Connection.hpp"
 #include "LocationData.hpp"
 #include "http_error.hpp"
 #include "http_status.hpp"
@@ -9,8 +9,8 @@
 #include "VirtualServer.hpp"
 #include "Logger.hpp"
 
-Response::Response(Request &request)
-	: request(request),
+Response::Response(const Connection &connection)
+	: connection(connection),
 	  sender(NULL),
 	  cgiPid(0),
 	  isCGI(false)
@@ -55,7 +55,7 @@ void Response::handleReturn(const std::pair<int, std::string> &returnPair)
 
 std::string Response::getIndexPage(const std::string &path)
 {
-	const std::vector<std::string> &indexes = this->request.getLocation()->getIndexes();
+	const std::vector<std::string> &indexes = this->connection.request.getLocation()->getIndexes();
 	for (std::vector<std::string>::const_iterator i = indexes.begin(); i != indexes.end(); i++)
 	{
 		std::string fullPath = path + *i;
@@ -67,7 +67,7 @@ std::string Response::getIndexPage(const std::string &path)
 
 int Response::fileHandler(const std::string &path)
 {
-	CgiHandler cgi(this->request);
+	CgiHandler cgi(this->connection.request);
 	int fdIn;
 	int fdOut;
 	this->isCGI = cgi.isCgiResource();
@@ -79,14 +79,14 @@ int Response::fileHandler(const std::string &path)
 	}
 	else
 	{
-		if (this->request.getMethod() != GET)
+		if (this->connection.request.getMethod() != GET)
 			throw http_error("Only GET method can be handled without CGI", 405);
 		fdIn = open("/dev/null", O_CREAT | O_WRONLY | O_TRUNC, 0644);
 		fdOut = open(path.c_str(), O_RDONLY);
 		if (fdIn == -1 || fdOut == -1)
 			throw http_error("open: " + std::string(strerror(errno)), 500);
 	}
-	this->request.setBodyFd(fdIn);
+	this->connection.request.setBodyFd(fdIn);
 	return fdOut;
 }
 
@@ -102,7 +102,7 @@ void Response::setTargetSender(const std::string &path, int status)
 	{
 		if (path[path.size() - 1] != '/')
 		{
-			std::string loc = path.substr(this->request.getLocation()->getRoot().size());
+			std::string loc = path.substr(this->connection.request.getLocation()->getRoot().size());
 			this->addHeader("Location", loc + '/');
 			this->setErrorSender(301);
 			return;
@@ -110,11 +110,11 @@ void Response::setTargetSender(const std::string &path, int status)
 		std::string indexPagePath = getIndexPage(path);
 		if (indexPagePath.empty())
 		{
-			if (!this->request.getLocation()->getAutoIndex())
+			if (!this->connection.request.getLocation()->getAutoIndex())
 				throw http_error("This target is a dir not have index pages and autoindex is disabled", 404);
-			if (this->request.getMethod() != GET)
+			if (this->connection.request.getMethod() != GET)
 				throw http_error("Only GET method is handled for autoindex", 405);
-			this->setSender(200, getAutoIndexHtml(path, this->request.getLocation()->getRoot()));
+			this->setSender(200, getAutoIndexHtml(path, this->connection.request.getLocation()->getRoot()));
 		}
 		else
 		{
@@ -131,9 +131,9 @@ void Response::setTargetSender(const std::string &path, int status)
 
 void Response::setErrorSender(int status)
 {
-	const VirtualServer *vServer = this->request.getVServer();
+	const VirtualServer *vServer = this->connection.request.getVServer();
 
-	if (vServer && this->request.getLocation() && vServer->getErrorPages().count(status))
+	if (vServer && this->connection.request.getLocation() && vServer->getErrorPages().count(status))
 	{
 		const std::string &path = vServer->getErrorPages().at(status);
 		try
@@ -189,12 +189,12 @@ void Response::addHeader(std::string key, long value)
 void Response::setSender(int status, const std::string &content)
 {
 	std::string header = "";
-	if (this->request.getVServer())
+	if (this->connection.request.getVServer())
 		this->addHeader("Content-Length", content.size());
 	header = this->generateHeader(status);
 	if (this->sender)
 		delete this->sender;
-	this->sender = new Sender(this->request.getClientFd(), header + content);
+	this->sender = new Sender(this->outputFd, header + content);
 }
 
 void Response::setSender(int status, int targetFd)
@@ -203,5 +203,5 @@ void Response::setSender(int status, int targetFd)
 	header = this->generateHeader(status);
 	if (this->sender)
 		delete this->sender;
-	this->sender = new Sender(this->request.getClientFd(), header, targetFd);
+	this->sender = new Sender(this->outputFd, header, targetFd);
 }

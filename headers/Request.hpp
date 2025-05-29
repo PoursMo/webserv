@@ -1,11 +1,11 @@
-#ifndef REQUEST_HPP
+	#ifndef REQUEST_HPP
 #define REQUEST_HPP
 
 #include "webserv.hpp"
-#include "Response.hpp"
 #include "AInputHandler.hpp"
 #include "AOutputHandler.hpp"
 
+class Connection;
 class VirtualServer;
 class LocationData;
 class Poller;
@@ -19,14 +19,12 @@ private:
 	std::string target;
 	std::map<std::string, std::string> headers;
 	int32_t contentLength;
-	int bodyFd;
-	int clientFd;
 	bool firstLineParsed;
 	const std::vector<VirtualServer *> &vServers;
 	const VirtualServer *vServer;
 	const LocationData *locationData;
-	const Poller &poller;
 	Uri *uri;
+	const Connection &connection;
 
 	// Line received parsing
 	void parseFirstLine(char *lstart, char *lend);
@@ -43,31 +41,32 @@ private:
 	void processRequest();
 	void setContentLength();
 
-public:
-	Request(int clientFd, const std::vector<VirtualServer *> &vServers, const Poller &poller);
-	~Request();
-
-	// Input handling
+	// AInputHandler
 	bool isInputEnd();
+	void onInputEnd();
 	bool parseLine(char *lstart, char *lend);
 	void onUpdateBodyBytes();
 	ssize_t handleInputSysCall(void *buf, size_t len);
 	void onHeaderBufferCreation();
-	// Setter
-	// void setBodyFd(int fd);
+
+	// AOutputHandler
+	ssize_t handleOutputSysCall(const void *buf, size_t len);
+	bool isOutputEnd();
+	void onOutputEnd();
+
+public:
+	Request(const Connection &connection, const std::vector<VirtualServer *> &vServers, Poller &poller);
+	~Request();
+
 	// Getters
 	const std::string &getTarget() const;
 	const std::string &getPath() const;
 	const std::string &getQuery() const;
 	const std::string getHeaderValue(const std::string key) const;
 	enum Method getMethod() const;
-	int getBodyFd() const;
-	int getClientFd() const;
 	const VirtualServer *getVServer() const;
 	const LocationData *getLocation() const;
 	const Poller &getPoller() const;
-
-	Response response;
 };
 
 #endif

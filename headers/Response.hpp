@@ -4,13 +4,13 @@
 #include "webserv.hpp"
 #include "CgiHandler.hpp"
 
-class Request;
+class Connection;
 class Sender;
 
 class Response: public AInputHandler, public AOutputHandler
 {
 private:
-	Request &request;
+	const Connection &connection;
 	std::map<std::string, std::string> headers;
 	Sender *sender;
 	pid_t cgiPid;
@@ -23,7 +23,7 @@ private:
 	std::string getIndexPage(const std::string &path);
 	int fileHandler(const std::string &path);
 public:
-	Response(Request &request);
+	Response(const Connection &connection);
 	~Response();
 
 	// Setters

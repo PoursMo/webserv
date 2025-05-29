@@ -14,10 +14,11 @@ class AOutputHandler : virtual public AIOHandler
 
 		virtual ssize_t handleOutputSysCall(const void *buf, size_t len) = 0;
 		virtual bool isOutputEnd() = 0;
+		virtual void onOutputEnd() = 0;
 		
 	public:
 		AOutputHandler();
-		bool handleOutput();
+		void handleOutput();
 };
 
 #endif

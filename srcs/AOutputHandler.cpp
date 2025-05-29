@@ -7,7 +7,7 @@ AOutputHandler::AOutputHandler()
 {
 }
 
-bool AOutputHandler::handleOutput()
+void AOutputHandler::handleOutput()
 {
 	ssize_t bytesOutput;
     if (!this->stringContent.empty())
@@ -37,5 +37,9 @@ bool AOutputHandler::handleOutput()
 			buffers.pop_front();
 		}
 	}
-	return !this->isOutputEnd();
+	if (this->isOutputEnd())
+	{
+		this->delOutputFd();
+		this->onOutputEnd();
+	}
 }

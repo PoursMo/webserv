@@ -18,7 +18,7 @@ AInputHandler::AInputHandler()
 // AInputHandler public
 // ********************************************************************
 
-bool AInputHandler::handleInput()
+void AInputHandler::handleInput()
 {
 	if (readingHeader)
 	{
@@ -31,7 +31,11 @@ bool AInputHandler::handleInput()
 		logger.log() << "AInputHandler: inputting body" << std::endl;
 		fillBuffer(BODY);
 	}
-	return !this->isInputEnd();
+	if (this->isInputEnd())
+	{
+		this->delInputFd();
+		this->onInputEnd();
+	}
 }
 
 ssize_t AInputHandler::getBytesInput() const

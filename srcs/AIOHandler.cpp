@@ -16,23 +16,40 @@ AIOHandler::~AIOHandler()
 		delete[] (*i)->first;
 		delete (*i);
 	}
-	//TODO: close()?
-	if (this->inputFd != -1)
-		this->poller.del(this->inputFd);
-	if (this->outputFd != -1)
-		this->poller.del(this->outputFd);
+	this->delInputFd();
+	this->delOutputFd();
+}
+
+void AIOHandler::delFd(int fd)
+{
+	if (fd == -1)
+		return ;
+	this->poller.del(fd);
+	this->poller.ioHandlers.erase(fd);
+}
+
+void AIOHandler::delInputFd()
+{
+	this->delFd(this->inputFd);
+}
+
+void AIOHandler::delOutputFd()
+{
+	this->delFd(this->outputFd);
 }
 
 void AIOHandler::setInputFd(int fd)
 {
 	this->inputFd = fd;
 	this->poller.add(fd, EPOLLIN);
+	this->poller.ioHandlers[fd] = this;
 }
 
 void AIOHandler::setOutputFd(int fd)
 {
 	this->outputFd = fd;
 	this->poller.add(fd, EPOLLOUT);
+	this->poller.ioHandlers[fd] = this;
 }
 
 // ********************************************************************

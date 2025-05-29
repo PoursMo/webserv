@@ -25,15 +25,19 @@ class AIOHandler
         int outputFd;
         Poller &poller;
     	std::list<Buffer *> buffers;
-        
+        void delFd(int fd);
+
         AIOHandler(Poller &poller);
         ~AIOHandler();
         static void debugPrint(const char *first, const char *const last);
     public:
-        virtual bool handleInput() = 0;
-        virtual bool handleOutput() = 0;
+        virtual void handleInput() = 0;
+        virtual void handleOutput() = 0;
         void setInputFd(int fd);
         void setOutputFd(int fd);
+		void delInputFd();
+		void delOutputFd();
+
 };
 
 #endif

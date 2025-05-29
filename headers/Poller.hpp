@@ -5,7 +5,7 @@
 
 class VirtualServer;
 class Connection;
-class AInputHandler;
+class AIOHandler;
 
 class Poller
 {
@@ -14,24 +14,25 @@ private:
 	std::vector<struct epoll_event> events;
 	const std::map<int, std::vector<VirtualServer *> > &servers;
 	std::map<int, Connection *> connections;
-	std::map<int, AInputHandler *> inputs;
+	
 
 	int waitEvents(int timeout);
 	
-	void terminateConnection(int fd);
 	bool isServerFd(int fd);
 	void handleNewConnection(int fd);
-	void handleInput(int fd);
-	void handleOutput(int fd);
+	void handlePollin(int fd);
+	void handlePollout(int fd);
 	void timeoutTerminator(int &timeout);
 	
 	public:
 	Poller(const std::map<int, std::vector<VirtualServer *> > &servers);
+	std::map<int, AIOHandler *> ioHandlers;
 	void mod(int fd, uint32_t events);
 	void add(int fd, uint32_t events);
 	void del(int fd);
 	~Poller();
 
+	void terminateConnection(int fd);
 	void loop();
 	void closeAll() const;
 };
