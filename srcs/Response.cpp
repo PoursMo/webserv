@@ -5,16 +5,15 @@
 #include "http_status.hpp"
 #include "utils.hpp"
 #include "autoindex.hpp"
-#include "Sender.hpp"
 #include "VirtualServer.hpp"
 #include "Logger.hpp"
+#include "parser.hpp"
 
-Response::Response(const Connection &connection)
-	: connection(connection),
-	  sender(NULL),
+Response::Response(Connection &connection, Poller &poller)
+	: AIOHandler(poller, connection),
 	  cgiPid(0),
 	  isCGI(false)
-{
+{ 
 }
 
 Response::~Response()
@@ -24,20 +23,81 @@ Response::~Response()
 		kill(this->cgiPid, SIGKILL);
 		waitpid(this->cgiPid, NULL, 0);
 	}
-	if (this->sender)
-		delete this->sender;
+}
+
+// ********************************************************************
+// AInputHandler
+// ********************************************************************
+
+bool Response::isInputEnd()
+{
+	return this->bytesInput == 0;
+}
+
+void Response::onInputEnd()
+{
+	close(this->inputFd);
+}
+
+bool Response::parseLine(char *lstart, char *lend)
+{
+	if (lstart == NULL || lend == NULL || *lend != '\n')
+		return false;
+	if (parser::isEmptyline(lstart, lend))
+		return false;
+	try
+	{
+		parser::parseHeaderLine(&AIOHandler::addHeader, lstart, lend);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+	return true;
+}
+
+void Response::onUpdateBodyBytes()
+{
+}
+
+ssize_t Response::handleInputSysCall(void *buf, size_t len)
+{
+	ssize_t bytesRead = read(this->inputFd, buf, len);
+	if (bytesRead == -1)
+		throw http_error("read: " + std::string(strerror(errno)), 500);
+	return bytesRead;
+}
+
+void Response::onHeaderBufferCreation()
+{
+}
+
+// ********************************************************************
+// AOutputHandler
+// ********************************************************************
+
+ssize_t Response::handleOutputSysCall(const void *buf, size_t len)
+{
+	ssize_t bytesSent = send(this->outputFd, buf, len, MSG_NOSIGNAL);
+	if (bytesSent == -1)
+		throw std::runtime_error("send: " + std::string(strerror(errno)));
+	logger.log() << "Response: bytesSent: " << bytesSent << std::endl;
+	return bytesSent;
+}
+
+bool Response::isOutputEnd()
+{
+	return this->buffers.empty() && this->isInputEnd();
+}
+
+void Response::onOutputEnd()
+{
+	this->poller->terminateConnection();
 }
 
 // ********************************************************************
 // Logic
 // ********************************************************************
-
-bool Response::send() const
-{
-	if (!this->sender)
-		throw std::runtime_error("response->sender not defined !");
-	return this->sender->handleSend();
-}
 
 void Response::handleReturn(const std::pair<int, std::string> &returnPair)
 {
@@ -175,15 +235,25 @@ std::string Response::generateHeader(int status) const
 
 void Response::addHeader(std::string key, std::string value)
 {
-	this->headers[key] = value;
+	try
+	{
+		std::string &headerValue = this->headers.at(key);
+		headerValue += ", " + value;
+	}
+	catch(const std::exception& e)
+	{
+		this->headers[key] = value;
+	}
 }
+
 void Response::addHeader(std::string key, unsigned long value)
 {
-	this->headers[key] = ulong_to_str(value);
+	this->addHeader(key, ulong_to_str(value));
 }
+
 void Response::addHeader(std::string key, long value)
 {
-	this->headers[key] = long_to_str(value);
+	this->addHeader(key, long_to_str(value));
 }
 
 void Response::setSender(int status, const std::string &content)

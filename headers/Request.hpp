@@ -17,19 +17,15 @@ private:
 	// Attributes
 	Method method;
 	std::string target;
-	std::map<std::string, std::string> headers;
 	int32_t contentLength;
 	bool firstLineParsed;
 	const std::vector<VirtualServer *> &vServers;
 	const VirtualServer *vServer;
 	const LocationData *locationData;
 	Uri *uri;
-	const Connection &connection;
 
 	// Line received parsing
 	void parseFirstLine(char *lstart, char *lend);
-	bool checkEmptyline(char *lstart, char *lend);
-	void parseHeaderLine(char *lstart, char *lend);
 
 	// Setters
 	std::string setTarget(char **lstart, char *lend);
@@ -55,7 +51,7 @@ private:
 	void onOutputEnd();
 
 public:
-	Request(const Connection &connection, const std::vector<VirtualServer *> &vServers, Poller &poller);
+	Request(Connection &connection, Poller &poller, const std::vector<VirtualServer *> &vServers);
 	~Request();
 
 	// Getters

@@ -2,10 +2,11 @@
 #include "Logger.hpp"
 #include "Poller.hpp"
 
-AIOHandler::AIOHandler(Poller &poller) 
+AIOHandler::AIOHandler(Poller &poller, Connection &connection) 
 : inputFd(-1),
   outputFd(-1),
-  poller(poller)
+  poller(poller),
+  connection(connection)
 {
 }
 

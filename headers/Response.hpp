@@ -3,16 +3,14 @@
 
 #include "webserv.hpp"
 #include "CgiHandler.hpp"
+#include "AInputHandler.hpp"
+#include "AOutputHandler.hpp"
 
 class Connection;
-class Sender;
 
 class Response: public AInputHandler, public AOutputHandler
 {
 private:
-	const Connection &connection;
-	std::map<std::string, std::string> headers;
-	Sender *sender;
 	pid_t cgiPid;
 	bool isCGI;
 
@@ -22,8 +20,22 @@ private:
 	std::string generateHeader(int status) const;
 	std::string getIndexPage(const std::string &path);
 	int fileHandler(const std::string &path);
+
+	// AInputHandler
+	bool isInputEnd();
+	void onInputEnd();
+	bool parseLine(char *lstart, char *lend);
+	void onUpdateBodyBytes();
+	ssize_t handleInputSysCall(void *buf, size_t len);
+	void onHeaderBufferCreation();
+
+	// AOutputHandler
+	ssize_t handleOutputSysCall(const void *buf, size_t len);
+	bool isOutputEnd();
+	void onOutputEnd();
+
 public:
-	Response(const Connection &connection);
+	Response(Connection &connection, Poller &poller);
 	~Response();
 
 	// Setters
@@ -32,7 +44,6 @@ public:
 	void addHeader(std::string key, long value);
 	void setTargetSender(const std::string &path, int status = 200);
 	void setErrorSender(int status);
-	bool send() const;
 
 	void handleReturn(const std::pair<int, std::string> &returnPair);
 };

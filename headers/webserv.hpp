@@ -29,11 +29,10 @@
 
 #define WS_MAX_CLIENT_MAX_BODY_SIZE 104857600 // Maximum allowed clientMaxBodySize
 #define WS_MAX_URI_SIZE 6144				  // Maximum allowed URI size
-#define WS_CLIENT_HEADER_BUFFER_SIZE 8192	  // Client header buffer size, max 4
-#define WS_CLIENT_BODY_BUFFER_SIZE 16384	  // Client body buffer size
+#define WS_HEADER_BUFFER_SIZE 8192	  			// Header buffer size
+#define WS_BODY_BUFFER_SIZE 32768	  			// Body buffer size
 #define WS_EPOLL_NB_EVENTS 512				  // Epoll maximum number of events returned by epoll_wait
 #define WS_BACKLOG 511						  // Listening socket backlog size
-#define WS_SENDER_BUFFER_SIZE 32768			  // Sender buffer size
 #define WS_CONNECTION_TIMEOUT_TIMER 60		  // Time for connection timeout
 #define CRLF "\r\n"							  // CRLF
 

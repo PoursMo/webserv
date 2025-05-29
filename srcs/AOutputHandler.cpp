@@ -12,7 +12,7 @@ void AOutputHandler::handleOutput()
 	ssize_t bytesOutput;
     if (!this->stringContent.empty())
 	{
-        logger.log() << "Sender: sending content" << std::endl;
+        logger.log() << "AOutputHandler: sending string content" << std::endl;
 		const char *buffer_pos = this->stringContent.c_str() + this->bytesOutputCount;
 		size_t len = this->stringContent.size() - this->bytesOutputCount;
 		bytesOutput = handleOutputSysCall(buffer_pos, len);
@@ -22,7 +22,7 @@ void AOutputHandler::handleOutput()
 	}
 	else
 	{
-        logger.log() << "Sender: sending buffer" << std::endl;
+        logger.log() << "AOutputHandler: sending buffer" << std::endl;
 		Buffer *buffer = this->buffers.front();
 		size_t len = buffer->last - buffer->pos + 1;
 		bytesOutput = handleOutputSysCall(buffer->pos, len);

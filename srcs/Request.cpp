@@ -6,16 +6,16 @@
 #include "utils.hpp"
 #include "http_error.hpp"
 #include "Uri.hpp"
+#include "parser.hpp"
 
-Request::Request(Connection &connection, const std::vector<VirtualServer *> &vServers, Poller &poller)
-	: AIOHandler(poller),
+Request::Request(Connection &connection, Poller &poller, const std::vector<VirtualServer *> &vServers)
+	: AIOHandler(poller, connection),
 	  contentLength(0),
 	  firstLineParsed(false),
 	  vServers(vServers),
 	  vServer(NULL),
 	  locationData(NULL),
-	  uri(NULL),
-	  connection(connection)
+	  uri(NULL)
 {
 }
 
@@ -58,7 +58,7 @@ void Request::processRequest()
 	const std::pair<int, std::string> &returnPair = this->locationData->getReturnPair();
 	if (returnPair.first != -1)
 	{
-		this->connection.reponse.handleReturn(returnPair);
+		this->connection.response.handleReturn(returnPair);
 		return;
 	}
 	if (!isInVector(this->locationData->getMethods(), this->method))
@@ -68,7 +68,7 @@ void Request::processRequest()
 	if (this->contentLength > vServer->getClientMaxBodySize())
 		throw http_error("Body size > Client max body size", 413);
 	std::string fullPath = locationData->getRoot() + this->getPath();
-	this->connection.reponse.setTargetSender(fullPath);
+	this->connection.response.setTargetSender(fullPath);
 }
 
 void Request::setContentLength()
@@ -100,7 +100,16 @@ std::string Request::setTarget(char **lstart, char *lend)
 
 void Request::addHeader(std::string key, std::string value)
 {
-	headers[str_to_lower(key)] = value;
+	str_to_lower(key);
+	try
+	{
+		std::string &headerValue = this->headers.at(key);
+		headerValue += ", " + value;
+	}
+	catch(const std::exception& e)
+	{
+		this->headers[key] = value;
+	}
 }
 
 Method Request::setMethod(char *lstart, char *lend)
@@ -155,7 +164,7 @@ bool Request::parseLine(char *lstart, char *lend)
 {
 	if (lstart == NULL || lend == NULL || *lend != '\n')
 		throw http_error("Empty request line", 400);
-	if (checkEmptyline(lstart, lend))
+	if (parser::isEmptyline(lstart, lend))
 	{
 		this->processRequest();
 		this->setContentLength();
@@ -164,18 +173,18 @@ bool Request::parseLine(char *lstart, char *lend)
 	if (!this->firstLineParsed)
 		parseFirstLine(lstart, lend);
 	else
-		parseHeaderLine(lstart, lend);
+		parser::parseHeaderLine(&AIOHandler::addHeader, lstart, lend);
 	return true;
 }
 
 ssize_t Request::handleInputSysCall(void *buf, size_t len)
 {
 	logger.log() << "Request: recving for " << len << " bytes" << std::endl;
-	ssize_t recved = recv(this->inputFd, buf, len, 0);
+	ssize_t bytesRecved = recv(this->inputFd, buf, len, 0);
 	logger.log() << "Request: recved " << this->bytesInput << " bytes" << std::endl;
-	if (this->bytesInput == -1)
+	if (bytesRecved == -1)
 		throw http_error("recv: " + std::string(strerror(errno)), 500);
-	return recved;
+	return bytesRecved;
 }
 
 bool Request::isInputEnd()
@@ -204,10 +213,10 @@ void Request::onHeaderBufferCreation()
 
 ssize_t Request::handleOutputSysCall(const void *buf, size_t len)
 {
-	ssize_t written = write(this->outputFd, buf, len);
-	if (written == -1)
+	ssize_t bytesWritten = write(this->outputFd, buf, len);
+	if (bytesWritten == -1)
 		throw http_error("write: " + std::string(strerror(errno)), 500);
-	return written;
+	return bytesWritten;
 }
 
 bool Request::isOutputEnd()
@@ -217,7 +226,7 @@ bool Request::isOutputEnd()
 
 void Request::onOutputEnd()
 {
-	this->connection.reponse.setOutputFd(this->inputFd);
+	this->connection.response.setOutputFd(this->inputFd);
 	close(this->outputFd);
 }
 
@@ -265,61 +274,6 @@ void Request::parseFirstLine(char *lstart, char *lend)
 			throw http_error("First line not correctly terminated", 400);
 	}
 	this->firstLineParsed = true;
-}
-
-std::string trimTrailingWhitespaces(std::string value)
-{
-	value.erase(value.find_last_not_of(" \t") + 1);
-	return value;
-}
-
-void Request::parseHeaderLine(char *lstart, char *lend)
-{
-	std::string key;
-	std::string value = "";
-
-	while (lstart != lend && *lstart != '\r' && *lstart != ':' && *lstart != ' ' && *lstart != '\t')
-	{
-		key = key + *lstart;
-		lstart++;
-	}
-	if (*lstart != ':')
-		throw http_error("No ':' in header line", 400);
-	lstart++;
-	while (*lstart == ' ' || *lstart == '\t')
-		lstart++;
-	while (lstart != lend && *lstart != '\r')
-	{
-		if (!std::isprint(*lstart) && *lstart != '\t')
-			throw http_error("Invalid character in header value", 400);
-		value = value + *lstart;
-		lstart++;
-	}
-	value = trimTrailingWhitespaces(value);
-	if (*lstart != '\r' && lstart != lend)
-		throw http_error("Header line not correctly ended", 400);
-	if (*lstart == '\r' && *(lstart + 1) != '\n')
-		throw http_error("Header line not correctly ended", 400);
-	if (this->getHeaderValue(str_to_lower(key)).empty())
-	{
-		this->addHeader(key, value);
-	}
-	else
-	{
-		this->headers.at(key) = this->headers.at(key) + ", " + value;
-	}
-}
-
-bool Request::checkEmptyline(char *lstart, char *lend)
-{
-	if (*lstart != '\r' && *lstart != '\n')
-		return false;
-	if (lstart == lend && *lstart == '\n')
-		return true;
-	lstart++;
-	if (lstart == lend && *lstart == '\n')
-		return true;
-	return false;
 }
 
 // ********************************************************************

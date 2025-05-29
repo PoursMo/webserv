@@ -24,20 +24,23 @@ class AIOHandler
         int inputFd;
         int outputFd;
         Poller &poller;
+		Connection &connection;
     	std::list<Buffer *> buffers;
+		std::map<std::string, std::string> headers;
+
         void delFd(int fd);
 
-        AIOHandler(Poller &poller);
+        AIOHandler(Poller &poller, Connection &connection);
         ~AIOHandler();
         static void debugPrint(const char *first, const char *const last);
     public:
         virtual void handleInput() = 0;
         virtual void handleOutput() = 0;
+		virtual void addHeader(std::string key, std::string value) = 0;
         void setInputFd(int fd);
         void setOutputFd(int fd);
 		void delInputFd();
 		void delOutputFd();
-
 };
 
 #endif
