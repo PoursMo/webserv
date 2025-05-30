@@ -44,7 +44,12 @@ bool Response::parseLine(char *lstart, char *lend)
 	if (lstart == NULL || lend == NULL || *lend != '\n')
 		return false;
 	if (parser::isEmptyline(lstart, lend))
+	{
+		// if no headers : 502
+		// find status header line
+		// "set sender"	
 		return false;
+	}
 	try
 	{
 		parser::parseHeaderLine(&AIOHandler::addHeader, lstart, lend);
@@ -87,7 +92,7 @@ ssize_t Response::handleOutputSysCall(const void *buf, size_t len)
 
 bool Response::isOutputEnd()
 {
-	return this->buffers.empty() && this->isInputEnd();
+	return this->isStringContentSent && this->buffers.empty() && this->isInputEnd();
 }
 
 void Response::onOutputEnd()
@@ -125,13 +130,12 @@ std::string Response::getIndexPage(const std::string &path)
 	return "";
 }
 
-int Response::fileHandler(const std::string &path)
+void Response::handleFile(const std::string &path)
 {
 	CgiHandler cgi(this->connection.request);
 	int fdIn;
 	int fdOut;
-	this->isCGI = cgi.isCgiResource();
-	if (this->isCGI)
+	if (cgi.isCgiResource())
 	{
 		this->cgiPid = cgi.cgiExecution();
 		fdIn = cgi.getFdIn();
@@ -146,11 +150,11 @@ int Response::fileHandler(const std::string &path)
 		if (fdIn == -1 || fdOut == -1)
 			throw http_error("open: " + std::string(strerror(errno)), 500);
 	}
-	this->connection.request.setBodyFd(fdIn);
-	return fdOut;
+	this->connection.request.setOutputFd(fdIn);
+	this->setInputFd(fdOut);
 }
 
-void Response::setTargetSender(const std::string &path, int status)
+void Response::handlePath(const std::string &path)
 {
 	logger.log() << "accessing path: " << path << std::endl;
 	if (access(path.c_str(), R_OK) == -1)
@@ -178,12 +182,12 @@ void Response::setTargetSender(const std::string &path, int status)
 		}
 		else
 		{
-			this->setTargetSender(indexPagePath);
+			this->handlePath(indexPagePath);
 		}
 	}
 	else if (S_ISREG(statBuffer.st_mode))
 	{
-		this->setSender(status, this->fileHandler(path));
+		this->handleFile(path);
 	}
 	else
 		throw http_error("Target is neither a directory nor a regular file", 422);
@@ -192,23 +196,38 @@ void Response::setTargetSender(const std::string &path, int status)
 void Response::setErrorSender(int status)
 {
 	const VirtualServer *vServer = this->connection.request.getVServer();
-
-	if (vServer && this->connection.request.getLocation() && vServer->getErrorPages().count(status))
+	if (vServer && this->connection.request.getLocation())
 	{
-		const std::string &path = vServer->getErrorPages().at(status);
 		try
 		{
-			this->setTargetSender(path, status);
+			const std::string &path = vServer->getErrorPages().at(status);
+			this->handlePath(path);
 			return;
 		}
-		catch (const http_error &e)
+		catch(const std::exception& e)
 		{
-			std::cerr << e.what() << '\n';
+			std::cerr << e.what() << '\n'; // log ?
 		}
 	}
+	// TODO: error output
+}
+
+void Response::prepareOutput(int status) // only for errors
+{
 	std::string body = generateErrorBody(status);
-	this->addHeader("Content-Type", "text/html");
-	this->setSender(status, body);
+	if (this->connection.request.getVServer())
+	{
+		this->addHeader("Content-Type", "text/html");
+		this->addHeader("Content-Length", body.size());
+	}
+	this->stringContent = this->generateHeader(status) + body;
+	this->setOutputFd(this->connection.request.getInputFd());
+}
+
+void Response::prepareOutput(int status)
+{
+	this->stringContent = this->generateHeader(status);
+	this->setOutputFd(this->connection.request.getInputFd());
 }
 
 std::string Response::generateHeader(int status) const
@@ -254,24 +273,4 @@ void Response::addHeader(std::string key, unsigned long value)
 void Response::addHeader(std::string key, long value)
 {
 	this->addHeader(key, long_to_str(value));
-}
-
-void Response::setSender(int status, const std::string &content)
-{
-	std::string header = "";
-	if (this->connection.request.getVServer())
-		this->addHeader("Content-Length", content.size());
-	header = this->generateHeader(status);
-	if (this->sender)
-		delete this->sender;
-	this->sender = new Sender(this->outputFd, header + content);
-}
-
-void Response::setSender(int status, int targetFd)
-{
-	std::string header = "";
-	header = this->generateHeader(status);
-	if (this->sender)
-		delete this->sender;
-	this->sender = new Sender(this->outputFd, header, targetFd);
 }

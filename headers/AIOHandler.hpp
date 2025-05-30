@@ -39,6 +39,8 @@ class AIOHandler
 		virtual void addHeader(std::string key, std::string value) = 0;
         void setInputFd(int fd);
         void setOutputFd(int fd);
+		int getInputFd() const;
+		int getOutputFd() const;
 		void delInputFd();
 		void delOutputFd();
 };

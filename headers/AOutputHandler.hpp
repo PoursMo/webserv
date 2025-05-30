@@ -6,11 +6,10 @@
 
 class AOutputHandler : virtual public AIOHandler
 {
-	private:
-		std::string stringContent;
-
 	protected:
 		ssize_t bytesOutputCount;
+		std::string stringContent;
+		bool isStringContentSent;
 
 		virtual ssize_t handleOutputSysCall(const void *buf, size_t len) = 0;
 		virtual bool isOutputEnd() = 0;

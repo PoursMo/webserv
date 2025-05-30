@@ -3,14 +3,15 @@
 
 
 AOutputHandler::AOutputHandler()
-	: bytesOutputCount(0)
+	: bytesOutputCount(0),
+	isStringContentSent(false)
 {
 }
 
 void AOutputHandler::handleOutput()
 {
 	ssize_t bytesOutput;
-    if (!this->stringContent.empty())
+    if (!isStringContentSent)
 	{
         logger.log() << "AOutputHandler: sending string content" << std::endl;
 		const char *buffer_pos = this->stringContent.c_str() + this->bytesOutputCount;
@@ -18,7 +19,7 @@ void AOutputHandler::handleOutput()
 		bytesOutput = handleOutputSysCall(buffer_pos, len);
 		this->bytesOutputCount += bytesOutput;
 		if ((size_t)bytesOutputCount == this->stringContent.size())
-            this->stringContent = "";
+            this->isStringContentSent = true;
 	}
 	else
 	{
@@ -27,9 +28,7 @@ void AOutputHandler::handleOutput()
 		size_t len = buffer->last - buffer->pos + 1;
 		bytesOutput = handleOutputSysCall(buffer->pos, len);
 		if (bytesOutput != len)
-		{
 			buffer->pos += bytesOutput;
-		}
 		else
 		{
 			delete[] buffer->first;
