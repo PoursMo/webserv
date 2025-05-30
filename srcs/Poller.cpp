@@ -3,6 +3,7 @@
 #include "Connection.hpp"
 #include "VirtualServer.hpp"
 #include "Logger.hpp"
+#include "utils.hpp"
 
 /*
 edge-trigerred mode: Epoll_wait will return only when a new event is enqueued with the epoll object.
@@ -33,7 +34,7 @@ void Poller::add(int fd, uint32_t events)
 	event.events = events;
 	event.data.fd = fd;
 	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &event) == -1)
-		throw std::runtime_error("epoll_ctl add: " + std::string(strerror(errno)));
+		throw std::runtime_error("epoll_ctl add: errno(" + int_to_str(errno) + "):" + std::string(strerror(errno)));
 }
 
 void Poller::del(int fd)
@@ -99,15 +100,15 @@ void Poller::handleNewConnection(int fd)
 	if (clientFd == -1)
 		throw std::runtime_error("accept: " + std::string(strerror(errno)));
 	logger.log() << "New connection on socket " << fd << ", created socket fd: " << clientFd << std::endl;
-	connections[clientFd] = new Connection(clientFd, servers.at(fd), *this);
+	connections[clientFd] = new Connection(*this, clientFd, servers.at(fd));
 }
 
-void Poller::handlePollout(int fd)
+void Poller::handlePollin(int fd)
 {
 	logger.log() << "In operations on socket " << fd << ":" << std::endl;
 	try
 	{
-		ioHandlers.at(fd)->handleInput()
+		ioHandlers.at(fd)->handleInput();
 		// dans handleInput
 		// if (!ioHandlers.at(fd). == 0)
 		// 	this->mod(fd, EPOLLET);
@@ -117,7 +118,7 @@ void Poller::handlePollout(int fd)
 	catch (const http_error &e)
 	{
 		std::cerr << e.what() << '\n';
-		connections.at(fd)->response.setErrorSender(e.getStatusCode());
+		connections.at(fd)->response.setError(e.getStatusCode());
 		this->mod(fd, EPOLLOUT);
 	}
 }

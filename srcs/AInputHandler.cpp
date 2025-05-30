@@ -7,7 +7,7 @@
 // ********************************************************************
 
 AInputHandler::AInputHandler()
-	: readingHeader(true),
+	: isReadingHeader(true),
 	bytesInput(0),
 	bodyBytesCount(0),
 	headerBufferCount(0)
@@ -20,7 +20,7 @@ AInputHandler::AInputHandler()
 
 void AInputHandler::handleInput()
 {
-	if (readingHeader)
+	if (isReadingHeader)
 	{
 		logger.log() << "AInputHandler: inputting header" << std::endl;
 		if (fillBuffer(HEADER))
@@ -76,13 +76,13 @@ void AInputHandler::sendHeaderLineToParsing(const Buffer *lbuffer, char *lf)
 		line.append(lbuffer->pos, lf + 1);
 		logger.log() << "AInputHandler: stitched line of size " << line.size() << ": ";
 		debugPrint(&line[0], &line[line.size() - 1]);
-		readingHeader = this->parseLine(&line[0], &line[line.size() - 1]);
+		isReadingHeader = this->parseLine(&line[0], &line[line.size() - 1]);
 	}
 	else
 	{
 		logger.log() << "AInputHandler: non-stitched line of size " << lf - lbuffer->pos + 1 << ": ";
 		debugPrint(lbuffer->pos, lf);
-		readingHeader = this->parseLine(lbuffer->pos, lf);
+		isReadingHeader = this->parseLine(lbuffer->pos, lf);
 	}
 }
 
@@ -100,7 +100,7 @@ void AInputHandler::flushHeaderBuffers()
 	{
 		sendHeaderLineToParsing(lbuffer, lf);
 		lbuffer->pos = lf + 1;
-		if (!readingHeader && lbuffer->last != lf)
+		if (!isReadingHeader && lbuffer->last != lf)
 		{
 			this->addBodyBytes(lbuffer->last - lbuffer->pos + 1);
 			logger.log() << "AInputHandler: copying remains of header buffer in body buffer " << std::endl;
@@ -131,18 +131,18 @@ AIOHandler::Buffer *AInputHandler::createBuffer(BufferType type)
 	{
 	case HEADER:
 		this->onHeaderBufferCreation();
-		buffer->first = new char[WS_CLIENT_HEADER_BUFFER_SIZE];
-		buffer->capacity = WS_CLIENT_HEADER_BUFFER_SIZE;
+		buffer->first = new char[WS_HEADER_BUFFER_SIZE];
+		buffer->capacity = WS_HEADER_BUFFER_SIZE;
 		headerBufferCount++;
 		break;
 	case BODY:
-		buffer->first = new char[WS_CLIENT_BODY_BUFFER_SIZE];
-		buffer->capacity = WS_CLIENT_BODY_BUFFER_SIZE;
+		buffer->first = new char[WS_BODY_BUFFER_SIZE];
+		buffer->capacity = WS_BODY_BUFFER_SIZE;
 		break;
 	default:
 		break;
 	}
-	logger.log() << "AInputHandler: created new buffer of size " << buffer->capacity;
+	logger.log() << "AInputHandler: created new buffer of size " << buffer->capacity << std::endl;
 	buffer->pos = buffer->first;
 	buffers.push_back(buffer);
 	return buffer;
@@ -158,12 +158,12 @@ bool AInputHandler::fillBuffer(BufferType type)
 		switch (type)
 		{
 		case HEADER:
-			this->bytesInput = this->handleInputSysCall(buffer->first, WS_CLIENT_HEADER_BUFFER_SIZE);
+			this->bytesInput = this->handleInputSysCall(buffer->first, WS_HEADER_BUFFER_SIZE);
 			if (bytesInput == 0)
 				return false;
 			break;
 		case BODY:
-			this->bytesInput = this->handleInputSysCall(buffer->first, WS_CLIENT_BODY_BUFFER_SIZE);
+			this->bytesInput = this->handleInputSysCall(buffer->first, WS_BODY_BUFFER_SIZE);
 			this->addBodyBytes(bytesInput);
 			break;
 		default:

@@ -1,7 +1,6 @@
 #include "AOutputHandler.hpp"
 #include "Logger.hpp"
 
-
 AOutputHandler::AOutputHandler()
 	: bytesOutputCount(0),
 	isStringContentSent(false)
@@ -27,7 +26,7 @@ void AOutputHandler::handleOutput()
 		Buffer *buffer = this->buffers.front();
 		size_t len = buffer->last - buffer->pos + 1;
 		bytesOutput = handleOutputSysCall(buffer->pos, len);
-		if (bytesOutput != len)
+		if ((size_t)bytesOutput != len)
 			buffer->pos += bytesOutput;
 		else
 		{

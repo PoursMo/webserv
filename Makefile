@@ -10,18 +10,17 @@ SRCS = $(SRCDIR)/ft_json.cpp \
 	$(SRCDIR)/config.cpp \
 	$(SRCDIR)/utils.cpp \
 	$(SRCDIR)/autoindex.cpp \
+	$(SRCDIR)/http_error.cpp \
+	$(SRCDIR)/http_status.cpp \
 	$(SRCDIR)/Request.cpp \
 	$(SRCDIR)/VirtualServer.cpp \
 	$(SRCDIR)/LocationData.cpp \
 	$(SRCDIR)/Poller.cpp \
-	$(SRCDIR)/http_error.cpp \
-	$(SRCDIR)/http_status.cpp \
-	$(SRCDIR)/AOuputHandler.cpp \
+	$(SRCDIR)/AOutputHandler.cpp \
 	$(SRCDIR)/AIOHandler.cpp \
 	$(SRCDIR)/AInputHandler.cpp \
 	$(SRCDIR)/Request.cpp \
 	$(SRCDIR)/Response.cpp \
-	$(SRCDIR)/Sender.cpp \
 	$(SRCDIR)/CgiHandler.cpp \
 	$(SRCDIR)/Connection.cpp \
 	$(SRCDIR)/Logger.cpp \

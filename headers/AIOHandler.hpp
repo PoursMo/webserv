@@ -4,6 +4,7 @@
 #include "webserv.hpp"
 
 class Poller;
+class Connection;
 
 class AIOHandler
 {
@@ -27,8 +28,11 @@ class AIOHandler
 		Connection &connection;
     	std::list<Buffer *> buffers;
 		std::map<std::string, std::string> headers;
-
         void delFd(int fd);
+
+		// parser utils
+		static bool isEmptyline(char *lstart, char *lend);
+		void parseHeaderLine(char *lstart, char *lend);
 
         AIOHandler(Poller &poller, Connection &connection);
         ~AIOHandler();

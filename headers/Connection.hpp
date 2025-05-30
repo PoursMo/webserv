@@ -13,7 +13,7 @@ struct Connection
 	Request request;
 	Response response;
 
-	Connection(int clientFd, const std::vector<VirtualServer *> &vServers, const Poller &poller);
+	Connection(Poller &poller, int clientFd, const std::vector<VirtualServer *> &vServers);
 	void updateTime();
 };
 

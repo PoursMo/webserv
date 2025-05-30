@@ -7,12 +7,11 @@
 #include "autoindex.hpp"
 #include "VirtualServer.hpp"
 #include "Logger.hpp"
-#include "parser.hpp"
+#include "Poller.hpp"
 
-Response::Response(Connection &connection, Poller &poller)
+Response::Response(Poller &poller, Connection &connection)
 	: AIOHandler(poller, connection),
-	  cgiPid(0),
-	  isCGI(false)
+	  cgiPid(0)
 { 
 }
 
@@ -36,6 +35,7 @@ bool Response::isInputEnd()
 
 void Response::onInputEnd()
 {
+	logger.log() << "Response ON_INPUT_END event !" << std::endl;
 	close(this->inputFd);
 }
 
@@ -43,16 +43,25 @@ bool Response::parseLine(char *lstart, char *lend)
 {
 	if (lstart == NULL || lend == NULL || *lend != '\n')
 		return false;
-	if (parser::isEmptyline(lstart, lend))
+	if (AIOHandler::isEmptyline(lstart, lend))
 	{
-		// if no headers : 502
-		// find status header line
-		// "set sender"	
+		// TODO: if no headers : 502
+		int status = 200;
+		try
+		{
+			status = extract_status_code(headers.at("Status"));
+			headers.erase("Status");
+		}
+		catch(const std::exception& e)
+		{
+			// std::cerr << e.what() << '\n'; // remove ?
+		}
+		set(status);
 		return false;
 	}
 	try
 	{
-		parser::parseHeaderLine(&AIOHandler::addHeader, lstart, lend);
+		this->parseHeaderLine(lstart, lend);
 	}
 	catch(const std::exception& e)
 	{
@@ -97,7 +106,8 @@ bool Response::isOutputEnd()
 
 void Response::onOutputEnd()
 {
-	this->poller->terminateConnection();
+	logger.log() << "Response ON_OUTPUT_END event !" << std::endl;
+	this->poller.terminateConnection(this->outputFd);
 }
 
 // ********************************************************************
@@ -109,12 +119,12 @@ void Response::handleReturn(const std::pair<int, std::string> &returnPair)
 	if (returnPair.first == 301 || returnPair.first == 302 || returnPair.first == 303 || returnPair.first == 307)
 	{
 		this->addHeader("Location", returnPair.second);
-		this->setErrorSender(returnPair.first);
+		this->setError(returnPair.first);
 	}
 	else
 	{
 		this->addHeader("Content-Type", "text/plain");
-		this->setSender(returnPair.first, returnPair.second);
+		this->set(returnPair.first, returnPair.second);
 	}
 }
 
@@ -140,23 +150,29 @@ void Response::handleFile(const std::string &path)
 		this->cgiPid = cgi.cgiExecution();
 		fdIn = cgi.getFdIn();
 		fdOut = cgi.getFdOut();
+		this->setInputFd(fdOut);
 	}
 	else
 	{
 		if (this->connection.request.getMethod() != GET)
 			throw http_error("Only GET method can be handled without CGI", 405);
-		fdIn = open("/dev/null", O_CREAT | O_WRONLY | O_TRUNC, 0644);
+		fdIn = open("/dev/null", O_CREAT | O_WRONLY | O_TRUNC, 0644); // opti: open once
 		fdOut = open(path.c_str(), O_RDONLY);
 		if (fdIn == -1 || fdOut == -1)
 			throw http_error("open: " + std::string(strerror(errno)), 500);
+		this->isReadingHeader = false;
+		this->inputFd = fdOut;
+		while (this->bytesInput != 0)
+			this->handleInput();
+		this->set(200);
 	}
 	this->connection.request.setOutputFd(fdIn);
-	this->setInputFd(fdOut);
+
 }
 
 void Response::handlePath(const std::string &path)
 {
-	logger.log() << "accessing path: " << path << std::endl;
+	logger.log() << "Response: accessing path: " << path << std::endl;
 	if (access(path.c_str(), R_OK) == -1)
 		throw http_error("access: " + path + ": " + std::string(strerror(errno)), 404);
 	struct stat statBuffer;
@@ -168,7 +184,7 @@ void Response::handlePath(const std::string &path)
 		{
 			std::string loc = path.substr(this->connection.request.getLocation()->getRoot().size());
 			this->addHeader("Location", loc + '/');
-			this->setErrorSender(301);
+			this->setError(301);
 			return;
 		}
 		std::string indexPagePath = getIndexPage(path);
@@ -178,7 +194,7 @@ void Response::handlePath(const std::string &path)
 				throw http_error("This target is a dir not have index pages and autoindex is disabled", 404);
 			if (this->connection.request.getMethod() != GET)
 				throw http_error("Only GET method is handled for autoindex", 405);
-			this->setSender(200, getAutoIndexHtml(path, this->connection.request.getLocation()->getRoot()));
+			this->set(200, getAutoIndexHtml(path, this->connection.request.getLocation()->getRoot()));
 		}
 		else
 		{
@@ -193,7 +209,7 @@ void Response::handlePath(const std::string &path)
 		throw http_error("Target is neither a directory nor a regular file", 422);
 }
 
-void Response::setErrorSender(int status)
+void Response::setError(int status)
 {
 	const VirtualServer *vServer = this->connection.request.getVServer();
 	if (vServer && this->connection.request.getLocation())
@@ -206,28 +222,26 @@ void Response::setErrorSender(int status)
 		}
 		catch(const std::exception& e)
 		{
-			std::cerr << e.what() << '\n'; // log ?
+			std::cerr << e.what() << '\n'; // remove ?
 		}
 	}
-	// TODO: error output
-}
-
-void Response::prepareOutput(int status) // only for errors
-{
 	std::string body = generateErrorBody(status);
 	if (this->connection.request.getVServer())
 	{
 		this->addHeader("Content-Type", "text/html");
 		this->addHeader("Content-Length", body.size());
 	}
-	this->stringContent = this->generateHeader(status) + body;
-	this->setOutputFd(this->connection.request.getInputFd());
+	this->set(status, body);
 }
 
-void Response::prepareOutput(int status)
+void Response::set(int status, const std::string &body)
+{
+	this->stringContent = this->generateHeader(status) + body;
+}
+
+void Response::set(int status)
 {
 	this->stringContent = this->generateHeader(status);
-	this->setOutputFd(this->connection.request.getInputFd());
 }
 
 std::string Response::generateHeader(int status) const
@@ -243,8 +257,6 @@ std::string Response::generateHeader(int status) const
 	{
 		header << i->first << ": " << i->second << CRLF;
 	}
-	if (!this->isCGI || status >= 300)
-		header << CRLF;
 	return header.str();
 }
 

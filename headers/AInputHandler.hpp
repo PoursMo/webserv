@@ -16,7 +16,7 @@ class AInputHandler: virtual public AIOHandler
 		bool fillBuffer(BufferType type);
 		
 	protected:
-		bool readingHeader;
+		bool isReadingHeader;
 		ssize_t bytesInput;
 		ssize_t bodyBytesCount;
 		size_t headerBufferCount;

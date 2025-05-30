@@ -6,9 +6,8 @@
 #include "utils.hpp"
 #include "http_error.hpp"
 #include "Uri.hpp"
-#include "parser.hpp"
 
-Request::Request(Connection &connection, Poller &poller, const std::vector<VirtualServer *> &vServers)
+Request::Request(Poller &poller, Connection &connection, const std::vector<VirtualServer *> &vServers)
 	: AIOHandler(poller, connection),
 	  contentLength(0),
 	  firstLineParsed(false),
@@ -68,7 +67,7 @@ void Request::processRequest()
 	if (this->contentLength > vServer->getClientMaxBodySize())
 		throw http_error("Body size > Client max body size", 413);
 	std::string fullPath = locationData->getRoot() + this->getPath();
-	this->connection.response.setTargetSender(fullPath);
+	this->connection.response.handlePath(fullPath);
 }
 
 void Request::setContentLength()
@@ -164,7 +163,7 @@ bool Request::parseLine(char *lstart, char *lend)
 {
 	if (lstart == NULL || lend == NULL || *lend != '\n')
 		throw http_error("Empty request line", 400);
-	if (parser::isEmptyline(lstart, lend))
+	if (AIOHandler::isEmptyline(lstart, lend))
 	{
 		this->processRequest();
 		this->setContentLength();
@@ -173,15 +172,15 @@ bool Request::parseLine(char *lstart, char *lend)
 	if (!this->firstLineParsed)
 		parseFirstLine(lstart, lend);
 	else
-		parser::parseHeaderLine(&AIOHandler::addHeader, lstart, lend);
+		this->parseHeaderLine(lstart, lend);
 	return true;
 }
 
 ssize_t Request::handleInputSysCall(void *buf, size_t len)
 {
-	logger.log() << "Request: recving for " << len << " bytes" << std::endl;
+	logger.log() << "Request: recving for " << len << " bytes on fd " << this->inputFd << std::endl;
 	ssize_t bytesRecved = recv(this->inputFd, buf, len, 0);
-	logger.log() << "Request: recved " << this->bytesInput << " bytes" << std::endl;
+	logger.log() << "Request: recved " << bytesRecved << " bytes" << std::endl;
 	if (bytesRecved == -1)
 		throw http_error("recv: " + std::string(strerror(errno)), 500);
 	return bytesRecved;
@@ -189,11 +188,12 @@ ssize_t Request::handleInputSysCall(void *buf, size_t len)
 
 bool Request::isInputEnd()
 {
-	return (!this->readingHeader && this->bodyBytesCount == this->contentLength);
+	return (!this->isReadingHeader && this->bodyBytesCount == this->contentLength);
 }
 
 void Request::onInputEnd()
 {
+	logger.log() << "Request ON_INPUT_END event !" << std::endl;
 }
 
 void Request::onUpdateBodyBytes() {
@@ -226,6 +226,7 @@ bool Request::isOutputEnd()
 
 void Request::onOutputEnd()
 {
+	logger.log() << "Request ON_OUPUT_END event !" << std::endl;
 	this->connection.response.setOutputFd(this->inputFd);
 	close(this->outputFd);
 }

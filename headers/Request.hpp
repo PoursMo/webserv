@@ -51,7 +51,7 @@ private:
 	void onOutputEnd();
 
 public:
-	Request(Connection &connection, Poller &poller, const std::vector<VirtualServer *> &vServers);
+	Request(Poller &poller, Connection &connection, const std::vector<VirtualServer *> &vServers);
 	~Request();
 
 	// Getters
