@@ -26,7 +26,7 @@ class AIOHandler
 		Connection &connection;
     	std::list<Buffer *> buffers;
 		std::map<std::string, std::string> headers;
-        void delFd(int fd);
+        void delFd(int *fd);
 
 		// parser utils
 		static bool isEmptyline(char *lstart, char *lend);

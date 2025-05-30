@@ -11,53 +11,58 @@ level-triggered mode (default): Epoll_wait will return as long as the condition 
 */
 
 Poller::Poller(const std::map<int, std::vector<VirtualServer *> > &servers)
-	: epollFd(epoll_create(1)),
-	  events(WS_EPOLL_NB_EVENTS),
+	: pollFds(),
 	  servers(servers)
 {
-	if (epollFd == -1)
-		throw std::runtime_error(strerror(errno));
 	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = servers.begin(); i != servers.end(); i++)
 	{
-		this->add(i->first, EPOLLIN);
+		this->add(i->first, POLLIN);
 	}
 }
 
 Poller::~Poller()
 {
-	close(epollFd);
 }
 
-void Poller::add(int fd, uint32_t events)
+void Poller::add(int fd, short events)
 {
-	struct epoll_event event;
-	event.events = events;
-	event.data.fd = fd;
-	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &event) == -1)
-		throw std::runtime_error("epoll_ctl add: errno(" + int_to_str(errno) + "):" + std::string(strerror(errno)));
+	logger.log() << "ADD FD: " << int_to_str(fd) << " MODE=" << int_to_str(events) << std::endl;
+	try
+	{
+		std::vector<struct pollfd>::iterator i = findPollFd(fd);
+		i->events = events;
+	}
+	catch(const std::exception& e)
+	{
+		this->pollFds.push_back((struct pollfd){
+			.fd = fd,
+			.events = events,
+			.revents = 0
+		});
+	}
 }
 
 void Poller::del(int fd)
 {
-	if (epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0) == -1)
-		throw std::runtime_error("epoll_ctl del: " + std::string(strerror(errno)));
-}
-
-void Poller::mod(int fd, uint32_t events)
-{
-	struct epoll_event event;
-	event.events = events;
-	event.data.fd = fd;
-	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &event) == -1)
-		throw std::runtime_error("epoll_ctl mod: " + std::string(strerror(errno)));
+	this->pollFds.erase(this->findPollFd(fd));
 }
 
 int Poller::waitEvents(int timeout)
 {
-	int nready = epoll_wait(epollFd, events.data(), events.size(), timeout);
+	int nready = poll(pollFds.data(), pollFds.size(), timeout);
 	if (nready == -1)
-		throw std::runtime_error("epoll_wait: " + std::string(strerror(errno)));
+		throw std::runtime_error("poll: " + std::string(strerror(errno)));
 	return nready;
+}
+
+std::vector<struct pollfd>::iterator Poller::findPollFd(int fd)
+{
+	for (std::vector<struct pollfd>::iterator i = this->pollFds.begin(); i != this->pollFds.end(); i++)
+	{
+		if (i->fd == fd)
+			return i;
+	}
+	throw std::runtime_error("expected fd in pollFds: " + int_to_str(fd));
 }
 
 bool Poller::isServerFd(int fd)
@@ -81,15 +86,6 @@ void Poller::terminateConnection(int fd)
 	catch (...)
 	{
 	}
-	try
-	{
-		this->del(fd);
-	}
-	catch (...)
-	{
-	}
-	if (!isServerFd(fd))
-		close(fd);
 }
 
 void Poller::handleNewConnection(int fd)
@@ -105,6 +101,9 @@ void Poller::handleNewConnection(int fd)
 
 void Poller::handlePollin(int fd)
 {
+	logger.log() << "POLLIN: " << int_to_str(fd) << std::endl;
+	if (connections.count(fd))
+		connections.at(fd)->updateTime();
 	logger.log() << "In operations on socket " << fd << ":" << std::endl;
 	try
 	{
@@ -113,18 +112,21 @@ void Poller::handlePollin(int fd)
 		// if (!ioHandlers.at(fd). == 0)
 		// 	this->mod(fd, EPOLLET);
 		// else
-		// 	this->mod(fd, EPOLLIN);
+		// 	this->mod(fd, POLLIN);
 	}
 	catch (const http_error &e)
 	{
 		std::cerr << e.what() << '\n';
 		connections.at(fd)->response.setError(e.getStatusCode());
-		this->mod(fd, EPOLLOUT);
+		// this->mod(fd, POLLOUT);
 	}
 }
 
 void Poller::handlePollout(int fd)
 {
+	logger.log() << "POLLOUT: " << int_to_str(fd) << std::endl;
+	if (connections.count(fd))
+		connections.at(fd)->updateTime();
 	logger.log() << "Out operations on socket " << fd << ":" << std::endl;
 	ioHandlers.at(fd)->handleOutput();
 }
@@ -158,40 +160,33 @@ void Poller::loop()
 		if (!connections.empty())
 			timeoutTerminator(timeout);
 		logger.log() << "Polling..." << std::endl; // debug
-		int nb_ready = this->waitEvents(timeout * 1000);
-		for (int i = 0; i < nb_ready; i++)
+		this->waitEvents(timeout * 1000);
+		std::vector<struct pollfd> fds = this->pollFds;
+		for (std::vector<struct pollfd>::const_iterator i = fds.begin(); i != fds.end(); i++)
 		{
-			struct epoll_event event = events.at(i);
 			try
 			{
-				if (isServerFd(event.data.fd))
+				if (i->revents & POLLIN)
 				{
-					handleNewConnection(event.data.fd);
+					if (isServerFd(i->fd))
+						handleNewConnection(i->fd);
+					else
+						this->handlePollin(i->fd);
 				}
-				else
-				{
-					if (connections.count(event.data.fd))
-						connections.at(event.data.fd)->updateTime();
-					if (event.events & EPOLLIN)
-					{
-						this->handlePollin(event.data.fd);
-					}
-					else if (event.events & EPOLLOUT)
-					{
-						this->handlePollout(event.data.fd);
-					}
-				}
+				else if (i->revents & POLLOUT)
+					this->handlePollout(i->fd);
 			}
 			catch (const std::runtime_error &e)
 			{
 				std::cerr << e.what() << '\n';
-				terminateConnection(event.data.fd);
+				terminateConnection(i->fd);
 			}
 			catch (const child_accident &e)
 			{
 				std::cerr << e.what() << '\n';
 				return;
 			}
+			// i->revents = 0;
 		}
 	}
 }
@@ -202,7 +197,6 @@ void Poller::closeAll() const
 	{
 		close(i->first);
 	}
-	close(this->epollFd);
 	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = servers.begin(); i != servers.end(); i++)
 	{
 		close(i->first);

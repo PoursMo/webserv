@@ -2,10 +2,10 @@ Poller:
 trouver si fd == pipe in ou pipe out (ajouter dans connection ?)
 si pipe input du cgi, ecrire dedans avec les buffers dans receiver
 si pipe output du cgi, lire dans des buffers
-passer client fd en EPOLLOUT seulement lorsque fdout a envoye toute sa content-length ?
+passer client fd en POLLOUT seulement lorsque fdout a envoye toute sa content-length ?
 
 Response:
-apres init du cgi, ajouter fdin en EPOLLOUT, et fdout en EPOLLIN dans poller (connection ?)
+apres init du cgi, ajouter fdin en POLLOUT, et fdout en POLLIN dans poller (connection ?)
 
 Sender:
 enlever targetfd, remplacer par liste de buffers

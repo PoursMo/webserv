@@ -30,14 +30,12 @@ class AInputHandler: virtual public AIOHandler
 		virtual void onHeaderBufferCreation() = 0;
 
 		AInputHandler();
-		~AInputHandler();
+		virtual ~AInputHandler();
 	public:
 		void handleInput();
 		void setInputFd(int fd);
 		void delInputFd();
-		//Utils
-
-		bool isInputRegularFile;
+		int getInputFd();
 	};
 
 #endif

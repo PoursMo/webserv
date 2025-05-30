@@ -11,7 +11,6 @@ AIOHandler::AIOHandler(Poller &poller, Connection &connection)
 
 AIOHandler::~AIOHandler()
 {
-	logger.log() << "AIOHandler destructor" << std::endl;
 	for (std::list<Buffer *>::iterator i = buffers.begin(); i != buffers.end(); i++)
 	{
 		delete[] (*i)->first;
@@ -19,12 +18,17 @@ AIOHandler::~AIOHandler()
 	}
 }
 
-void AIOHandler::delFd(int fd)
+void AIOHandler::delFd(int *fd)
 {
-	if (fd == -1)
+	if (*fd == -1)
 		return ;
-	this->poller.del(fd);
-	this->poller.ioHandlers.erase(fd);
+	this->poller.del(*fd);
+	this->poller.ioHandlers.erase(*fd);
+	if (this->poller.isServerFd(*fd))
+		this->poller.terminateConnection(*fd);
+	else
+		close(*fd);
+	*fd = -1;
 }
 
 // ********************************************************************

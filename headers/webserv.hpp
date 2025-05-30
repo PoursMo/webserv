@@ -2,7 +2,8 @@
 #define WEBSERV_HPP
 
 #include <sys/socket.h>
-#include <sys/epoll.h>
+#include <poll.h>
+// #include <sys/epoll.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -13,6 +14,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <sys/wait.h>
+#include <stdint.h>
 
 #include <cstring>
 #include <cerrno>

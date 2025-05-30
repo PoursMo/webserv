@@ -1,0 +1,1 @@
+valgrind --track-fds=yes --log-file="leaks.log" ./webserv

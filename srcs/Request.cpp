@@ -76,7 +76,7 @@ void Request::setContentLength()
 	long res = std::strtoul(str.c_str(), 0, 10);
 	if (res > UINT32_MAX)
 		throw http_error("content-length > UINT32_MAX", 413);
-	contentLength = res;
+	this->contentLength = res;
 }
 
 // ********************************************************************
@@ -188,17 +188,11 @@ ssize_t Request::handleInputSysCall(void *buf, size_t len)
 
 bool Request::isInputEnd()
 {
-	return (!this->isReadingHeader && this->bodyBytesCount == this->contentLength);
+	return (this->inputFd == -1 || (!this->isReadingHeader && this->bodyBytesCount == this->contentLength));
 }
 
 void Request::onInputEnd()
 {
-	logger.log() << "Request ON_INPUT_END event !" << std::endl;
-	if (this->isOutputRegularFile)
-	{
-		while (!this->isOutputEnd())
-			this->handleOutput();
-	}
 }
 
 void Request::onUpdateBodyBytes() {
@@ -233,10 +227,8 @@ bool Request::isOutputEnd()
 
 void Request::onOutputEnd()
 {
-	logger.log() << "Request ON_OUPUT_END event !" << std::endl;
 	this->connection.response.setOutputFd(this->inputFd);
 	this->inputFd = -1;
-	close(this->outputFd);
 }
 
 // ********************************************************************

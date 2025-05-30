@@ -4,14 +4,13 @@
 
 AOutputHandler::AOutputHandler()
 	:outputFd(-1),
-	 bytesOutputCount(0),
-	 isOutputRegularFile(false)
+	 bytesOutputCount(0)
 {
 }
 
 AOutputHandler::~AOutputHandler()
 {
-	logger.log() << "AOutputHandler destructor" << std::endl;
+	logger.log() << "AOutputHandler desctructor -> delOutputFd()" << std::endl;
 	this->delOutputFd();
 }
 
@@ -45,7 +44,7 @@ void AOutputHandler::handleOutput()
 	}
 	if (this->isOutputEnd())
 	{
-		logger.log() << "IS END OUTPUT" << std::endl;
+		logger.log() << "AOutputHandler output end -> delOutputFd()" << std::endl;
 		this->delOutputFd();
 		this->onOutputEnd();
 	}
@@ -53,18 +52,14 @@ void AOutputHandler::handleOutput()
 
 void AOutputHandler::delOutputFd()
 {
-	if (!this->isOutputRegularFile)
-		this->delFd(this->outputFd);
+	this->delFd(&this->outputFd);
 }
 
 void AOutputHandler::setOutputFd(int fd)
 {
 	this->outputFd = fd;
-	logger.log() << "setOutputFd: " << fd << std::endl;
-	logger.log() << "isOutputRegularFile: " << this->isOutputRegularFile << std::endl;
-	if (!this->isOutputRegularFile)
-	{
-		this->poller.add(fd, EPOLLOUT);
-		this->poller.ioHandlers[fd] = this;
-	}
+	if (this->outputFd == -1)
+		return ;
+	this->poller.add(fd, POLLOUT);
+	this->poller.ioHandlers[fd] = this;
 }

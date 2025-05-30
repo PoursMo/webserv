@@ -12,16 +12,16 @@ AInputHandler::AInputHandler()
 	isReadingHeader(true),
 	bytesInput(-1),
 	bodyBytesCount(0),
-	headerBufferCount(0),
-	isInputRegularFile(false)
+	headerBufferCount(0)
 {
 }
 
 AInputHandler::~AInputHandler()
 {
-	logger.log() << "AInputHandler destructor" << std::endl;
+	logger.log() << "InputHandler desctructor -> delInputFd()" << std::endl;
 	this->delInputFd();
 }
+
 
 // ********************************************************************
 // AInputHandler public
@@ -29,7 +29,7 @@ AInputHandler::~AInputHandler()
 
 void AInputHandler::handleInput()
 {
-	if (isReadingHeader)
+	if (this->isReadingHeader)
 	{
 		logger.log() << "AInputHandler: inputting header" << std::endl;
 		if (fillBuffer(HEADER))
@@ -42,6 +42,7 @@ void AInputHandler::handleInput()
 	}
 	if (this->isInputEnd())
 	{
+		logger.log() << "InputHandler input end -> delInputFd()" << std::endl;
 		this->delInputFd();
 		this->onInputEnd();
 	}
@@ -49,24 +50,21 @@ void AInputHandler::handleInput()
 
 void AInputHandler::delInputFd()
 {
-	if (!this->isInputRegularFile)
-		this->delFd(this->inputFd);
+	this->delFd(&this->inputFd);
+}
+
+int AInputHandler::getInputFd()
+{
+	return this->inputFd;
 }
 
 void AInputHandler::setInputFd(int fd)
 {
 	this->inputFd = fd;
-	logger.log() << "setInputFd: " << fd << std::endl;
-	if (this->isInputRegularFile)
-	{
-		while (!this->isInputEnd())
-			this->handleInput();
-	}
-	else
-	{
-		this->poller.add(fd, EPOLLIN);
-		this->poller.ioHandlers[fd] = this;
-	}
+	if (this->inputFd == -1)
+		return ;
+	this->poller.add(fd, POLLIN);
+	this->poller.ioHandlers[fd] = this;
 }
 
 // ********************************************************************
@@ -161,11 +159,13 @@ AIOHandler::Buffer *AInputHandler::createBuffer(BufferType type)
 	case HEADER:
 		this->onHeaderBufferCreation();
 		buffer->first = new char[WS_HEADER_BUFFER_SIZE];
+		buffer->last = buffer->first;
 		buffer->capacity = WS_HEADER_BUFFER_SIZE;
 		headerBufferCount++;
 		break;
 	case BODY:
 		buffer->first = new char[WS_BODY_BUFFER_SIZE];
+		buffer->last = buffer->first;
 		buffer->capacity = WS_BODY_BUFFER_SIZE;
 		break;
 	default:
@@ -186,19 +186,19 @@ bool AInputHandler::fillBuffer(BufferType type)
 		buffer = createBuffer(type);
 		switch (type)
 		{
-		case HEADER:
-			this->bytesInput = this->handleInputSysCall(buffer->first, WS_HEADER_BUFFER_SIZE);
-			if (bytesInput == 0)
-				return false;
-			break;
-		case BODY:
-			this->bytesInput = this->handleInputSysCall(buffer->first, WS_BODY_BUFFER_SIZE);
-			this->addBodyBytes(bytesInput);
-			break;
-		default:
-			break;
+			case HEADER:
+				this->bytesInput = this->handleInputSysCall(buffer->first, WS_HEADER_BUFFER_SIZE);
+				break;
+			case BODY:
+				this->bytesInput = this->handleInputSysCall(buffer->first, WS_BODY_BUFFER_SIZE);
+				this->addBodyBytes(bytesInput);
+				break;
+			default:
+				break;
 		}
-		buffer->last = buffer->first + bytesInput - 1;
+		if (this->bytesInput == 0)
+			return false;
+		buffer->last = buffer->first + this->bytesInput - 1;
 	}
 	else
 	{
@@ -210,8 +210,11 @@ bool AInputHandler::fillBuffer(BufferType type)
 			return false;
 		buffer->last += bytesInput;
 	}
-	logger.log() << "AInputHandler: buffer: ";
-	debugPrint(buffer->first, buffer->last);
+	if (buffer)
+	{
+		logger.log() << "AInputHandler: buffer: ";
+		debugPrint(buffer->first, buffer->last);
+	}
 	return true;
 }
 

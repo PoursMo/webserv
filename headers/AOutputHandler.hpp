@@ -16,13 +16,11 @@ class AOutputHandler : virtual public AIOHandler
 		virtual void onOutputEnd() = 0;
 		
 		AOutputHandler();
-		~AOutputHandler();
+		virtual ~AOutputHandler();
 	public:
 		void handleOutput();
 		void setOutputFd(int fd);
 		void delOutputFd();
-
-		bool isOutputRegularFile;
 };
 
 #endif

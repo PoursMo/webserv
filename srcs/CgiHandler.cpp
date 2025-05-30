@@ -15,7 +15,7 @@ CgiHandler::CgiHandler(const Request &request) : request(request),
 												 fdIn(-1),
 												 fdOut(-1)
 {
-	logger.log() << "Init CGI HANDLER" << std::endl;
+	logger.log() << "CgiHandler: Init" << std::endl;
 	const std::string& path = this->request.getPath();
 	std::map<std::string, std::string> cgiConfig = this->request.getLocation()->getCgiConfig();
 
@@ -37,7 +37,7 @@ CgiHandler::CgiHandler(const Request &request) : request(request),
 			}
 		}
 	}
-	logger.log() << "TARGET IS NOT CGI:" << this->pathFile << std::endl;
+	logger.log() << "CgiHandler: TARGET IS NOT CGI:" << this->pathFile << std::endl;
 }
 
 std::string CgiHandler::getMethodString() const
@@ -158,15 +158,15 @@ int CgiHandler::cgiExecution()
 		throw http_error("cgi path is not defined", 500);
 	if (access(this->pathExecutable.c_str(), X_OK) == -1)
 		throw http_error("non existant cgi binary", 500);
-	logger.log() << "file:\t" << this->pathFile << std::endl;
-	logger.log() << "file absolute:\t" << this->pathFileAbsolute << std::endl;
-	logger.log() << "query:\t\t" << this->request.getQuery() << std::endl;
-	logger.log() << "content-type:\t" << this->request.getHeaderValue("content-type") << std::endl;
-	logger.log() << "content-length:\t" << this->request.getHeaderValue("content-length") << std::endl;
-	logger.log() << "cgi extension:\t" << this->extension << std::endl;
-	logger.log() << "cgi path:\t" << this->pathExecutable << std::endl;
-	logger.log() << "cgi pathinfo:\t" << this->pathInfo << std::endl;
-	logger.log() << "method:\t" << this->getMethodString() << std::endl;
+	logger.log() << "CgiHandler: file:\t" << this->pathFile << std::endl;
+	logger.log() << "CgiHandler: file absolute:\t" << this->pathFileAbsolute << std::endl;
+	logger.log() << "CgiHandler: query:\t\t" << this->request.getQuery() << std::endl;
+	logger.log() << "CgiHandler: content-type:\t" << this->request.getHeaderValue("content-type") << std::endl;
+	logger.log() << "CgiHandler: content-length:\t" << this->request.getHeaderValue("content-length") << std::endl;
+	logger.log() << "CgiHandler: cgi extension:\t" << this->extension << std::endl;
+	logger.log() << "CgiHandler: cgi path:\t" << this->pathExecutable << std::endl;
+	logger.log() << "CgiHandler: cgi pathinfo:\t" << this->pathInfo << std::endl;
+	logger.log() << "CgiHandler: method:\t" << this->getMethodString() << std::endl;
 
 	if (pipe(pipefd_in.fds) == -1)
 		throw http_error("pipe: " + std::string(strerror(errno)), 500);

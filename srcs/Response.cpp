@@ -35,8 +35,6 @@ bool Response::isInputEnd()
 
 void Response::onInputEnd()
 {
-	logger.log() << "Response ON_INPUT_END event !" << std::endl;
-	close(this->inputFd);
 }
 
 bool Response::parseLine(char *lstart, char *lend)
@@ -109,7 +107,6 @@ bool Response::isOutputEnd()
 
 void Response::onOutputEnd()
 {
-	logger.log() << "Response ON_OUTPUT_END event !" << std::endl;
 	this->poller.terminateConnection(this->outputFd);
 }
 
@@ -146,34 +143,28 @@ std::string Response::getIndexPage(const std::string &path)
 void Response::handleFile(const std::string &path)
 {
 	CgiHandler cgi(this->connection.request);
-	int fdIn;
-	int fdOut;
 	if (cgi.isCgiResource())
 	{
 		this->cgiPid = cgi.cgiExecution();
-		fdIn = cgi.getFdIn();
-		fdOut = cgi.getFdOut();
+		this->connection.request.setOutputFd(cgi.getFdIn());
+		this->setInputFd(cgi.getFdOut());
+		return ;
 	}
-	else
-	{
-		if (this->connection.request.getMethod() != GET)
-			throw http_error("Only GET method can be handled without CGI", 405);
-		fdIn = open("/dev/null", O_CREAT | O_WRONLY | O_TRUNC, 0644); // opti: open once
-		fdOut = open(path.c_str(), O_RDONLY);
-		if (fdIn == -1 || fdOut == -1)
-			throw http_error("open: " + std::string(strerror(errno)), 500);
-		this->isReadingHeader = false;
-		this->isInputRegularFile = true;
-		this->connection.request.isOutputRegularFile = true;
-		this->set(200);
-	}
-	this->connection.request.setOutputFd(fdIn);
-	this->setInputFd(fdOut);
+	if (this->connection.request.getMethod() != GET)
+		throw http_error("Only GET method can be handled without CGI", 405);
+	int fileFd = open(path.c_str(), O_RDONLY);
+	if (fileFd == -1)
+		throw http_error("open: " + std::string(strerror(errno)), 500);
+	this->isReadingHeader = false;
+	this->set(200);
+	this->setInputFd(fileFd);
+	this->setOutputFd(this->connection.request.getInputFd());
+	this->connection.request.setInputFd(-1);
 }
 
 void Response::handlePath(const std::string &path)
 {
-	logger.log() << "Response: accessing path: " << path << std::endl;
+	logger.log() << "Response: handling path: " << path << std::endl;
 	if (access(path.c_str(), R_OK) == -1)
 		throw http_error("access: " + path + ": " + std::string(strerror(errno)), 404);
 	struct stat statBuffer;
