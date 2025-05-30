@@ -1,17 +1,26 @@
 #include "AInputHandler.hpp"
 #include "Logger.hpp"
 #include "AIOHandler.hpp"
+#include "Poller.hpp"
 
 // ********************************************************************
 // AInputHandler class
 // ********************************************************************
 
 AInputHandler::AInputHandler()
-	: isReadingHeader(true),
-	bytesInput(0),
+	: inputFd(-1),
+	isReadingHeader(true),
+	bytesInput(-1),
 	bodyBytesCount(0),
-	headerBufferCount(0)
+	headerBufferCount(0),
+	isInputRegularFile(false)
 {
+}
+
+AInputHandler::~AInputHandler()
+{
+	logger.log() << "AInputHandler destructor" << std::endl;
+	this->delInputFd();
 }
 
 // ********************************************************************
@@ -38,9 +47,26 @@ void AInputHandler::handleInput()
 	}
 }
 
-ssize_t AInputHandler::getBytesInput() const
+void AInputHandler::delInputFd()
 {
-	return bytesInput;
+	if (!this->isInputRegularFile)
+		this->delFd(this->inputFd);
+}
+
+void AInputHandler::setInputFd(int fd)
+{
+	this->inputFd = fd;
+	logger.log() << "setInputFd: " << fd << std::endl;
+	if (this->isInputRegularFile)
+	{
+		while (!this->isInputEnd())
+			this->handleInput();
+	}
+	else
+	{
+		this->poller.add(fd, EPOLLIN);
+		this->poller.ioHandlers[fd] = this;
+	}
 }
 
 // ********************************************************************
@@ -76,13 +102,13 @@ void AInputHandler::sendHeaderLineToParsing(const Buffer *lbuffer, char *lf)
 		line.append(lbuffer->pos, lf + 1);
 		logger.log() << "AInputHandler: stitched line of size " << line.size() << ": ";
 		debugPrint(&line[0], &line[line.size() - 1]);
-		isReadingHeader = this->parseLine(&line[0], &line[line.size() - 1]);
+		this->isReadingHeader = this->parseLine(&line[0], &line[line.size() - 1]);
 	}
 	else
 	{
 		logger.log() << "AInputHandler: non-stitched line of size " << lf - lbuffer->pos + 1 << ": ";
 		debugPrint(lbuffer->pos, lf);
-		isReadingHeader = this->parseLine(lbuffer->pos, lf);
+		this->isReadingHeader = this->parseLine(lbuffer->pos, lf);
 	}
 }
 
@@ -100,12 +126,15 @@ void AInputHandler::flushHeaderBuffers()
 	{
 		sendHeaderLineToParsing(lbuffer, lf);
 		lbuffer->pos = lf + 1;
-		if (!isReadingHeader && lbuffer->last != lf)
+		if (!this->isReadingHeader)
 		{
-			this->addBodyBytes(lbuffer->last - lbuffer->pos + 1);
-			logger.log() << "AInputHandler: copying remains of header buffer in body buffer " << std::endl;
-			Buffer *bodyBuffer = createBuffer(BODY);
-			std::memcpy(bodyBuffer->first, lbuffer->pos, bodyBytesCount);
+			if (lf != lbuffer->last)
+			{
+				this->addBodyBytes(lbuffer->last - lbuffer->pos + 1);
+				logger.log() << "AInputHandler: copying remains of header buffer in body buffer " << std::endl;
+				Buffer *bodyBuffer = createBuffer(BODY);
+				std::memcpy(bodyBuffer->first, lbuffer->pos, bodyBytesCount);
+			}
 			delete[] lbuffer->first;
 			delete lbuffer;
 			buffers.pop_front();
@@ -117,7 +146,7 @@ void AInputHandler::flushHeaderBuffers()
 			{
 				delete[] lbuffer->first;
 				delete lbuffer;
-				buffers.clear();
+				buffers.pop_front();
 			}
 			break;
 		}

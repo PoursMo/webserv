@@ -194,6 +194,11 @@ bool Request::isInputEnd()
 void Request::onInputEnd()
 {
 	logger.log() << "Request ON_INPUT_END event !" << std::endl;
+	if (this->isOutputRegularFile)
+	{
+		while (!this->isOutputEnd())
+			this->handleOutput();
+	}
 }
 
 void Request::onUpdateBodyBytes() {
@@ -213,9 +218,11 @@ void Request::onHeaderBufferCreation()
 
 ssize_t Request::handleOutputSysCall(const void *buf, size_t len)
 {
+	logger.log() << "Request: writing " << len << " bytes" << std::endl;
 	ssize_t bytesWritten = write(this->outputFd, buf, len);
 	if (bytesWritten == -1)
 		throw http_error("write: " + std::string(strerror(errno)), 500);
+	logger.log() << "Request: wrote " << len << " bytes" << std::endl;
 	return bytesWritten;
 }
 
@@ -228,6 +235,7 @@ void Request::onOutputEnd()
 {
 	logger.log() << "Request ON_OUPUT_END event !" << std::endl;
 	this->connection.response.setOutputFd(this->inputFd);
+	this->inputFd = -1;
 	close(this->outputFd);
 }
 

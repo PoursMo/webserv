@@ -4,22 +4,19 @@
 #include "http_error.hpp"
 
 AIOHandler::AIOHandler(Poller &poller, Connection &connection) 
-: inputFd(-1),
-  outputFd(-1),
-  poller(poller),
+: poller(poller),
   connection(connection)
 {
 }
 
 AIOHandler::~AIOHandler()
 {
+	logger.log() << "AIOHandler destructor" << std::endl;
 	for (std::list<Buffer *>::iterator i = buffers.begin(); i != buffers.end(); i++)
 	{
 		delete[] (*i)->first;
 		delete (*i);
 	}
-	this->delInputFd();
-	this->delOutputFd();
 }
 
 void AIOHandler::delFd(int fd)
@@ -28,46 +25,6 @@ void AIOHandler::delFd(int fd)
 		return ;
 	this->poller.del(fd);
 	this->poller.ioHandlers.erase(fd);
-}
-
-void AIOHandler::delInputFd()
-{
-	this->delFd(this->inputFd);
-}
-
-void AIOHandler::delOutputFd()
-{
-	this->delFd(this->outputFd);
-}
-
-void AIOHandler::setInputFd(int fd)
-{
-	this->inputFd = fd;
-	logger.log() << "setInputFd :" << fd << std::endl;
-	this->poller.add(fd, EPOLLIN);
-	this->poller.ioHandlers[fd] = this;
-}
-
-void AIOHandler::setOutputFd(int fd)
-{
-	this->outputFd = fd;
-	logger.log() << "setOutputFd :" << fd << std::endl;
-	this->poller.add(fd, EPOLLOUT);
-	this->poller.ioHandlers[fd] = this;
-}
-
-// ********************************************************************
-// Getters
-// ********************************************************************
-
-int AIOHandler::getInputFd() const
-{
-	return this->inputFd;
-}
-
-int AIOHandler::getOutputFd() const
-{
-	return this->outputFd;
 }
 
 // ********************************************************************

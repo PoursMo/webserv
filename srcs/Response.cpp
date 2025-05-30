@@ -76,9 +76,11 @@ void Response::onUpdateBodyBytes()
 
 ssize_t Response::handleInputSysCall(void *buf, size_t len)
 {
+	logger.log() << "Response: reading " << len << " bytes" << std::endl;
 	ssize_t bytesRead = read(this->inputFd, buf, len);
 	if (bytesRead == -1)
 		throw http_error("read: " + std::string(strerror(errno)), 500);
+	logger.log() << "Response: read " << bytesRead << " bytes" << std::endl;
 	return bytesRead;
 }
 
@@ -92,6 +94,7 @@ void Response::onHeaderBufferCreation()
 
 ssize_t Response::handleOutputSysCall(const void *buf, size_t len)
 {
+	logger.log() << "Response: sending " << len << " bytes" << std::endl;
 	ssize_t bytesSent = send(this->outputFd, buf, len, MSG_NOSIGNAL);
 	if (bytesSent == -1)
 		throw std::runtime_error("send: " + std::string(strerror(errno)));
@@ -101,7 +104,7 @@ ssize_t Response::handleOutputSysCall(const void *buf, size_t len)
 
 bool Response::isOutputEnd()
 {
-	return this->isStringContentSent && this->buffers.empty() && this->isInputEnd();
+	return this->stringContent.empty() && this->buffers.empty() && this->isInputEnd();
 }
 
 void Response::onOutputEnd()
@@ -150,7 +153,6 @@ void Response::handleFile(const std::string &path)
 		this->cgiPid = cgi.cgiExecution();
 		fdIn = cgi.getFdIn();
 		fdOut = cgi.getFdOut();
-		this->setInputFd(fdOut);
 	}
 	else
 	{
@@ -161,13 +163,12 @@ void Response::handleFile(const std::string &path)
 		if (fdIn == -1 || fdOut == -1)
 			throw http_error("open: " + std::string(strerror(errno)), 500);
 		this->isReadingHeader = false;
-		this->inputFd = fdOut;
-		while (this->bytesInput != 0)
-			this->handleInput();
+		this->isInputRegularFile = true;
+		this->connection.request.isOutputRegularFile = true;
 		this->set(200);
 	}
 	this->connection.request.setOutputFd(fdIn);
-
+	this->setInputFd(fdOut);
 }
 
 void Response::handlePath(const std::string &path)
@@ -203,6 +204,7 @@ void Response::handlePath(const std::string &path)
 	}
 	else if (S_ISREG(statBuffer.st_mode))
 	{
+		this->addHeader("Content-Length", statBuffer.st_size);
 		this->handleFile(path);
 	}
 	else
@@ -229,13 +231,13 @@ void Response::setError(int status)
 	if (this->connection.request.getVServer())
 	{
 		this->addHeader("Content-Type", "text/html");
-		this->addHeader("Content-Length", body.size());
 	}
 	this->set(status, body);
 }
 
 void Response::set(int status, const std::string &body)
 {
+	this->addHeader("Content-Length", body.size());
 	this->stringContent = this->generateHeader(status) + body;
 }
 
@@ -257,6 +259,7 @@ std::string Response::generateHeader(int status) const
 	{
 		header << i->first << ": " << i->second << CRLF;
 	}
+	header << CRLF;
 	return header.str();
 }
 
@@ -266,15 +269,7 @@ std::string Response::generateHeader(int status) const
 
 void Response::addHeader(std::string key, std::string value)
 {
-	try
-	{
-		std::string &headerValue = this->headers.at(key);
-		headerValue += ", " + value;
-	}
-	catch(const std::exception& e)
-	{
-		this->headers[key] = value;
-	}
+	this->headers[key] = value;
 }
 
 void Response::addHeader(std::string key, unsigned long value)

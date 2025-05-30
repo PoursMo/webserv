@@ -22,8 +22,6 @@ class AIOHandler
 			BODY
 		};
 
-        int inputFd;
-        int outputFd;
         Poller &poller;
 		Connection &connection;
     	std::list<Buffer *> buffers;
@@ -35,18 +33,12 @@ class AIOHandler
 		void parseHeaderLine(char *lstart, char *lend);
 
         AIOHandler(Poller &poller, Connection &connection);
-        ~AIOHandler();
+        virtual ~AIOHandler();
         static void debugPrint(const char *first, const char *const last);
     public:
         virtual void handleInput() = 0;
         virtual void handleOutput() = 0;
 		virtual void addHeader(std::string key, std::string value) = 0;
-        void setInputFd(int fd);
-        void setOutputFd(int fd);
-		int getInputFd() const;
-		int getOutputFd() const;
-		void delInputFd();
-		void delOutputFd();
 };
 
 #endif

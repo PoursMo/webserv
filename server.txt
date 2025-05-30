@@ -1,0 +1,78 @@
+[1m[31mservers:[0m
+Socket: 5
+  VirtualServer:
+    Address: 0.0.0.0
+    Port: 8000
+    VirtualServer Names: webserv.com, www.webserv.com
+    Error Pages: [404: /app/www/custom_errors/my-error-404.html] 
+    Client Max Body Size: 1048576
+    Locations:
+    [
+      Path: /
+	Methods: [GET, POST]
+	ReturnPair: (-1, )
+	AutoIndex: true
+	Root: /app/www
+	UploadStore: 
+	Indexes: [index.html]
+	CgiConfig: {
+	}
+    ]
+
+[1m[31mpoll loop:[0m
+Polling...
+New connection on socket 5, created socket fd: 6
+setInputFd: 6
+Polling...
+In operations on socket 6:
+AInputHandler: inputting header
+AInputHandler: filling new buffer
+AInputHandler: created new buffer of size 8192
+Request: recving for 8192 bytes on fd 6
+Request: recved 88 bytes
+AInputHandler: buffer: GET /hello.html HTTP/1.1\r\nHost: 127.0.0.1:8000\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n
+AInputHandler: non-stitched line of size 26: GET /hello.html HTTP/1.1\r\n
+AInputHandler: non-stitched line of size 22: Host: 127.0.0.1:8000\r\n
+AInputHandler: non-stitched line of size 25: User-Agent: curl/7.81.0\r\n
+AInputHandler: non-stitched line of size 13: Accept: */*\r\n
+AInputHandler: non-stitched line of size 2: \r\n
+Response: accessing path: /app/www/hello.html
+Init CGI HANDLER
+TARGET IS NOT CGI:
+setOutputFd: 7
+isOutputRegularFile: 1
+setInputFd: 8
+AInputHandler: inputting body
+AInputHandler: filling new buffer
+AInputHandler: created new buffer of size 32768
+Response: reading 32768 bytes
+Response: read 208 bytes
+AInputHandler: buffer: <!DOCTYPE html>\n<html lang="en">\n<head>\n	<meta charset="UTF-8">\n	<meta name="viewport" content="width=device-width, initial-scale=1.0">\n	<title>Document</title>\n</head>\n<body>\n	<h1>Hello</h1>\n</body>\n</html>\n
+AInputHandler: inputting body
+AInputHandler: filling existing buffer
+Response: reading 32560 bytes
+Response: read 0 bytes
+Response ON_INPUT_END event !
+AOutputHandler: sending buffer
+Request: writing 0 bytes
+Request: wrote 0 bytes
+IS END OUTPUT
+Request ON_OUPUT_END event !
+setOutputFd: 6
+isOutputRegularFile: 0
+Request ON_INPUT_END event !
+Polling...
+Out operations on socket 6:
+AOutputHandler: sending string content
+Response: sending 97 bytes
+Response: bytesSent: 97
+Polling...
+Out operations on socket 6:
+AOutputHandler: sending buffer
+Response: sending 208 bytes
+Response: bytesSent: 208
+IS END OUTPUT
+Response ON_OUTPUT_END event !
+Terminating socket: 6
+AIOHandler destructor
+AIOHandler destructor

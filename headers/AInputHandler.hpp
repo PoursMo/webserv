@@ -16,6 +16,7 @@ class AInputHandler: virtual public AIOHandler
 		bool fillBuffer(BufferType type);
 		
 	protected:
+	    int inputFd;
 		bool isReadingHeader;
 		ssize_t bytesInput;
 		ssize_t bodyBytesCount;
@@ -29,11 +30,14 @@ class AInputHandler: virtual public AIOHandler
 		virtual void onHeaderBufferCreation() = 0;
 
 		AInputHandler();
-
+		~AInputHandler();
 	public:
 		void handleInput();
-		ssize_t getBytesInput() const;
+		void setInputFd(int fd);
+		void delInputFd();
 		//Utils
-};
+
+		bool isInputRegularFile;
+	};
 
 #endif
