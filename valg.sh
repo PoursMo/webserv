@@ -1,1 +1,1 @@
-valgrind --track-fds=yes --log-file="leaks.txt" ./webserv conf/cgi.json
+valgrind --track-fds=yes --log-file="leaks.txt" ./webserv conf/locations.json

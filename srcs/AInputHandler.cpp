@@ -110,7 +110,9 @@ void AInputHandler::sendHeaderLineToParsing(const Buffer* buffer, char* lf)
 
 void AInputHandler::addBodyBytes(size_t bytes)
 {
-	bodyBytesCount += bytes;
+	logger.log() << "add " << bytes << " to " << this->bodyBytesCount;
+	this->bodyBytesCount += bytes;
+	logger.log() << " = " << this->bodyBytesCount << std::endl;
 	this->onUpdateBodyBytes();
 }
 
@@ -159,7 +161,6 @@ AIOHandler::Buffer* AInputHandler::createBuffer(BufferType type)
 		this->onHeaderBufferCreation();
 		buffer->first = new char[WS_HEADER_BUFFER_SIZE];
 		buffer->capacity = WS_HEADER_BUFFER_SIZE;
-		headerBufferCount++;
 		break;
 	case BODY:
 		buffer->first = new char[WS_BODY_BUFFER_SIZE];
@@ -188,6 +189,8 @@ bool AInputHandler::fillBuffer(BufferType type)
 		{
 		case HEADER:
 			this->bytesInput = this->handleInputSysCall(buffer->first, WS_HEADER_BUFFER_SIZE);
+			if (this->bytesInput)
+				headerBufferCount++;
 			break;
 		case BODY:
 			this->bytesInput = this->handleInputSysCall(buffer->first, WS_BODY_BUFFER_SIZE);
@@ -211,6 +214,8 @@ bool AInputHandler::fillBuffer(BufferType type)
 		char* buf = buffer->last + 1;
 		size_t readSize = buffer->capacity - (buffer->last - buffer->first) - 1;
 		this->bytesInput = this->handleInputSysCall(buf, readSize);
+		if (type == BODY)
+			this->addBodyBytes(bytesInput);
 		if (bytesInput == 0)
 			return false;
 		buffer->last += bytesInput;
@@ -220,6 +225,7 @@ bool AInputHandler::fillBuffer(BufferType type)
 	// 	logger.log() << "AInputHandler: buffer: ";
 	// 	printBuffer(buffer->first, buffer->last);
 	// }
+	this->connection.updateTime();
 	return true;
 }
 

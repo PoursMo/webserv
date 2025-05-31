@@ -16,6 +16,7 @@ AOutputHandler::~AOutputHandler()
 
 void AOutputHandler::handleOutput()
 {
+	this->connection.updateTime();
 	ssize_t bytesOutput;
 	if (!this->stringContent.empty())
 	{

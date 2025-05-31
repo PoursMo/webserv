@@ -5,11 +5,6 @@
 #include "Logger.hpp"
 #include "utils.hpp"
 
-/*
-edge-trigerred mode: Epoll_wait will return only when a new event is enqueued with the epoll object.
-level-triggered mode (default): Epoll_wait will return as long as the condition holds.
-*/
-
 Poller::Poller(const std::map<int, std::vector<VirtualServer*> >& servers)
 	: pollFds(),
 	servers(servers)
@@ -111,32 +106,20 @@ void Poller::handleNewConnection(int fd)
 
 void Poller::handlePollin(int fd)
 {
-	std::map<int, Connection*>::iterator connection = connections.find(fd);
-	if (connection != connections.end())
-		connection->second->updateTime();
 	try
 	{
 		logger.log() << "In operations on fd " << fd << ":" << std::endl;
 		ioHandlers.at(fd)->handleInput();
-		// dans handleInput
-		// if (!ioHandlers.at(fd). == 0)
-		// 	this->mod(fd, EPOLLET);
-		// else
-		// 	this->mod(fd, POLLIN);
 	}
 	catch (const http_error& e)
 	{
 		std::cerr << e.what() << '\n';
-		connection->second->response.setError(e.getStatusCode());
+		connections.at(fd)->response.setError(e.getStatusCode());
 	}
-
 }
 
 void Poller::handlePollout(int fd)
 {
-	std::map<int, Connection*>::iterator connection = connections.find(fd);
-	if (connection != connections.end())
-		connection->second->updateTime();
 	logger.log() << "Out operations on fd " << fd << ":" << std::endl;
 	ioHandlers.at(fd)->handleOutput();
 }
@@ -169,7 +152,7 @@ void Poller::loop()
 		int timeout = WS_CONNECTION_TIMEOUT_TIMER;
 		if (!connections.empty())
 			timeoutTerminator(timeout);
-		logger.log() << "Polling..." << std::endl; // debug
+		logger.log() << "Polling..." << std::endl;
 		this->waitEvents(timeout * 1000);
 		std::vector<struct pollfd> fds = this->pollFds;
 		for (std::vector<struct pollfd>::const_iterator i = fds.begin(); i != fds.end(); i++)

@@ -3,12 +3,17 @@
   "debug": true,
   "servers": [
     {
+      "client_max_body_size": 104857600,
       "address": "0.0.0.0",
       "locations": [
         {
           "root": "/app/www",
           "path": "/",
-          "method": ["GET", "POST", "DELETE"],
+          "method": [
+            "GET",
+            "POST",
+            "DELETE"
+          ],
           "autoindex": true,
           "cgi": {
             ".php": "/usr/bin/php-cgi",

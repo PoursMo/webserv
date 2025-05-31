@@ -1,3 +1,0 @@
-GET /pomme/index.html HTTP/1.1
-Host: webserv.com
-

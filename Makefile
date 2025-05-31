@@ -1,5 +1,5 @@
 CFLAGS = -Wall -Wextra -Werror -std=c++98 -g -I$(INCDIR)
-
+CXX    = c++
 INCDIR = headers
 SRCDIR = srcs
 OBJDIR = objs

@@ -18,7 +18,7 @@ private:
 	void set(int status);
 	std::string generateHeader(int status) const;
 	std::string getIndexPage(const std::string& path);
-	void handleFile(const std::string& path);
+	void handleFile(const std::string& path, int status);
 
 	// AInputHandler
 	bool isInputEnd();
@@ -41,7 +41,7 @@ public:
 	void addHeader(std::string key, std::string value);
 	void addHeader(std::string key, unsigned long value);
 	void addHeader(std::string key, long value);
-	void handlePath(const std::string& path);
+	void handlePath(const std::string& path, int status);
 	void setError(int status);
 
 	void handleReturn(const std::pair<int, std::string>& returnPair);

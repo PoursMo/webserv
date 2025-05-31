@@ -144,7 +144,7 @@ std::string Response::getIndexPage(const std::string& path)
 	return "";
 }
 
-void Response::handleFile(const std::string& path)
+void Response::handleFile(const std::string& path, int status)
 {
 	CgiHandler cgi(this->connection.request);
 	if (cgi.isCgiResource())
@@ -166,11 +166,11 @@ void Response::handleFile(const std::string& path)
 		this->connection.print("Response: set fileFd on input");
 		this->isReadingHeader = false;
 		this->subscribeInputFd(fileFd);
-		this->set(200);
+		this->set(status);
 	}
 }
 
-void Response::handlePath(const std::string& path)
+void Response::handlePath(const std::string& path, int status)
 {
 	logger.log() << "Response: handling path: " << path << std::endl;
 	if (access(path.c_str(), R_OK) == -1)
@@ -198,13 +198,13 @@ void Response::handlePath(const std::string& path)
 		}
 		else
 		{
-			this->handlePath(indexPagePath);
+			this->handlePath(indexPagePath, status);
 		}
 	}
 	else if (S_ISREG(statBuffer.st_mode))
 	{
 		this->addHeader("Content-Length", statBuffer.st_size);
-		this->handleFile(path);
+		this->handleFile(path, status);
 	}
 	else
 		throw http_error("Target is neither a directory nor a regular file", 422);
@@ -218,7 +218,7 @@ void Response::setError(int status)
 		try
 		{
 			const std::string& path = vServer->getErrorPages().at(status);
-			this->handlePath(path);
+			this->handlePath(path, status);
 			return;
 		}
 		catch (const std::exception& e)
@@ -227,10 +227,6 @@ void Response::setError(int status)
 		}
 	}
 	std::string body = generateErrorBody(status);
-	if (this->connection.request.getVServer())
-	{
-		this->addHeader("Content-Type", "text/html");
-	}
 	this->set(status, body);
 }
 
