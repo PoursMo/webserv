@@ -117,7 +117,7 @@ void Poller::handlePollin(int fd)
 	catch (const http_error &e)
 	{
 		std::cerr << e.what() << '\n';
-		connections.at(fd)->response.setError(e.getStatusCode());
+		connections.at(fd)->response.sendError(e.getStatusCode());
 		// this->mod(fd, POLLOUT);
 	}
 }

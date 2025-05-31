@@ -118,12 +118,13 @@ void Response::handleReturn(const std::pair<int, std::string> &returnPair)
 	if (returnPair.first == 301 || returnPair.first == 302 || returnPair.first == 303 || returnPair.first == 307)
 	{
 		this->addHeader("Location", returnPair.second);
-		this->setError(returnPair.first);
+		this->sendError(returnPair.first);
 	}
 	else
 	{
 		this->addHeader("Content-Type", "text/plain");
 		this->set(returnPair.first, returnPair.second);
+		this->takeSocket();
 	}
 }
 
@@ -180,8 +181,7 @@ void Response::handlePath(const std::string &path)
 		{
 			std::string loc = path.substr(this->connection.request.getLocation()->getRoot().size());
 			this->addHeader("Location", loc + '/');
-			this->setError(301);
-			this->takeSocket();
+			this->sendError(301);
 			return;
 		}
 		std::string indexPagePath = getIndexPage(path);
@@ -208,7 +208,7 @@ void Response::handlePath(const std::string &path)
 		throw http_error("Target is neither a directory nor a regular file", 422);
 }
 
-void Response::setError(int status)
+void Response::sendError(int status)
 {
 	const VirtualServer *vServer = this->connection.request.getVServer();
 	if (vServer && this->connection.request.getLocation())
@@ -230,6 +230,7 @@ void Response::setError(int status)
 		this->addHeader("Content-Type", "text/html");
 	}
 	this->set(status, body);
+	this->takeSocket();
 }
 
 void Response::set(int status, const std::string &body)

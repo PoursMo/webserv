@@ -43,9 +43,8 @@ class Response: public AInputHandler, public AOutputHandler
 		void addHeader(std::string key, unsigned long value);
 		void addHeader(std::string key, long value);
 		void handlePath(const std::string &path);
-		void setError(int status);
+		void sendError(int status);
 		
-
 		void handleReturn(const std::pair<int, std::string> &returnPair);
 };
 
