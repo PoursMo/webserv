@@ -22,6 +22,8 @@ Response::~Response()
 		kill(this->cgiPid, SIGKILL);
 		waitpid(this->cgiPid, NULL, 0);
 	}
+	if (this->inputFd != -1)
+		close(this->inputFd);
 }
 
 // ********************************************************************
@@ -30,18 +32,19 @@ Response::~Response()
 
 bool Response::isInputEnd()
 {
-	logger.log() << "response input end ? " << int_to_str(this->bytesInput) << std::endl;
 	return this->inputFd == -1 || this->bytesInput == 0;
 }
 
 void Response::onInputEnd()
 {
+	this->unsubscribeInputFd();
 }
 
 bool Response::parseLine(char* lstart, char* lend)
 {
 	if (lstart == NULL || lend == NULL || *lend != '\n')
 		return false;
+
 	if (AIOHandler::isEmptyline(lstart, lend))
 	{
 		// TODO: if no headers : 502
@@ -108,7 +111,7 @@ bool Response::isOutputEnd()
 
 void Response::onOutputEnd()
 {
-	this->delOutputFd();
+	this->poller.terminateConnection(this->outputFd);
 }
 
 // ********************************************************************
@@ -120,13 +123,12 @@ void Response::handleReturn(const std::pair<int, std::string>& returnPair)
 	if (returnPair.first == 301 || returnPair.first == 302 || returnPair.first == 303 || returnPair.first == 307)
 	{
 		this->addHeader("Location", returnPair.second);
-		this->sendError(returnPair.first);
+		this->setError(returnPair.first);
 	}
 	else
 	{
 		this->addHeader("Content-Type", "text/plain");
 		this->set(returnPair.first, returnPair.second);
-		this->takeSocket();
 	}
 }
 
@@ -142,14 +144,6 @@ std::string Response::getIndexPage(const std::string& path)
 	return "";
 }
 
-void Response::takeSocket()
-{
-	this->connection.print("Response: takeSocket()");
-	this->setOutputFd(this->connection.request.getInputFd());
-	this->connection.request.setInputFd(-1);
-	this->connection.print();
-}
-
 void Response::handleFile(const std::string& path)
 {
 	CgiHandler cgi(this->connection.request);
@@ -157,24 +151,22 @@ void Response::handleFile(const std::string& path)
 	{
 		this->cgiPid = cgi.cgiExecution();
 		this->connection.print("Response: bind CGI process");
-		this->connection.request.setOutputFd(cgi.getFdIn());
-		this->setInputFd(cgi.getFdOut());
+		this->connection.request.subscribeOutputFd(cgi.getFdIn());
+		this->subscribeInputFd(cgi.getFdOut());
 		this->connection.print();
-		return;
 	}
-	if (this->connection.request.getMethod() != GET)
-		throw http_error("Only GET method can be handled without CGI", 405);
-	int fileFd = open(path.c_str(), O_RDONLY);
-	if (fileFd == -1)
-		throw http_error("open: " + std::string(strerror(errno)), 500);
-	this->isReadingHeader = false;
-	this->set(200);
-	this->connection.print("Response: set fileFd on input");
-	this->setInputFd(fileFd);
-	this->connection.print();
-	// TODO wait on Request onInputEnd();
-	// if (request.outputFd == -1 && response.inputFd != -1) then response->takeSocket();
-	this->takeSocket();
+	else
+	{
+		if (this->connection.request.getMethod() != GET)
+			throw http_error("Only GET method can be handled without CGI", 405);
+		int fileFd = open(path.c_str(), O_RDONLY);
+		if (fileFd == -1)
+			throw http_error("open: " + std::string(strerror(errno)), 500);
+		this->isReadingHeader = false;
+		this->connection.print("Response: set fileFd on input");
+		this->subscribeInputFd(fileFd);
+		this->set(200);
+	}
 }
 
 void Response::handlePath(const std::string& path)
@@ -191,18 +183,17 @@ void Response::handlePath(const std::string& path)
 		{
 			std::string loc = path.substr(this->connection.request.getLocation()->getRoot().size());
 			this->addHeader("Location", loc + '/');
-			this->sendError(301);
+			this->setError(301);
 			return;
 		}
 		std::string indexPagePath = getIndexPage(path);
 		if (indexPagePath.empty())
 		{
 			if (!this->connection.request.getLocation()->getAutoIndex())
-				throw http_error("This target is a dir not have index pages and autoindex is disabled", 404);
+				throw http_error("Target is dir without index pages and autoindex is disabled", 404);
 			if (this->connection.request.getMethod() != GET)
 				throw http_error("Only GET method is handled for autoindex", 405);
 			this->set(200, getAutoIndexHtml(path, this->connection.request.getLocation()->getRoot()));
-			this->takeSocket();
 		}
 		else
 		{
@@ -218,7 +209,7 @@ void Response::handlePath(const std::string& path)
 		throw http_error("Target is neither a directory nor a regular file", 422);
 }
 
-void Response::sendError(int status)
+void Response::setError(int status)
 {
 	const VirtualServer* vServer = this->connection.request.getVServer();
 	if (vServer && this->connection.request.getLocation())
@@ -240,18 +231,22 @@ void Response::sendError(int status)
 		this->addHeader("Content-Type", "text/html");
 	}
 	this->set(status, body);
-	this->takeSocket();
 }
 
 void Response::set(int status, const std::string& body)
 {
 	this->addHeader("Content-Length", body.size());
 	this->stringContent = this->generateHeader(status) + body;
+	this->connection.request.unsubscribeInputFd();
+	this->subscribeOutputFd(this->connection.clientFd);
+	this->connection.print();
 }
 
 void Response::set(int status)
 {
 	this->stringContent = this->generateHeader(status);
+	this->subscribeOutputFd(this->connection.clientFd);
+	this->connection.print();
 }
 
 std::string Response::generateHeader(int status) const

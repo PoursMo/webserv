@@ -18,8 +18,8 @@ protected:
 	virtual ~AOutputHandler();
 public:
 	void handleOutput();
-	void setOutputFd(int fd);
-	void delOutputFd();
+	void subscribeOutputFd(int fd);
+	void unsubscribeOutputFd();
 };
 
 #endif

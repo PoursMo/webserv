@@ -7,14 +7,11 @@
 AOutputHandler::AOutputHandler()
 	: bytesOutputCount(0)
 {
-	this->connection.print("AOutputHandler constructor");
 }
 
 AOutputHandler::~AOutputHandler()
 {
-	this->connection.print("AOutputHandler desctructor");
-	this->delOutputFd();
-	this->connection.print();
+	this->unsubscribeOutputFd();
 }
 
 void AOutputHandler::handleOutput()
@@ -22,7 +19,7 @@ void AOutputHandler::handleOutput()
 	ssize_t bytesOutput;
 	if (!this->stringContent.empty())
 	{
-		// logger.log() << "AOutputHandler: sending string content" << std::endl;
+		logger.log() << "AOutputHandler: sending string content" << std::endl;
 		const char* buffer_pos = this->stringContent.c_str() + this->bytesOutputCount;
 		size_t len = this->stringContent.size() - this->bytesOutputCount;
 		bytesOutput = handleOutputSysCall(buffer_pos, len);
@@ -32,7 +29,7 @@ void AOutputHandler::handleOutput()
 	}
 	else if (!this->buffers.empty())
 	{
-		// logger.log() << "AOutputHandler: sending buffer" << std::endl;
+		logger.log() << "AOutputHandler: sending buffer" << std::endl;
 		Buffer* buffer = this->buffers.front();
 		size_t len = buffer->last - buffer->pos + 1;
 		bytesOutput = handleOutputSysCall(buffer->pos, len);
@@ -49,17 +46,15 @@ void AOutputHandler::handleOutput()
 	{
 		this->connection.print("AOutputHandler output end");
 		this->onOutputEnd();
-		this->delOutputFd();
-		this->connection.print();
 	}
 }
 
-void AOutputHandler::delOutputFd()
+void AOutputHandler::unsubscribeOutputFd()
 {
-	this->delFd(this->outputFd);
+	this->unsubscribeFd(this->outputFd);
 }
 
-void AOutputHandler::setOutputFd(int fd)
+void AOutputHandler::subscribeOutputFd(int fd)
 {
 	this->outputFd = fd;
 	if (this->outputFd == -1)

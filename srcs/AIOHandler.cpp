@@ -21,15 +21,16 @@ AIOHandler::~AIOHandler()
 	}
 }
 
-void AIOHandler::delFd(int& fd)
+void AIOHandler::unsubscribeFd(int& fd)
 {
 	if (fd == -1)
+	{
+		logger.log() << "Unsubscribe unsetted fd !!" << std::endl;
 		return;
+	}
+	logger.log() << "Unsubscribe fd " << fd << std::endl;
 	this->poller.del(fd);
 	this->poller.ioHandlers.erase(fd);
-	if (this->poller.isServerFd(fd))
-		this->poller.terminateConnection(fd);
-	close(fd);
 	fd = -1;
 }
 

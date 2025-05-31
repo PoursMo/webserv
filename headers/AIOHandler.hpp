@@ -27,7 +27,7 @@ protected:
 
 	std::list<Buffer*> buffers;
 	std::map<std::string, std::string> headers;
-	void delFd(int& fd);
+	void unsubscribeFd(int& fd);
 
 	int inputFd;
 	int outputFd;

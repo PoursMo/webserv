@@ -32,8 +32,8 @@ protected:
 	virtual ~AInputHandler();
 public:
 	void handleInput();
-	void setInputFd(int fd);
-	void delInputFd();
+	void subscribeInputFd(int fd);
+	void unsubscribeInputFd();
 	int getInputFd();
 };
 

@@ -44,7 +44,14 @@ void Poller::add(int fd, short events)
 
 void Poller::del(int fd)
 {
-	this->pollFds.erase(this->findPollFd(fd));
+	logger.log() << "DEL FD: " << int_to_str(fd) << std::endl;
+	try
+	{
+		this->pollFds.erase(this->findPollFd(fd));
+	}
+	catch (const std::exception& e)
+	{
+	}
 }
 
 int Poller::waitEvents(int timeout)
@@ -85,7 +92,10 @@ void Poller::terminateConnection(int fd)
 	}
 	catch (...)
 	{
+		logger.log() << "Terminate connection failed (" << fd << ")" << std::endl;
 	}
+	if (!isServerFd(fd))
+		close(fd);
 }
 
 void Poller::handleNewConnection(int fd)
@@ -101,12 +111,12 @@ void Poller::handleNewConnection(int fd)
 
 void Poller::handlePollin(int fd)
 {
-	logger.log() << "POLLIN: " << int_to_str(fd) << std::endl;
-	if (connections.count(fd))
-		connections.at(fd)->updateTime();
-	logger.log() << "In operations on socket " << fd << ":" << std::endl;
+	std::map<int, Connection*>::iterator connection = connections.find(fd);
+	if (connection != connections.end())
+		connection->second->updateTime();
 	try
 	{
+		logger.log() << "In operations on fd " << fd << ":" << std::endl;
 		ioHandlers.at(fd)->handleInput();
 		// dans handleInput
 		// if (!ioHandlers.at(fd). == 0)
@@ -117,17 +127,17 @@ void Poller::handlePollin(int fd)
 	catch (const http_error& e)
 	{
 		std::cerr << e.what() << '\n';
-		connections.at(fd)->response.sendError(e.getStatusCode());
-		// this->mod(fd, POLLOUT);
+		connection->second->response.setError(e.getStatusCode());
 	}
+
 }
 
 void Poller::handlePollout(int fd)
 {
-	logger.log() << "POLLOUT: " << int_to_str(fd) << std::endl;
-	if (connections.count(fd))
-		connections.at(fd)->updateTime();
-	logger.log() << "Out operations on socket " << fd << ":" << std::endl;
+	std::map<int, Connection*>::iterator connection = connections.find(fd);
+	if (connection != connections.end())
+		connection->second->updateTime();
+	logger.log() << "Out operations on fd " << fd << ":" << std::endl;
 	ioHandlers.at(fd)->handleOutput();
 }
 
@@ -186,7 +196,6 @@ void Poller::loop()
 				std::cerr << e.what() << '\n';
 				return;
 			}
-			// i->revents = 0;
 		}
 	}
 }

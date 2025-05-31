@@ -1,0 +1,98 @@
+[1m[31mservers:[0m
+Socket: 6
+  VirtualServer:
+    Address: 0.0.0.0
+    Port: 8000
+    VirtualServer Names: 
+    Error Pages: 
+    Client Max Body Size: 1048576
+    Locations:
+    [
+      Path: /
+	Methods: [GET, POST, DELETE]
+	ReturnPair: (-1, )
+	AutoIndex: true
+	Root: /app/www
+	UploadStore: /app/upload
+	Indexes: [index.html]
+	CgiConfig: {
+		.php: /usr/bin/php-cgi,
+		.py: /usr/bin/python3.10,
+	}
+    ]
+    [
+      Path: /upload
+	Methods: [GET]
+	ReturnPair: (-1, )
+	AutoIndex: false
+	Root: /app
+	UploadStore: 
+	Indexes: [index.html]
+	CgiConfig: {
+	}
+    ]
+
+[1m[31mpoll loop:[0m
+ADD FD: 6 MODE=1
+Polling...
+New connection on socket 6, created socket fd: 5
+ADD FD: 5 MODE=1
+Polling...
+In operations on fd 5:
+AInputHandler: inputting header
+Request: recving for 8192 bytes on fd 5
+Request: recved 88 bytes
+GET /hello.html HTTP/1.1\r\n
+Host: 127.0.0.1:8000\r\n
+User-Agent: curl/7.81.0\r\n
+Accept: */*\r\n
+\r\n
+Response: handling path: /app/www/hello.html
+CgiHandler: Init
+CgiHandler: TARGET IS NOT CGI:
+Response: set fileFd on input
+│5├───┤X│ -> │X├───┤X│
+ADD FD: 7 MODE=1
+ADD FD: 5 MODE=4
+│5├───┤X│ -> │7├───┤5│
+InputHandler input end
+│5├───┤X│ -> │7├───┤5│
+Request: On Input end
+│5├───┤X│ -> │7├───┤5│
+Polling...
+Out operations on fd 5:
+AOutputHandler: sending string content
+Response: sending 97 bytes
+Response: bytesSent: 97
+In operations on fd 7:
+AInputHandler: inputting body
+Response: reading 32768 bytes
+Response: read 208 bytes
+Polling...
+Out operations on fd 5:
+AOutputHandler: sending buffer
+Response: sending 208 bytes
+Response: bytesSent: 208
+In operations on fd 7:
+AInputHandler: inputting body
+Response: reading 32768 bytes
+Response: read 0 bytes
+InputHandler input end
+│5├───┤X│ -> │7├───┤5│
+Unsubscribe fd 7
+DEL FD: 7
+Polling...
+Out operations on fd 5:
+AOutputHandler: sending buffer
+Response: sending 1 bytes
+Response: bytesSent: 1
+AOutputHandler output end
+│5├───┤X│ -> │X├───┤5│
+Terminating socket: 5
+Unsubscribe fd 5
+DEL FD: 5
+Unsubscribe unsetted fd !!
+Unsubscribe unsetted fd !!
+Unsubscribe fd 5
+DEL FD: 5
+Polling...

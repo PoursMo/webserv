@@ -3,9 +3,10 @@
 
 Connection::Connection(Poller& poller, int clientFd, const std::vector<VirtualServer*>& vServers)
 	: request(poller, *this, vServers),
-	response(poller, *this)
+	response(poller, *this),
+	clientFd(clientFd)
 {
-	request.setInputFd(clientFd);
+	request.subscribeInputFd(clientFd);
 	this->updateTime();
 }
 

@@ -42,8 +42,7 @@ public:
 	void addHeader(std::string key, unsigned long value);
 	void addHeader(std::string key, long value);
 	void handlePath(const std::string& path);
-	void sendError(int status);
-	void takeSocket();
+	void setError(int status);
 
 	void handleReturn(const std::pair<int, std::string>& returnPair);
 };

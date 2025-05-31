@@ -15,16 +15,12 @@ AInputHandler::AInputHandler()
 	bodyBytesCount(0),
 	headerBufferCount(0)
 {
-	this->connection.print("AInputHandler constructor");
 }
 
 AInputHandler::~AInputHandler()
 {
-	this->connection.print("AInputHandler desctructor");
-	this->delInputFd();
-	this->connection.print();
+	this->unsubscribeInputFd();
 }
-
 
 // ********************************************************************
 // AInputHandler public
@@ -34,27 +30,25 @@ void AInputHandler::handleInput()
 {
 	if (this->isReadingHeader)
 	{
-		// logger.log() << "AInputHandler: inputting header" << std::endl;
+		logger.log() << "AInputHandler: inputting header" << std::endl;
 		if (fillBuffer(HEADER))
 			flushHeaderBuffers();
 	}
 	else
 	{
-		// logger.log() << "AInputHandler: inputting body" << std::endl;
+		logger.log() << "AInputHandler: inputting body" << std::endl;
 		fillBuffer(BODY);
 	}
 	if (this->isInputEnd())
 	{
 		this->connection.print("InputHandler input end");
-		this->onInputEnd(); // TODO: useless
-		this->delInputFd();
-		this->connection.print();
+		this->onInputEnd();
 	}
 }
 
-void AInputHandler::delInputFd()
+void AInputHandler::unsubscribeInputFd()
 {
-	this->delFd(this->inputFd);
+	this->unsubscribeFd(this->inputFd);
 }
 
 int AInputHandler::getInputFd()
@@ -62,7 +56,7 @@ int AInputHandler::getInputFd()
 	return this->inputFd;
 }
 
-void AInputHandler::setInputFd(int fd)
+void AInputHandler::subscribeInputFd(int fd)
 {
 	this->inputFd = fd;
 	if (this->inputFd == -1)
@@ -163,13 +157,11 @@ AIOHandler::Buffer* AInputHandler::createBuffer(BufferType type)
 	case HEADER:
 		this->onHeaderBufferCreation();
 		buffer->first = new char[WS_HEADER_BUFFER_SIZE];
-		buffer->last = buffer->first;
 		buffer->capacity = WS_HEADER_BUFFER_SIZE;
 		headerBufferCount++;
 		break;
 	case BODY:
 		buffer->first = new char[WS_BODY_BUFFER_SIZE];
-		buffer->last = buffer->first;
 		buffer->capacity = WS_BODY_BUFFER_SIZE;
 		break;
 	default:
@@ -177,6 +169,7 @@ AIOHandler::Buffer* AInputHandler::createBuffer(BufferType type)
 	}
 	// logger.log() << "AInputHandler: created new buffer of size " << buffer->capacity << std::endl;
 	buffer->pos = buffer->first;
+	buffer->last = buffer->first;
 	buffers.push_back(buffer);
 	return buffer;
 }

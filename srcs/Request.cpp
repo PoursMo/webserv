@@ -22,6 +22,8 @@ Request::~Request()
 {
 	if (this->uri)
 		delete this->uri;
+	if (this->outputFd != -1)
+		close(this->outputFd);
 }
 
 // ********************************************************************
@@ -193,6 +195,7 @@ bool Request::isInputEnd()
 
 void Request::onInputEnd()
 {
+	this->connection.print("Request: On Input end");
 }
 
 void Request::onUpdateBodyBytes() {
@@ -222,14 +225,12 @@ ssize_t Request::handleOutputSysCall(const void* buf, size_t len)
 
 bool Request::isOutputEnd()
 {
-	logger.log() << "Request: is output end ?" << std::endl;
 	return this->buffers.empty() && this->isInputEnd();
 }
 
 void Request::onOutputEnd()
 {
-	logger.log() << "Request: End of write in CGI (event)" << std::endl;
-	this->connection.response.takeSocket();
+	this->unsubscribeOutputFd();
 }
 
 // ********************************************************************
