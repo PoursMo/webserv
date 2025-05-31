@@ -8,7 +8,7 @@
 ft_json::JsonValue::JsonValue() : type(NULLTYPE)
 {
 }
-ft_json::JsonValue::JsonValue(const std::string &str) : type(STRING)
+ft_json::JsonValue::JsonValue(const std::string& str) : type(STRING)
 {
 	string_value = new std::string(str);
 }
@@ -16,11 +16,11 @@ ft_json::JsonValue::JsonValue(int64_t num) : type(NUMBER)
 {
 	number_value = num;
 }
-ft_json::JsonValue::JsonValue(const std::map<std::string, JsonValue> &obj) : type(OBJECT)
+ft_json::JsonValue::JsonValue(const std::map<std::string, JsonValue>& obj) : type(OBJECT)
 {
 	object_value = new std::map<std::string, JsonValue>(obj);
 }
-ft_json::JsonValue::JsonValue(const std::vector<JsonValue> &arr) : type(ARRAY)
+ft_json::JsonValue::JsonValue(const std::vector<JsonValue>& arr) : type(ARRAY)
 {
 	array_value = new std::vector<JsonValue>(arr);
 }
@@ -29,7 +29,7 @@ ft_json::JsonValue::JsonValue(bool b) : type(BOOLEAN)
 	bool_value = b;
 }
 
-ft_json::JsonValue::JsonValue(const JsonValue &rhs) : type(rhs.type)
+ft_json::JsonValue::JsonValue(const JsonValue& rhs) : type(rhs.type)
 {
 	switch (type)
 	{
@@ -53,7 +53,7 @@ ft_json::JsonValue::JsonValue(const JsonValue &rhs) : type(rhs.type)
 	}
 }
 
-ft_json::JsonValue &ft_json::JsonValue::operator=(const JsonValue &rhs)
+ft_json::JsonValue& ft_json::JsonValue::operator=(const JsonValue& rhs)
 {
 	if (this != &rhs)
 	{
@@ -107,7 +107,7 @@ ft_json::Type ft_json::JsonValue::getType() const
 	return type;
 }
 
-const std::string &ft_json::JsonValue::asString() const
+const std::string& ft_json::JsonValue::asString() const
 {
 	if (type != STRING)
 		throw std::runtime_error("JsonValue is not a string");
@@ -119,13 +119,13 @@ int64_t ft_json::JsonValue::asNumber() const
 		throw std::runtime_error("JsonValue is not a number");
 	return number_value;
 }
-const std::map<std::string, ft_json::JsonValue> &ft_json::JsonValue::asObject() const
+const std::map<std::string, ft_json::JsonValue>& ft_json::JsonValue::asObject() const
 {
 	if (type != OBJECT)
 		throw std::runtime_error("JsonValue is not an object");
 	return *object_value;
 }
-const std::vector<ft_json::JsonValue> &ft_json::JsonValue::asArray() const
+const std::vector<ft_json::JsonValue>& ft_json::JsonValue::asArray() const
 {
 	if (type != ARRAY)
 		throw std::runtime_error("JsonValue is not an array");
@@ -144,12 +144,12 @@ bool ft_json::JsonValue::asBoolean() const
 
 static int line = 1;
 
-static bool is_whitespace(const char &c)
+static bool is_whitespace(const char& c)
 {
 	return c == ' ' || c == '\n' || c == '\r' || c == '\t';
 }
 
-static void skip_whitespaces(std::string::iterator &i)
+static void skip_whitespaces(std::string::iterator& i)
 {
 	while (is_whitespace(*i))
 	{
@@ -159,9 +159,9 @@ static void skip_whitespaces(std::string::iterator &i)
 	}
 }
 
-static ft_json::JsonValue parse_value(std::string::iterator &i);
+static ft_json::JsonValue parse_value(std::string::iterator& i);
 
-static ft_json::JsonValue parse_string(std::string::iterator &i)
+static ft_json::JsonValue parse_string(std::string::iterator& i)
 {
 	std::string str;
 	while (*i != '"')
@@ -177,7 +177,7 @@ static ft_json::JsonValue parse_string(std::string::iterator &i)
 	return ft_json::JsonValue(str);
 }
 
-static ft_json::JsonValue parse_number(std::string::iterator &i)
+static ft_json::JsonValue parse_number(std::string::iterator& i)
 {
 	std::string num_str;
 	if (*i == '-')
@@ -193,7 +193,7 @@ static ft_json::JsonValue parse_number(std::string::iterator &i)
 	return ft_json::JsonValue(std::strtol(num_str.c_str(), 0, 10));
 }
 
-static ft_json::JsonValue parse_object(std::string::iterator &i)
+static ft_json::JsonValue parse_object(std::string::iterator& i)
 {
 	std::map<std::string, ft_json::JsonValue> obj;
 	bool value_expected = false;
@@ -233,7 +233,7 @@ static ft_json::JsonValue parse_object(std::string::iterator &i)
 	return ft_json::JsonValue(obj);
 }
 
-static ft_json::JsonValue parse_array(std::string::iterator &i)
+static ft_json::JsonValue parse_array(std::string::iterator& i)
 {
 	std::vector<ft_json::JsonValue> arr;
 	bool value_expected = false;
@@ -264,7 +264,7 @@ static ft_json::JsonValue parse_array(std::string::iterator &i)
 	return ft_json::JsonValue(arr);
 }
 
-static ft_json::JsonValue parse_keyword(std::string::iterator &i)
+static ft_json::JsonValue parse_keyword(std::string::iterator& i)
 {
 	std::string keyword;
 	while (std::isalpha(*i))
@@ -281,7 +281,7 @@ static ft_json::JsonValue parse_keyword(std::string::iterator &i)
 	throw std::runtime_error("Unknown keyword: " + keyword);
 }
 
-static ft_json::JsonValue parse_value(std::string::iterator &i)
+static ft_json::JsonValue parse_value(std::string::iterator& i)
 {
 	skip_whitespaces(i);
 	if (*i == '"')
@@ -308,13 +308,13 @@ ft_json::JsonValue ft_json::parse_json(std::string file_content)
 			throw std::runtime_error("Trailing characters in file");
 		return parsed;
 	}
-	catch (const std::exception &e)
+	catch (const std::exception& e)
 	{
 		throw std::runtime_error("JSON parsing: line " + int_to_str(line) + ": " + e.what());
 	}
 }
 
-ft_json::JsonValue ft_json::parse_json(std::istream &stream)
+ft_json::JsonValue ft_json::parse_json(std::istream& stream)
 {
 	std::string content((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
 	return parse_json(content);
@@ -324,7 +324,7 @@ ft_json::JsonValue ft_json::parse_json(std::istream &stream)
 // Debug
 // ********************************************************************
 
-std::ostream &ft_json::operator<<(std::ostream &os, const ft_json::JsonValue &value)
+std::ostream& ft_json::operator<<(std::ostream& os, const ft_json::JsonValue& value)
 {
 	switch (value.getType())
 	{
@@ -337,7 +337,7 @@ std::ostream &ft_json::operator<<(std::ostream &os, const ft_json::JsonValue &va
 	case ft_json::OBJECT:
 	{
 		os << "{";
-		const std::map<std::string, ft_json::JsonValue> &obj = value.asObject();
+		const std::map<std::string, ft_json::JsonValue>& obj = value.asObject();
 		for (std::map<std::string, ft_json::JsonValue>::const_iterator i = obj.begin(); i != obj.end(); ++i)
 		{
 			if (i != obj.begin())
@@ -351,7 +351,7 @@ std::ostream &ft_json::operator<<(std::ostream &os, const ft_json::JsonValue &va
 	case ft_json::ARRAY:
 	{
 		os << "[";
-		const std::vector<ft_json::JsonValue> &arr = value.asArray();
+		const std::vector<ft_json::JsonValue>& arr = value.asArray();
 		for (size_t i = 0; i < arr.size(); ++i)
 		{
 			if (i > 0)

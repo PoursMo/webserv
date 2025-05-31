@@ -4,7 +4,7 @@
 #include "config.hpp"
 #include "LocationData.hpp"
 
-VirtualServer::VirtualServer(const ft_json::JsonObject &json_directives)
+VirtualServer::VirtualServer(const ft_json::JsonObject& json_directives)
 {
 	// Default values
 	address = "0.0.0.0";
@@ -13,8 +13,8 @@ VirtualServer::VirtualServer(const ft_json::JsonObject &json_directives)
 
 	for (ft_json::JsonObject::const_iterator json_directive = json_directives.begin(); json_directive != json_directives.end(); json_directive++)
 	{
-		const std::string &s = (*json_directive).first;
-		const ft_json::JsonValue &v = (*json_directive).second;
+		const std::string& s = (*json_directive).first;
+		const ft_json::JsonValue& v = (*json_directive).second;
 		try
 		{
 			if (!s.compare("address"))
@@ -32,7 +32,7 @@ VirtualServer::VirtualServer(const ft_json::JsonObject &json_directives)
 			else
 				throw std::runtime_error("Unknown directive.");
 		}
-		catch (const std::exception &e)
+		catch (const std::exception& e)
 		{
 			throw std::runtime_error(s + ": " + e.what());
 		}
@@ -43,7 +43,7 @@ VirtualServer::VirtualServer(const ft_json::JsonObject &json_directives)
 // Setters using JsonValue
 // ********************************************************************
 
-void VirtualServer::setAddress(const std::string &input)
+void VirtualServer::setAddress(const std::string& input)
 {
 	int dot_count = 0;
 	std::size_t left = 0;
@@ -77,7 +77,7 @@ void VirtualServer::setPort(int64_t input)
 	port = static_cast<uint16_t>(input);
 }
 
-void VirtualServer::setServerNames(const ft_json::JsonArray &input)
+void VirtualServer::setServerNames(const ft_json::JsonArray& input)
 {
 	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
@@ -85,7 +85,7 @@ void VirtualServer::setServerNames(const ft_json::JsonArray &input)
 	}
 }
 
-void VirtualServer::setErrorPages(const ft_json::JsonObject &input)
+void VirtualServer::setErrorPages(const ft_json::JsonObject& input)
 {
 	for (ft_json::JsonObject::const_iterator i = input.begin(); i != input.end(); i++)
 	{
@@ -100,7 +100,7 @@ void VirtualServer::setClientMaxBodySize(int64_t input)
 	clientMaxBodySize = input;
 }
 
-void VirtualServer::setLocations(const ft_json::JsonArray &input)
+void VirtualServer::setLocations(const ft_json::JsonArray& input)
 {
 	for (ft_json::JsonArray::const_iterator location = input.begin(); location != input.end(); location++)
 	{
@@ -122,7 +122,7 @@ void VirtualServer::setLocations(const ft_json::JsonArray &input)
 // Getters
 // ********************************************************************
 
-const std::string &VirtualServer::getAddress() const
+const std::string& VirtualServer::getAddress() const
 {
 	return address;
 }
@@ -132,12 +132,12 @@ in_port_t VirtualServer::getPort() const
 	return port;
 }
 
-const std::vector<std::string> &VirtualServer::getServerNames() const
+const std::vector<std::string>& VirtualServer::getServerNames() const
 {
 	return serverNames;
 }
 
-const std::map<int, std::string> &VirtualServer::getErrorPages() const
+const std::map<int, std::string>& VirtualServer::getErrorPages() const
 {
 	return errorPages;
 }
@@ -148,12 +148,12 @@ int32_t VirtualServer::getClientMaxBodySize() const
 }
 
 // DEBUG
-const std::map<std::string, LocationData> &VirtualServer::getLocations() const
+const std::map<std::string, LocationData>& VirtualServer::getLocations() const
 {
 	return locations;
 }
 
-static size_t locationMatchScore(const std::string &path, const std::string &target)
+static size_t locationMatchScore(const std::string& path, const std::string& target)
 {
 	size_t score = 0;
 
@@ -164,9 +164,9 @@ static size_t locationMatchScore(const std::string &path, const std::string &tar
 	return score;
 }
 
-const LocationData *VirtualServer::getLocation(const std::string &target) const
+const LocationData* VirtualServer::getLocation(const std::string& target) const
 {
-	const LocationData *bestMatch = NULL;
+	const LocationData* bestMatch = NULL;
 	size_t matchScore = 0;
 
 	for (std::map<std::string, LocationData>::const_iterator i = locations.begin(); i != locations.end(); i++)
@@ -198,7 +198,7 @@ in_addr_t VirtualServer::getAddressAsNum() const
 // Debug
 // ********************************************************************
 
-std::ostream &operator<<(std::ostream &os, const VirtualServer &server)
+std::ostream& operator<<(std::ostream& os, const VirtualServer& server)
 {
 	os << "  VirtualServer:" << std::endl;
 	os << "    Address: " << server.getAddress() << std::endl;
@@ -222,9 +222,9 @@ std::ostream &operator<<(std::ostream &os, const VirtualServer &server)
 	for (std::map<std::string, LocationData>::const_iterator i = server.getLocations().begin(); i != server.getLocations().end(); ++i)
 	{
 		os << std::endl
-		   << "    [" << std::endl
-		   << "      Path: " << i->first << std::endl
-		   << i->second << "    ]";
+			<< "    [" << std::endl
+			<< "      Path: " << i->first << std::endl
+			<< i->second << "    ]";
 	}
 	os << std::endl;
 	return os;

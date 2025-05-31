@@ -3,9 +3,9 @@
 #include "utils.hpp"
 #include "Logger.hpp"
 
-Uri::Uri(const Request &request)
+Uri::Uri(const Request& request)
 	: path(request.getTarget()),
-	  query("")
+	query("")
 {
 	std::size_t query_index = path.find("?");
 
@@ -19,17 +19,17 @@ Uri::Uri(const Request &request)
 	this->path = Uri::decode(this->path);
 }
 
-const std::string &Uri::getPath() const
+const std::string& Uri::getPath() const
 {
 	return this->path;
 }
 
-const std::string &Uri::getQuery() const
+const std::string& Uri::getQuery() const
 {
 	return this->query;
 }
 
-std::string Uri::decode(const std::string &src)
+std::string Uri::decode(const std::string& src)
 {
 	std::stringstream decoded;
 
@@ -46,7 +46,7 @@ std::string Uri::decode(const std::string &src)
 	return decoded.str();
 }
 
-std::string Uri::encode(const std::string &src)
+std::string Uri::encode(const std::string& src)
 {
 	static std::string set = ":/?#[]@!$&'()*+,;=%";
 	std::stringstream encoded;

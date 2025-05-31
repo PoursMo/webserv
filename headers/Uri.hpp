@@ -12,13 +12,13 @@ private:
 	std::string query;
 
 public:
-	Uri(const Request &request);
+	Uri(const Request& request);
 
-	const std::string &getPath() const;
-	const std::string &getQuery() const;
+	const std::string& getPath() const;
+	const std::string& getQuery() const;
 
-	static std::string decode(const std::string &src);
-	static std::string encode(const std::string &src);
+	static std::string decode(const std::string& src);
+	static std::string encode(const std::string& src);
 };
 
 #endif

@@ -47,21 +47,21 @@ std::string ulong_to_str(unsigned long num)
 	return result;
 }
 
-int extract_status_code(const std::string &s)
+int extract_status_code(const std::string& s)
 {
 	for (std::string::const_iterator i = s.begin(); i != s.end(); i++)
 	{
 		if (!std::isdigit(*i))
 			throw std::runtime_error("Invalid status code.");
 	}
-	char *end;
+	char* end;
 	unsigned long code = std::strtoul(s.c_str(), &end, 10);
 	if (*end != '\0' || code < 300 || code > 599)
 		throw std::runtime_error("Invalid status code.");
 	return code;
 }
 
-std::string &str_to_lower(std::string &str)
+std::string& str_to_lower(std::string& str)
 {
 	for (size_t i = 0; i < str.size(); i++)
 	{
@@ -73,7 +73,7 @@ std::string &str_to_lower(std::string &str)
 std::string getDateString()
 {
 	std::time_t rawtime;
-	std::tm *timeinfo;
+	std::tm* timeinfo;
 	char buffer[80];
 
 	std::time(&rawtime);
@@ -88,7 +88,7 @@ std::string getDateString(time_t time)
 {
 	char buffer[80];
 
-	tm *timeinfo = std::gmtime(&time);
+	tm* timeinfo = std::gmtime(&time);
 	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeinfo);
 
 	std::string formatted_time(buffer);

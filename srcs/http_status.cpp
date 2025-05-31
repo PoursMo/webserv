@@ -2,7 +2,7 @@
 
 std::map<int, std::string> http_status::statuses;
 
-const std::string &http_status::get(int code)
+const std::string& http_status::get(int code)
 {
 	if (http_status::statuses.count(code))
 		return http_status::statuses.at(code);

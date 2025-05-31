@@ -20,42 +20,42 @@ namespace ft_json
 	public:
 		// Constructors
 		JsonValue();
-		JsonValue(const std::string &str);
+		JsonValue(const std::string& str);
 		JsonValue(int64_t num);
-		JsonValue(const std::map<std::string, JsonValue> &obj);
-		JsonValue(const std::vector<JsonValue> &arr);
+		JsonValue(const std::map<std::string, JsonValue>& obj);
+		JsonValue(const std::vector<JsonValue>& arr);
 		JsonValue(bool b);
 
 		// Copy constructor
-		JsonValue(const JsonValue &rhs);
+		JsonValue(const JsonValue& rhs);
 
 		// Copy assignment operator
-		JsonValue &operator=(const JsonValue &rhs);
+		JsonValue& operator=(const JsonValue& rhs);
 
 		// Destructor
 		~JsonValue();
 
 		// Accessors
 		Type getType() const;
-		const std::string &asString() const;
+		const std::string& asString() const;
 		int64_t asNumber() const;
-		const std::map<std::string, JsonValue> &asObject() const;
-		const std::vector<JsonValue> &asArray() const;
+		const std::map<std::string, JsonValue>& asObject() const;
+		const std::vector<JsonValue>& asArray() const;
 		bool asBoolean() const;
 
 	private:
 		union
 		{
-			std::string *string_value;
+			std::string* string_value;
 			int64_t number_value;
-			std::map<std::string, JsonValue> *object_value;
-			std::vector<JsonValue> *array_value;
+			std::map<std::string, JsonValue>* object_value;
+			std::vector<JsonValue>* array_value;
 			bool bool_value;
 		};
 		Type type;
 	};
 
-	std::ostream &operator<<(std::ostream &os, const ft_json::JsonValue &value);
+	std::ostream& operator<<(std::ostream& os, const ft_json::JsonValue& value);
 
 	typedef std::map<std::string, JsonValue> JsonObject;
 	typedef std::vector<JsonValue> JsonArray;

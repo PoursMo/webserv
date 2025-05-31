@@ -7,7 +7,7 @@
 
 Logger logger;
 
-bool init(const char *config_path, std::map<int, std::vector<VirtualServer *> > &servers)
+bool init(const char* config_path, std::map<int, std::vector<VirtualServer*> >& servers)
 {
 	std::ifstream file(config_path);
 	if (!file)
@@ -22,10 +22,10 @@ bool init(const char *config_path, std::map<int, std::vector<VirtualServer *> > 
 			logger.setEnabled(json.asObject().at("debug").asBoolean());
 		logger.log() << "\033[1m\033[31m" << "servers:" << "\033[0m" << std::endl;
 		create_servers(json, servers);
-		for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
+		for (std::map<int, std::vector<VirtualServer*> >::iterator i = servers.begin(); i != servers.end(); i++)
 		{
 			logger.log() << "Socket: " << i->first << std::endl;
-			for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
+			for (std::vector<VirtualServer*>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
 			{
 				logger.log() << *(*j);
 			}
@@ -33,7 +33,7 @@ bool init(const char *config_path, std::map<int, std::vector<VirtualServer *> > 
 		logger.log() << std::endl;
 		http_status::init();
 	}
-	catch (const std::exception &e)
+	catch (const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
 		return false;
@@ -41,12 +41,12 @@ bool init(const char *config_path, std::map<int, std::vector<VirtualServer *> > 
 	return true;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-	const char *config_path = "conf/default.json";
+	const char* config_path = "conf/default.json";
 	if (argc > 1)
 		config_path = argv[1];
-	std::map<int, std::vector<VirtualServer *> > servers;
+	std::map<int, std::vector<VirtualServer*> > servers;
 	if (!init(config_path, servers))
 		return 1;
 

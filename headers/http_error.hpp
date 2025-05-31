@@ -11,11 +11,11 @@ private:
 	std::string whatMessage;
 
 public:
-	http_error(const char *ainfo, int status_code);
-	http_error(const std::string &ainfo, int status_code);
+	http_error(const char* ainfo, int status_code);
+	http_error(const std::string& ainfo, int status_code);
 	http_error(int status_code);
 	~http_error() throw();
-	const char *what() const throw();
+	const char* what() const throw();
 	int getStatusCode() const;
 };
 

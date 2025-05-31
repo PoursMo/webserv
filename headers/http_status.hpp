@@ -10,7 +10,7 @@ private:
 
 public:
 	static void init();
-	static const std::string &get(int code);
+	static const std::string& get(int code);
 };
 
 #endif

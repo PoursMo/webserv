@@ -6,14 +6,15 @@
 #include "Poller.hpp"
 #include "Logger.hpp"
 
-CgiHandler::CgiHandler(const Request &request) : request(request),
-												 extension(""),
-												 pathExecutable(""),
-												 pathFile(""),
-												 pathFileAbsolute(""),
-												 pathInfo(""),
-												 fdIn(-1),
-												 fdOut(-1)
+CgiHandler::CgiHandler(const Request& request)
+	: request(request),
+	extension(""),
+	pathExecutable(""),
+	pathFile(""),
+	pathFileAbsolute(""),
+	pathInfo(""),
+	fdIn(-1),
+	fdOut(-1)
 {
 	logger.log() << "CgiHandler: Init" << std::endl;
 	const std::string& path = this->request.getPath();
@@ -66,16 +67,16 @@ static void connect_fd(int fd, int stdFd)
 	close(fd);
 }
 
-static char *ft_strdup(const char *src)
+static char* ft_strdup(const char* src)
 {
-	char *dup = new char[strlen(src) + 1];
+	char* dup = new char[strlen(src) + 1];
 	strcpy(dup, src);
 	return dup;
 }
 
-static char **mapToStringArray(std::map<std::string, std::string> map)
+static char** mapToStringArray(std::map<std::string, std::string> map)
 {
-	char **arr = new char *[map.size() + 1];
+	char** arr = new char* [map.size() + 1];
 	size_t index = 0;
 
 	for (std::map<std::string, std::string>::const_iterator it = map.begin(); it != map.end(); it++)
@@ -87,15 +88,15 @@ static char **mapToStringArray(std::map<std::string, std::string> map)
 	return (arr);
 }
 
-static void deleteArray(char **arr)
+static void deleteArray(char** arr)
 {
-	char **a = arr;
+	char** a = arr;
 	while (*arr)
-		delete[] *(arr++);
+		delete[] * (arr++);
 	delete[] a;
 }
 
-char **CgiHandler::getCgiEnv()
+char** CgiHandler::getCgiEnv()
 {
 	std::map<std::string, std::string> env;
 
@@ -129,9 +130,9 @@ char **CgiHandler::getCgiEnv()
 	return mapToStringArray(env);
 }
 
-char **CgiHandler::getCgiArgv()
+char** CgiHandler::getCgiArgv()
 {
-	char **argv = new char *[3];
+	char** argv = new char* [3];
 
 	argv[0] = ft_strdup(this->pathExecutable.c_str());
 	argv[1] = ft_strdup(this->pathFileAbsolute.c_str());
@@ -189,8 +190,8 @@ int CgiHandler::cgiExecution()
 	close(pipefd_out.out);
 	connect_fd(pipefd_in.out, STDIN_FILENO);
 	connect_fd(pipefd_out.in, STDOUT_FILENO);
-	char **envp = this->getCgiEnv();
-	char **argv = this->getCgiArgv();
+	char** envp = this->getCgiEnv();
+	char** argv = this->getCgiArgv();
 
 	if (execve(this->pathExecutable.c_str(), argv, envp) == -1)
 	{
@@ -216,7 +217,7 @@ bool CgiHandler::isCgiResource() const
 	return (this->pathExecutable != "");
 }
 
-const char *child_accident::what() const throw()
+const char* child_accident::what() const throw()
 {
 	return "child error";
 }

@@ -5,7 +5,7 @@
 std::string generateErrorBody(int status)
 {
 	std::stringstream body;
-	const std::string &statusName = http_status::get(status);
+	const std::string& statusName = http_status::get(status);
 
 	body << "<!DOCTYPE header>" << CRLF;
 	body << "<header lang=\"en\">" << CRLF;
@@ -23,18 +23,18 @@ std::string generateErrorBody(int status)
 	return body.str();
 }
 
-http_error::http_error(const char *ainfo, int status_code)
+http_error::http_error(const char* ainfo, int status_code)
 	: statusCode(status_code),
-	  additionalInfo(ainfo)
+	additionalInfo(ainfo)
 {
 	whatMessage = int_to_str(statusCode) + " " + http_status::get(statusCode);
 	if (!additionalInfo.empty())
 		whatMessage.append(": " + additionalInfo);
 }
 
-http_error::http_error(const std::string &ainfo, int status_code)
+http_error::http_error(const std::string& ainfo, int status_code)
 	: statusCode(status_code),
-	  additionalInfo(ainfo)
+	additionalInfo(ainfo)
 {
 	whatMessage = int_to_str(statusCode) + " " + http_status::get(statusCode);
 	if (!additionalInfo.empty())
@@ -51,7 +51,7 @@ http_error::~http_error() throw()
 {
 }
 
-const char *http_error::what() const throw()
+const char* http_error::what() const throw()
 {
 	return whatMessage.c_str();
 }

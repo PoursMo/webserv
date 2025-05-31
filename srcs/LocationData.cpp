@@ -5,7 +5,7 @@
 // Default constructor necessary for use in map
 LocationData::LocationData() {}
 
-LocationData::LocationData(const ft_json::JsonObject &json_directives)
+LocationData::LocationData(const ft_json::JsonObject& json_directives)
 {
 	// Default values
 	methods.push_back(GET);
@@ -16,8 +16,8 @@ LocationData::LocationData(const ft_json::JsonObject &json_directives)
 
 	for (ft_json::JsonObject::const_iterator json_directive = json_directives.begin(); json_directive != json_directives.end(); json_directive++)
 	{
-		const std::string &s = (*json_directive).first;
-		const ft_json::JsonValue &v = (*json_directive).second;
+		const std::string& s = (*json_directive).first;
+		const ft_json::JsonValue& v = (*json_directive).second;
 		try
 		{
 			if (!s.compare("path"))
@@ -39,19 +39,19 @@ LocationData::LocationData(const ft_json::JsonObject &json_directives)
 			else
 				throw std::runtime_error("Unknown directive.");
 		}
-		catch (const std::exception &e)
+		catch (const std::exception& e)
 		{
 			throw std::runtime_error(s + ": " + e.what());
 		}
 	}
 }
 
-void LocationData::setMethods(const ft_json::JsonArray &input)
+void LocationData::setMethods(const ft_json::JsonArray& input)
 {
 	methods.clear();
 	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
-		const std::string &s = i->asString();
+		const std::string& s = i->asString();
 		if (!s.compare("GET"))
 			methods.push_back(GET);
 		else if (!s.compare("POST"))
@@ -63,7 +63,7 @@ void LocationData::setMethods(const ft_json::JsonArray &input)
 	}
 }
 
-void LocationData::setReturnPair(const ft_json::JsonObject &input)
+void LocationData::setReturnPair(const ft_json::JsonObject& input)
 {
 	if (input.size() != 1)
 		throw std::runtime_error("Multiple returns detected for a location.");
@@ -71,7 +71,7 @@ void LocationData::setReturnPair(const ft_json::JsonObject &input)
 	returnPair.second = (*input.begin()).second.asString();
 }
 
-void LocationData::setIndexes(const ft_json::JsonArray &input)
+void LocationData::setIndexes(const ft_json::JsonArray& input)
 {
 	for (ft_json::JsonArray::const_iterator i = input.begin(); i != input.end(); i++)
 	{
@@ -80,14 +80,14 @@ void LocationData::setIndexes(const ft_json::JsonArray &input)
 	}
 }
 
-void LocationData::setCgiConfig(const ft_json::JsonObject &input)
+void LocationData::setCgiConfig(const ft_json::JsonObject& input)
 {
 	ft_json::JsonObject::const_iterator it = input.begin();
 	ft_json::JsonObject::const_iterator end = input.end();
 	while (it != end)
 	{
-		const std::string &key = it->first;
-		const ft_json::JsonValue &value = it->second;
+		const std::string& key = it->first;
+		const ft_json::JsonValue& value = it->second;
 		this->cgiConfig[key] = value.asString();
 		it++;
 	}
@@ -97,22 +97,22 @@ void LocationData::setCgiConfig(const ft_json::JsonObject &input)
 // Getters
 // ********************************************************************
 
-const std::vector<Method> &LocationData::getMethods() const
+const std::vector<Method>& LocationData::getMethods() const
 {
 	return methods;
 }
 
-const std::pair<int, std::string> &LocationData::getReturnPair() const
+const std::pair<int, std::string>& LocationData::getReturnPair() const
 {
 	return returnPair;
 }
 
-const std::string &LocationData::getRoot() const
+const std::string& LocationData::getRoot() const
 {
 	return root;
 }
 
-const std::map<std::string, std::string> &LocationData::getCgiConfig() const
+const std::map<std::string, std::string>& LocationData::getCgiConfig() const
 {
 	return this->cgiConfig;
 }
@@ -122,12 +122,12 @@ bool LocationData::getAutoIndex() const
 	return autoIndex;
 }
 
-const std::vector<std::string> &LocationData::getIndexes() const
+const std::vector<std::string>& LocationData::getIndexes() const
 {
 	return indexes;
 }
 
-const std::string &LocationData::getUploadStore() const
+const std::string& LocationData::getUploadStore() const
 {
 	return uploadStore;
 }
@@ -136,13 +136,13 @@ const std::string &LocationData::getUploadStore() const
 // Debug
 // ********************************************************************
 
-static void printTabs(std::ostream &os, int tabs)
+static void printTabs(std::ostream& os, int tabs)
 {
 	for (int i = 0; i < tabs; i++)
 		os << "\t";
 }
 
-static void printStringMap(std::ostream &os, std::map<std::string, std::string> map, int tabs = 0)
+static void printStringMap(std::ostream& os, std::map<std::string, std::string> map, int tabs = 0)
 {
 	std::map<std::string, std::string>::const_iterator it = map.begin();
 	std::map<std::string, std::string>::const_iterator end = map.end();
@@ -157,10 +157,10 @@ static void printStringMap(std::ostream &os, std::map<std::string, std::string> 
 	os << "}" << std::endl;
 }
 
-std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
+std::ostream& operator<<(std::ostream& os, const LocationData& locationData)
 {
 	os << "\tMethods: [";
-	const std::vector<Method> &methods = locationData.getMethods();
+	const std::vector<Method>& methods = locationData.getMethods();
 	for (std::vector<Method>::const_iterator i = methods.begin(); i != methods.end(); ++i)
 	{
 		if (i != methods.begin())
@@ -186,7 +186,7 @@ std::ostream &operator<<(std::ostream &os, const LocationData &locationData)
 	os << "\tRoot: " << locationData.getRoot() << std::endl;
 	os << "\tUploadStore: " << locationData.getUploadStore() << "\n";
 	os << "\tIndexes: [";
-	const std::vector<std::string> &indexes = locationData.getIndexes();
+	const std::vector<std::string>& indexes = locationData.getIndexes();
 	for (std::vector<std::string>::const_iterator i = indexes.begin(); i != indexes.end(); ++i)
 	{
 		if (i != indexes.begin())

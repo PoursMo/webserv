@@ -5,14 +5,14 @@
 
 class Logger
 {
-    private:
-        bool isEnabled;
-        std::ofstream streamNull;
-    public:
-        Logger();
-        ~Logger();
-        void setEnabled(bool);
-        std::ostream & log();
+private:
+    bool isEnabled;
+    std::ofstream streamNull;
+public:
+    Logger();
+    ~Logger();
+    void setEnabled(bool);
+    std::ostream& log();
 };
 
 extern Logger logger;

@@ -21,7 +21,7 @@ static int initializeSocket(in_port_t port, in_addr_t vserver_addr)
 	server_addr.sin_port = htons(port);
 	server_addr.sin_addr.s_addr = htonl(vserver_addr);
 	memset(server_addr.sin_zero, 0, sizeof(server_addr.sin_zero));
-	if (bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+	if (bind(socket_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1)
 	{
 		close(socket_fd);
 		throw std::runtime_error("bind: " + std::string(strerror(errno)));
@@ -35,11 +35,11 @@ static int initializeSocket(in_port_t port, in_addr_t vserver_addr)
 	return socket_fd;
 }
 
-static int check_duplicate_fd(const std::map<int, std::vector<VirtualServer *> > &m, const VirtualServer *const server)
+static int check_duplicate_fd(const std::map<int, std::vector<VirtualServer*> >& m, const VirtualServer* const server)
 {
-	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = m.begin(); i != m.end(); i++)
+	for (std::map<int, std::vector<VirtualServer*> >::const_iterator i = m.begin(); i != m.end(); i++)
 	{
-		for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
+		for (std::vector<VirtualServer*>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
 		{
 			if ((*j)->getAddress() == server->getAddress() && (*j)->getPort() == server->getPort())
 				return i->first;
@@ -48,29 +48,29 @@ static int check_duplicate_fd(const std::map<int, std::vector<VirtualServer *> >
 	return -1;
 }
 
-void create_servers(const ft_json::JsonValue &json, std::map<int, std::vector<VirtualServer *> > &servers)
+void create_servers(const ft_json::JsonValue& json, std::map<int, std::vector<VirtualServer*> >& servers)
 {
-	const ft_json::JsonObject &root = json.asObject();
+	const ft_json::JsonObject& root = json.asObject();
 	if (root.count("servers") != 1 || root.at("servers").getType() != ft_json::ARRAY)
 		throw std::runtime_error("Root level must have a \"servers\" array of objects as it's value.");
 	int count = 1;
-	const ft_json::JsonArray &json_servers = root.at("servers").asArray();
+	const ft_json::JsonArray& json_servers = root.at("servers").asArray();
 	for (ft_json::JsonArray::const_iterator json_server = json_servers.begin(); json_server != json_servers.end(); json_server++)
 	{
 		try
 		{
-			VirtualServer *server = new VirtualServer((*json_server).asObject());
+			VirtualServer* server = new VirtualServer((*json_server).asObject());
 			int fd = check_duplicate_fd(servers, server);
 			if (fd == -1)
 				servers[initializeSocket(server->getPort(), server->getAddressAsNum())].push_back(server);
 			else
 				servers[fd].push_back(server);
 		}
-		catch (const std::exception &e)
+		catch (const std::exception& e)
 		{
-			for (std::map<int, std::vector<VirtualServer *> >::iterator i = servers.begin(); i != servers.end(); i++)
+			for (std::map<int, std::vector<VirtualServer*> >::iterator i = servers.begin(); i != servers.end(); i++)
 			{
-				for (std::vector<VirtualServer *>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
+				for (std::vector<VirtualServer*>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
 				{
 					delete (*j);
 				}
