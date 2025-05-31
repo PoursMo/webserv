@@ -30,7 +30,7 @@ Response::~Response()
 
 bool Response::isInputEnd()
 {
-	return this->bytesInput == 0;
+	return this->inputFd == -1 || this->bytesInput == 0;
 }
 
 void Response::onInputEnd()
@@ -107,7 +107,6 @@ bool Response::isOutputEnd()
 
 void Response::onOutputEnd()
 {
-	this->poller.terminateConnection(this->outputFd);
 }
 
 // ********************************************************************
@@ -140,6 +139,12 @@ std::string Response::getIndexPage(const std::string &path)
 	return "";
 }
 
+void Response::takeSocket()
+{
+	this->setOutputFd(this->connection.request.getInputFd());
+	this->connection.request.setInputFd(-1);
+}
+
 void Response::handleFile(const std::string &path)
 {
 	CgiHandler cgi(this->connection.request);
@@ -158,8 +163,7 @@ void Response::handleFile(const std::string &path)
 	this->isReadingHeader = false;
 	this->set(200);
 	this->setInputFd(fileFd);
-	this->setOutputFd(this->connection.request.getInputFd());
-	this->connection.request.setInputFd(-1);
+	this->takeSocket();
 }
 
 void Response::handlePath(const std::string &path)
@@ -177,6 +181,7 @@ void Response::handlePath(const std::string &path)
 			std::string loc = path.substr(this->connection.request.getLocation()->getRoot().size());
 			this->addHeader("Location", loc + '/');
 			this->setError(301);
+			this->takeSocket();
 			return;
 		}
 		std::string indexPagePath = getIndexPage(path);
@@ -187,6 +192,7 @@ void Response::handlePath(const std::string &path)
 			if (this->connection.request.getMethod() != GET)
 				throw http_error("Only GET method is handled for autoindex", 405);
 			this->set(200, getAutoIndexHtml(path, this->connection.request.getLocation()->getRoot()));
+			this->takeSocket();
 		}
 		else
 		{

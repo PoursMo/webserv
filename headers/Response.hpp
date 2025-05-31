@@ -32,6 +32,7 @@ class Response: public AInputHandler, public AOutputHandler
 		ssize_t handleOutputSysCall(const void *buf, size_t len);
 		bool isOutputEnd();
 		void onOutputEnd();
+		void takeSocket();
 
 	public:
 		Response(Poller &poller, Connection &connection);
