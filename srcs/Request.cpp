@@ -7,14 +7,14 @@
 #include "http_error.hpp"
 #include "Uri.hpp"
 
-Request::Request(Poller &poller, Connection &connection, const std::vector<VirtualServer *> &vServers)
+Request::Request(Poller& poller, Connection& connection, const std::vector<VirtualServer*>& vServers)
 	: AIOHandler(poller, connection),
-	  contentLength(0),
-	  firstLineParsed(false),
-	  vServers(vServers),
-	  vServer(NULL),
-	  locationData(NULL),
-	  uri(NULL)
+	contentLength(0),
+	firstLineParsed(false),
+	vServers(vServers),
+	vServer(NULL),
+	locationData(NULL),
+	uri(NULL)
 {
 }
 
@@ -28,10 +28,10 @@ Request::~Request()
 // Processing
 // ********************************************************************
 
-const VirtualServer *Request::selectVServer()
+const VirtualServer* Request::selectVServer()
 {
-	const std::string &hostName = this->getHeaderValue("host");
-	for (std::vector<VirtualServer *>::const_iterator i = vServers.begin(); i != vServers.end(); i++)
+	const std::string& hostName = this->getHeaderValue("host");
+	for (std::vector<VirtualServer*>::const_iterator i = vServers.begin(); i != vServers.end(); i++)
 	{
 		for (std::vector<std::string>::const_iterator j = (*i)->getServerNames().begin(); j != (*i)->getServerNames().end(); j++)
 		{
@@ -54,7 +54,7 @@ void Request::processRequest()
 		throw http_error("No '/' in path", 400);
 	if (!this->locationData)
 		throw http_error("Target not found in location data", 404);
-	const std::pair<int, std::string> &returnPair = this->locationData->getReturnPair();
+	const std::pair<int, std::string>& returnPair = this->locationData->getReturnPair();
 	if (returnPair.first != -1)
 	{
 		this->connection.response.handleReturn(returnPair);
@@ -83,7 +83,7 @@ void Request::setContentLength()
 // Setters
 // ********************************************************************
 
-std::string Request::setTarget(char **lstart, char *lend)
+std::string Request::setTarget(char** lstart, char* lend)
 {
 	std::string target;
 
@@ -102,22 +102,22 @@ void Request::addHeader(std::string key, std::string value)
 	str_to_lower(key);
 	try
 	{
-		std::string &headerValue = this->headers.at(key);
+		std::string& headerValue = this->headers.at(key);
 		headerValue += ", " + value;
 	}
-	catch(const std::exception& e)
+	catch (const std::exception& e)
 	{
 		this->headers[key] = value;
 	}
 }
 
-Method Request::setMethod(char *lstart, char *lend)
+Method Request::setMethod(char* lstart, char* lend)
 {
-	char *backup = lstart;
+	char* backup = lstart;
 
 	std::string method;
 
-	const char *methods_array[] = {"GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE"};
+	const char* methods_array[] = { "GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE" };
 	std::vector<std::string> existing_methods(methods_array, methods_array + sizeof(methods_array) / sizeof(methods_array[0]));
 	for (std::vector<std::string>::iterator s = existing_methods.begin(); s != existing_methods.end(); s++)
 	{
@@ -159,7 +159,7 @@ Method Request::setMethod(char *lstart, char *lend)
 // AInputHandler
 // ********************************************************************
 
-bool Request::parseLine(char *lstart, char *lend)
+bool Request::parseLine(char* lstart, char* lend)
 {
 	if (lstart == NULL || lend == NULL || *lend != '\n')
 		throw http_error("Empty request line", 400);
@@ -176,7 +176,7 @@ bool Request::parseLine(char *lstart, char *lend)
 	return true;
 }
 
-ssize_t Request::handleInputSysCall(void *buf, size_t len)
+ssize_t Request::handleInputSysCall(void* buf, size_t len)
 {
 	logger.log() << "Request: recving for " << len << " bytes on fd " << this->inputFd << std::endl;
 	ssize_t bytesRecved = recv(this->inputFd, buf, len, 0);
@@ -210,7 +210,7 @@ void Request::onHeaderBufferCreation()
 // AOutputHandler
 // ********************************************************************
 
-ssize_t Request::handleOutputSysCall(const void *buf, size_t len)
+ssize_t Request::handleOutputSysCall(const void* buf, size_t len)
 {
 	logger.log() << "Request: writing " << len << " bytes" << std::endl;
 	ssize_t bytesWritten = write(this->outputFd, buf, len);
@@ -222,20 +222,21 @@ ssize_t Request::handleOutputSysCall(const void *buf, size_t len)
 
 bool Request::isOutputEnd()
 {
+	logger.log() << "Request: is output end ?" << std::endl;
 	return this->buffers.empty() && this->isInputEnd();
 }
 
 void Request::onOutputEnd()
 {
-	this->connection.response.setOutputFd(this->inputFd);
-	this->inputFd = -1;
+	logger.log() << "Request: End of write in CGI (event)" << std::endl;
+	this->connection.response.takeSocket();
 }
 
 // ********************************************************************
 // Input parsing
 // ********************************************************************
 
-bool isValidProtocol(char **lstart, char *lend)
+bool isValidProtocol(char** lstart, char* lend)
 {
 	size_t i = 0;
 	std::string protocol = "HTTP/1.1";
@@ -249,7 +250,7 @@ bool isValidProtocol(char **lstart, char *lend)
 	return true;
 }
 
-void Request::parseFirstLine(char *lstart, char *lend)
+void Request::parseFirstLine(char* lstart, char* lend)
 {
 	this->method = setMethod(lstart, lend);
 	while (lstart != lend && *lstart != ' ' && *lstart != '\r')
@@ -281,19 +282,19 @@ void Request::parseFirstLine(char *lstart, char *lend)
 // Getters
 // ********************************************************************
 
-const std::string &Request::getTarget() const
+const std::string& Request::getTarget() const
 {
 	return (this->target);
 }
 
-const std::string &Request::getPath() const
+const std::string& Request::getPath() const
 {
 	if (!this->uri)
 		throw std::runtime_error("Uri is not defined");
 	return this->uri->getPath();
 }
 
-const std::string &Request::getQuery() const
+const std::string& Request::getQuery() const
 {
 	if (!this->uri)
 		throw std::runtime_error("Uri is not defined");
@@ -312,17 +313,17 @@ enum Method Request::getMethod() const
 	return this->method;
 }
 
-const VirtualServer *Request::getVServer() const
+const VirtualServer* Request::getVServer() const
 {
 	return this->vServer;
 }
 
-const LocationData *Request::getLocation() const
+const LocationData* Request::getLocation() const
 {
 	return this->locationData;
 }
 
-const Poller &Request::getPoller() const
+const Poller& Request::getPoller() const
 {
 	return this->poller;
 }

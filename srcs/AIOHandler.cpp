@@ -2,40 +2,42 @@
 #include "Logger.hpp"
 #include "Poller.hpp"
 #include "http_error.hpp"
+#include "utils.hpp"
 
-AIOHandler::AIOHandler(Poller &poller, Connection &connection) 
-: poller(poller),
-  connection(connection)
+AIOHandler::AIOHandler(Poller& poller, Connection& connection)
+	: poller(poller),
+	connection(connection),
+	inputFd(-1),
+	outputFd(-1)
 {
 }
 
 AIOHandler::~AIOHandler()
 {
-	for (std::list<Buffer *>::iterator i = buffers.begin(); i != buffers.end(); i++)
+	for (std::list<Buffer*>::iterator i = buffers.begin(); i != buffers.end(); i++)
 	{
-		delete[] (*i)->first;
+		delete[](*i)->first;
 		delete (*i);
 	}
 }
 
-void AIOHandler::delFd(int *fd)
+void AIOHandler::delFd(int& fd)
 {
-	if (*fd == -1)
-		return ;
-	this->poller.del(*fd);
-	this->poller.ioHandlers.erase(*fd);
-	if (this->poller.isServerFd(*fd))
-		this->poller.terminateConnection(*fd);
-	else
-		close(*fd);
-	*fd = -1;
+	if (fd == -1)
+		return;
+	this->poller.del(fd);
+	this->poller.ioHandlers.erase(fd);
+	if (this->poller.isServerFd(fd))
+		this->poller.terminateConnection(fd);
+	close(fd);
+	fd = -1;
 }
 
 // ********************************************************************
 // Utils
 // ********************************************************************
 
-bool AIOHandler::isEmptyline(char *lstart, char *lend)
+bool AIOHandler::isEmptyline(char* lstart, char* lend)
 {
 	if (*lstart != '\r' && *lstart != '\n')
 		return false;
@@ -47,7 +49,7 @@ bool AIOHandler::isEmptyline(char *lstart, char *lend)
 	return false;
 }
 
-void AIOHandler::parseHeaderLine(char *lstart, char *lend)
+void AIOHandler::parseHeaderLine(char* lstart, char* lend)
 {
 	std::string key;
 	std::string value = "";
@@ -81,7 +83,17 @@ void AIOHandler::parseHeaderLine(char *lstart, char *lend)
 // Debug
 // ********************************************************************
 
-void AIOHandler::debugPrint(const char *first, const char *const last)
+std::ostream& AIOHandler::printIOHandler()
+{
+	return logger.log()
+		<< "│"
+		<< ((this->inputFd == -1) ? "X" : int_to_str(this->inputFd))
+		<< "├───┤"
+		<< ((this->outputFd == -1) ? "X" : int_to_str(this->outputFd))
+		<< "│";
+}
+
+void AIOHandler::printBuffer(const char* first, const char* const last)
 {
 	while (1)
 	{

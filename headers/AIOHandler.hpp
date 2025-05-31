@@ -8,37 +8,43 @@ class Connection;
 
 class AIOHandler
 {
-    protected:
-    	struct Buffer
-		{
-			char *first;
-			char *last;
-			char *pos;
-			size_t capacity;
-		};
-		enum BufferType
-		{
-			HEADER,
-			BODY
-		};
+protected:
+	struct Buffer
+	{
+		char* first;
+		char* last;
+		char* pos;
+		size_t capacity;
+	};
+	enum BufferType
+	{
+		HEADER,
+		BODY
+	};
 
-        Poller &poller;
-		Connection &connection;
-    	std::list<Buffer *> buffers;
-		std::map<std::string, std::string> headers;
-        void delFd(int *fd);
+	Poller& poller;
+	Connection& connection;
 
-		// parser utils
-		static bool isEmptyline(char *lstart, char *lend);
-		void parseHeaderLine(char *lstart, char *lend);
+	std::list<Buffer*> buffers;
+	std::map<std::string, std::string> headers;
+	void delFd(int& fd);
 
-        AIOHandler(Poller &poller, Connection &connection);
-        virtual ~AIOHandler();
-        static void debugPrint(const char *first, const char *const last);
-    public:
-        virtual void handleInput() = 0;
-        virtual void handleOutput() = 0;
-		virtual void addHeader(std::string key, std::string value) = 0;
+	int inputFd;
+	int outputFd;
+
+	// parser utils
+	static bool isEmptyline(char* lstart, char* lend);
+	void parseHeaderLine(char* lstart, char* lend);
+
+	AIOHandler(Poller& poller, Connection& connection);
+	virtual ~AIOHandler();
+
+public:
+	virtual void handleInput() = 0;
+	virtual void handleOutput() = 0;
+	virtual void addHeader(std::string key, std::string value) = 0;
+	static void printBuffer(const char* first, const char* const last);
+	std::ostream& printIOHandler();
 };
 
 #endif

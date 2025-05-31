@@ -12,9 +12,9 @@ struct Connection
 	time_t lastEventTime;
 	Request request;
 	Response response;
-
-	Connection(Poller &poller, int clientFd, const std::vector<VirtualServer *> &vServers);
+	Connection(Poller& poller, int clientFd, const std::vector<VirtualServer*>& vServers);
 	void updateTime();
+	void print(const std::string title = "");
 };
 
 #endif

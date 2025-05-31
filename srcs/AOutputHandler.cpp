@@ -1,36 +1,39 @@
 #include "AOutputHandler.hpp"
-#include "Logger.hpp"
 #include "Poller.hpp"
+#include "Connection.hpp"
+#include "Logger.hpp"
+#include "utils.hpp"
 
 AOutputHandler::AOutputHandler()
-	:outputFd(-1),
-	 bytesOutputCount(0)
+	: bytesOutputCount(0)
 {
+	this->connection.print("AOutputHandler constructor");
 }
 
 AOutputHandler::~AOutputHandler()
 {
-	logger.log() << "AOutputHandler desctructor -> delOutputFd()" << std::endl;
+	this->connection.print("AOutputHandler desctructor");
 	this->delOutputFd();
+	this->connection.print();
 }
 
 void AOutputHandler::handleOutput()
 {
 	ssize_t bytesOutput;
-    if (!this->stringContent.empty())
+	if (!this->stringContent.empty())
 	{
-        logger.log() << "AOutputHandler: sending string content" << std::endl;
-		const char *buffer_pos = this->stringContent.c_str() + this->bytesOutputCount;
+		// logger.log() << "AOutputHandler: sending string content" << std::endl;
+		const char* buffer_pos = this->stringContent.c_str() + this->bytesOutputCount;
 		size_t len = this->stringContent.size() - this->bytesOutputCount;
 		bytesOutput = handleOutputSysCall(buffer_pos, len);
 		this->bytesOutputCount += bytesOutput;
 		if ((size_t)bytesOutputCount == this->stringContent.size())
-            this->stringContent.clear();
+			this->stringContent.clear();
 	}
 	else if (!this->buffers.empty())
 	{
-        logger.log() << "AOutputHandler: sending buffer" << std::endl;
-		Buffer *buffer = this->buffers.front();
+		// logger.log() << "AOutputHandler: sending buffer" << std::endl;
+		Buffer* buffer = this->buffers.front();
 		size_t len = buffer->last - buffer->pos + 1;
 		bytesOutput = handleOutputSysCall(buffer->pos, len);
 		if ((size_t)bytesOutput != len)
@@ -44,22 +47,23 @@ void AOutputHandler::handleOutput()
 	}
 	if (this->isOutputEnd())
 	{
-		logger.log() << "AOutputHandler output end -> delOutputFd()" << std::endl;
-		this->delOutputFd();
+		this->connection.print("AOutputHandler output end");
 		this->onOutputEnd();
+		this->delOutputFd();
+		this->connection.print();
 	}
 }
 
 void AOutputHandler::delOutputFd()
 {
-	this->delFd(&this->outputFd);
+	this->delFd(this->outputFd);
 }
 
 void AOutputHandler::setOutputFd(int fd)
 {
 	this->outputFd = fd;
 	if (this->outputFd == -1)
-		return ;
+		return;
 	this->poller.add(fd, POLLOUT);
 	this->poller.ioHandlers[fd] = this;
 }

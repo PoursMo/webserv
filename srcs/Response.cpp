@@ -9,10 +9,10 @@
 #include "Logger.hpp"
 #include "Poller.hpp"
 
-Response::Response(Poller &poller, Connection &connection)
+Response::Response(Poller& poller, Connection& connection)
 	: AIOHandler(poller, connection),
-	  cgiPid(0)
-{ 
+	cgiPid(0)
+{
 }
 
 Response::~Response()
@@ -30,6 +30,7 @@ Response::~Response()
 
 bool Response::isInputEnd()
 {
+	logger.log() << "response input end ? " << int_to_str(this->bytesInput) << std::endl;
 	return this->inputFd == -1 || this->bytesInput == 0;
 }
 
@@ -37,7 +38,7 @@ void Response::onInputEnd()
 {
 }
 
-bool Response::parseLine(char *lstart, char *lend)
+bool Response::parseLine(char* lstart, char* lend)
 {
 	if (lstart == NULL || lend == NULL || *lend != '\n')
 		return false;
@@ -50,18 +51,18 @@ bool Response::parseLine(char *lstart, char *lend)
 			status = extract_status_code(headers.at("Status"));
 			headers.erase("Status");
 		}
-		catch(const std::exception& e)
+		catch (const std::exception& e)
 		{
 			// std::cerr << e.what() << '\n'; // remove ?
 		}
-		set(status);
+		this->set(status);
 		return false;
 	}
 	try
 	{
 		this->parseHeaderLine(lstart, lend);
 	}
-	catch(const std::exception& e)
+	catch (const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
 	}
@@ -72,7 +73,7 @@ void Response::onUpdateBodyBytes()
 {
 }
 
-ssize_t Response::handleInputSysCall(void *buf, size_t len)
+ssize_t Response::handleInputSysCall(void* buf, size_t len)
 {
 	logger.log() << "Response: reading " << len << " bytes" << std::endl;
 	ssize_t bytesRead = read(this->inputFd, buf, len);
@@ -90,7 +91,7 @@ void Response::onHeaderBufferCreation()
 // AOutputHandler
 // ********************************************************************
 
-ssize_t Response::handleOutputSysCall(const void *buf, size_t len)
+ssize_t Response::handleOutputSysCall(const void* buf, size_t len)
 {
 	logger.log() << "Response: sending " << len << " bytes" << std::endl;
 	ssize_t bytesSent = send(this->outputFd, buf, len, MSG_NOSIGNAL);
@@ -107,13 +108,14 @@ bool Response::isOutputEnd()
 
 void Response::onOutputEnd()
 {
+	this->delOutputFd();
 }
 
 // ********************************************************************
 // Logic
 // ********************************************************************
 
-void Response::handleReturn(const std::pair<int, std::string> &returnPair)
+void Response::handleReturn(const std::pair<int, std::string>& returnPair)
 {
 	if (returnPair.first == 301 || returnPair.first == 302 || returnPair.first == 303 || returnPair.first == 307)
 	{
@@ -128,9 +130,9 @@ void Response::handleReturn(const std::pair<int, std::string> &returnPair)
 	}
 }
 
-std::string Response::getIndexPage(const std::string &path)
+std::string Response::getIndexPage(const std::string& path)
 {
-	const std::vector<std::string> &indexes = this->connection.request.getLocation()->getIndexes();
+	const std::vector<std::string>& indexes = this->connection.request.getLocation()->getIndexes();
 	for (std::vector<std::string>::const_iterator i = indexes.begin(); i != indexes.end(); i++)
 	{
 		std::string fullPath = path + *i;
@@ -142,19 +144,23 @@ std::string Response::getIndexPage(const std::string &path)
 
 void Response::takeSocket()
 {
+	this->connection.print("Response: takeSocket()");
 	this->setOutputFd(this->connection.request.getInputFd());
 	this->connection.request.setInputFd(-1);
+	this->connection.print();
 }
 
-void Response::handleFile(const std::string &path)
+void Response::handleFile(const std::string& path)
 {
 	CgiHandler cgi(this->connection.request);
 	if (cgi.isCgiResource())
 	{
 		this->cgiPid = cgi.cgiExecution();
+		this->connection.print("Response: bind CGI process");
 		this->connection.request.setOutputFd(cgi.getFdIn());
 		this->setInputFd(cgi.getFdOut());
-		return ;
+		this->connection.print();
+		return;
 	}
 	if (this->connection.request.getMethod() != GET)
 		throw http_error("Only GET method can be handled without CGI", 405);
@@ -163,11 +169,15 @@ void Response::handleFile(const std::string &path)
 		throw http_error("open: " + std::string(strerror(errno)), 500);
 	this->isReadingHeader = false;
 	this->set(200);
+	this->connection.print("Response: set fileFd on input");
 	this->setInputFd(fileFd);
+	this->connection.print();
+	// TODO wait on Request onInputEnd();
+	// if (request.outputFd == -1 && response.inputFd != -1) then response->takeSocket();
 	this->takeSocket();
 }
 
-void Response::handlePath(const std::string &path)
+void Response::handlePath(const std::string& path)
 {
 	logger.log() << "Response: handling path: " << path << std::endl;
 	if (access(path.c_str(), R_OK) == -1)
@@ -210,16 +220,16 @@ void Response::handlePath(const std::string &path)
 
 void Response::sendError(int status)
 {
-	const VirtualServer *vServer = this->connection.request.getVServer();
+	const VirtualServer* vServer = this->connection.request.getVServer();
 	if (vServer && this->connection.request.getLocation())
 	{
 		try
 		{
-			const std::string &path = vServer->getErrorPages().at(status);
+			const std::string& path = vServer->getErrorPages().at(status);
 			this->handlePath(path);
 			return;
 		}
-		catch(const std::exception& e)
+		catch (const std::exception& e)
 		{
 			std::cerr << e.what() << '\n'; // remove ?
 		}
@@ -233,7 +243,7 @@ void Response::sendError(int status)
 	this->takeSocket();
 }
 
-void Response::set(int status, const std::string &body)
+void Response::set(int status, const std::string& body)
 {
 	this->addHeader("Content-Length", body.size());
 	this->stringContent = this->generateHeader(status) + body;
@@ -247,7 +257,7 @@ void Response::set(int status)
 std::string Response::generateHeader(int status) const
 {
 	std::stringstream header;
-	const std::string &statusName = http_status::get(status);
+	const std::string& statusName = http_status::get(status);
 
 	header << "HTTP/1.1 " << status << " " << statusName << CRLF;
 	header << "Server: Webserv_42" << CRLF;

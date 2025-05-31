@@ -10,11 +10,11 @@ edge-trigerred mode: Epoll_wait will return only when a new event is enqueued wi
 level-triggered mode (default): Epoll_wait will return as long as the condition holds.
 */
 
-Poller::Poller(const std::map<int, std::vector<VirtualServer *> > &servers)
+Poller::Poller(const std::map<int, std::vector<VirtualServer*> >& servers)
 	: pollFds(),
-	  servers(servers)
+	servers(servers)
 {
-	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = servers.begin(); i != servers.end(); i++)
+	for (std::map<int, std::vector<VirtualServer*> >::const_iterator i = servers.begin(); i != servers.end(); i++)
 	{
 		this->add(i->first, POLLIN);
 	}
@@ -32,12 +32,12 @@ void Poller::add(int fd, short events)
 		std::vector<struct pollfd>::iterator i = findPollFd(fd);
 		i->events = events;
 	}
-	catch(const std::exception& e)
+	catch (const std::exception& e)
 	{
-		this->pollFds.push_back((struct pollfd){
+		this->pollFds.push_back((struct pollfd) {
 			.fd = fd,
-			.events = events,
-			.revents = 0
+				.events = events,
+				.revents = 0
 		});
 	}
 }
@@ -67,7 +67,7 @@ std::vector<struct pollfd>::iterator Poller::findPollFd(int fd)
 
 bool Poller::isServerFd(int fd)
 {
-	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = servers.begin(); i != servers.end(); i++)
+	for (std::map<int, std::vector<VirtualServer*> >::const_iterator i = servers.begin(); i != servers.end(); i++)
 	{
 		if (fd == i->first)
 			return true;
@@ -92,7 +92,7 @@ void Poller::handleNewConnection(int fd)
 {
 	struct sockaddr_in client_addr;
 	int addrlen = sizeof(client_addr);
-	int clientFd = accept(fd, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
+	int clientFd = accept(fd, (struct sockaddr*)&client_addr, (socklen_t*)&addrlen);
 	if (clientFd == -1)
 		throw std::runtime_error("accept: " + std::string(strerror(errno)));
 	logger.log() << "New connection on socket " << fd << ", created socket fd: " << clientFd << std::endl;
@@ -114,7 +114,7 @@ void Poller::handlePollin(int fd)
 		// else
 		// 	this->mod(fd, POLLIN);
 	}
-	catch (const http_error &e)
+	catch (const http_error& e)
 	{
 		std::cerr << e.what() << '\n';
 		connections.at(fd)->response.sendError(e.getStatusCode());
@@ -131,12 +131,12 @@ void Poller::handlePollout(int fd)
 	ioHandlers.at(fd)->handleOutput();
 }
 
-void Poller::timeoutTerminator(int &timeout)
+void Poller::timeoutTerminator(int& timeout)
 {
 	std::vector<int> timedOuts;
 	time_t currentTime = std::time(NULL);
 	time_t highestElapsedTime = 0;
-	for (std::map<int, Connection *>::iterator i = connections.begin(); i != connections.end(); i++)
+	for (std::map<int, Connection*>::iterator i = connections.begin(); i != connections.end(); i++)
 	{
 		time_t elapsedTime = currentTime - i->second->lastEventTime;
 		if (elapsedTime >= WS_CONNECTION_TIMEOUT_TIMER)
@@ -176,12 +176,12 @@ void Poller::loop()
 				else if (i->revents & POLLOUT)
 					this->handlePollout(i->fd);
 			}
-			catch (const std::runtime_error &e)
+			catch (const std::runtime_error& e)
 			{
 				std::cerr << e.what() << '\n';
 				terminateConnection(i->fd);
 			}
-			catch (const child_accident &e)
+			catch (const child_accident& e)
 			{
 				std::cerr << e.what() << '\n';
 				return;
@@ -193,11 +193,11 @@ void Poller::loop()
 
 void Poller::closeAll() const
 {
-	for (std::map<int, Connection *>::const_iterator i = connections.begin(); i != connections.end(); i++)
+	for (std::map<int, Connection*>::const_iterator i = connections.begin(); i != connections.end(); i++)
 	{
 		close(i->first);
 	}
-	for (std::map<int, std::vector<VirtualServer *> >::const_iterator i = servers.begin(); i != servers.end(); i++)
+	for (std::map<int, std::vector<VirtualServer*> >::const_iterator i = servers.begin(); i != servers.end(); i++)
 	{
 		close(i->first);
 	}

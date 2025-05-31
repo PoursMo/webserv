@@ -14,13 +14,13 @@ void initDirectoryEntries(
 	std::vector<struct s_entrie>& files)
 {
 	DIR* dirp;
-	dirent *dp;
+	dirent* dp;
 	struct stat statBuffer;
 	struct s_entrie ent;
 
 	dirp = opendir(path.c_str());
 	if (!dirp)
-		return ;
+		return;
 	while ((dp = readdir(dirp)))
 	{
 		ent.name = dp->d_name;
@@ -43,13 +43,13 @@ void initDirectoryEntries(
 	closedir(dirp);
 }
 
-std::string getAutoIndexHtml(const std::string &path, const std::string &root)
+std::string getAutoIndexHtml(const std::string& path, const std::string& root)
 {
 	std::stringstream html;
 	std::vector<struct s_entrie> folders;
 	std::vector<struct s_entrie> files;
 	std::string loc = path.substr(root.size());
-	
+
 	initDirectoryEntries(path, folders, files);
 	html << "<!DOCTYPE html>";
 	html << "<html lang=\"en\">";
@@ -82,11 +82,11 @@ std::string getAutoIndexHtml(const std::string &path, const std::string &root)
 	html << "text-decoration: none;";
 	html << "color: black;";
 	html << "display: flex;";
-    html << "gap: .5rem;";
-    html << "align-items: center;";
-    html << "padding: .3rem .6rem;";
-    html << "border: #eee solid 1px;";
-    html << "border-radius: .2rem;";
+	html << "gap: .5rem;";
+	html << "align-items: center;";
+	html << "padding: .3rem .6rem;";
+	html << "border: #eee solid 1px;";
+	html << "border-radius: .2rem;";
 	html << "}";
 	html << "a:hover {";
 	html << "border-color: #bbb;";
@@ -94,10 +94,10 @@ std::string getAutoIndexHtml(const std::string &path, const std::string &root)
 	html << "}";
 	html << ".entrie-name {flex-grow: 1;}";
 	html << "</style>";
-	
+
 	html << "</div>";
 	html << "</body>";
 	html << "</html>";
-	
+
 	return html.str();
 }
