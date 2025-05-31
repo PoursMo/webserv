@@ -1,0 +1,6 @@
+==28509== Memcheck, a memory error detector
+==28509== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==28509== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==28509== Command: ./webserv conf/cgi.json
+==28509== Parent PID: 28508
+==28509== 

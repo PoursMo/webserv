@@ -1,3 +1,3 @@
-GET /delete_user.php?ressource=/tests/http/DELETE_ME.trash HTTP/1.1
+GET /php/test.php HTTP/1.1
 Host: webserv.com
 

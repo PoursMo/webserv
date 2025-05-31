@@ -1,24 +1,27 @@
 {
 	"$schema": "./_schema.json",
 	"debug": true,
-		"servers": [
-			{
-				"error_page": {
-					"404": "/app/www/custom_errors/my-error-404.html"
-				},
-				"server_names": [
-					"webserv.com",
-					"www.webserv.com"
-				],
-				"address": "0.0.0.0",
-				"locations": [
-					{
-						"method": ["GET", "POST"],
-						"root": "/app/www",
-						"path": "/",
-						"autoindex": true
-					}
-				]
-			}
+	"servers": [
+		{
+			"error_page": {
+				"404": "/app/www/custom_errors/my-error-404.html"
+			},
+			"server_names": [
+				"webserv.com",
+				"www.webserv.com"
+			],
+			"address": "0.0.0.0",
+			"locations": [
+				{
+					"method": [
+						"GET",
+						"POST"
+					],
+					"root": "/app/www",
+					"path": "/",
+					"autoindex": true
+				}
+			]
+		}
 	]
 }

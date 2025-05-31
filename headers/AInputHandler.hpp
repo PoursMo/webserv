@@ -21,11 +21,8 @@ protected:
 	ssize_t bodyBytesCount;
 	size_t headerBufferCount;
 
-	virtual bool isInputEnd() = 0;
-	virtual void onInputEnd() = 0;
 	virtual bool parseLine(char* lstart, char* lend) = 0;
 	virtual void onUpdateBodyBytes() = 0;
-	virtual ssize_t handleInputSysCall(void* buf, size_t len) = 0;
 	virtual void onHeaderBufferCreation() = 0;
 
 	AInputHandler();

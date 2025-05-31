@@ -82,29 +82,29 @@ char* AInputHandler::ws_strchr(char* first, const char* const last, char c)
 	return 0;
 }
 
-void AInputHandler::sendHeaderLineToParsing(const Buffer* lbuffer, char* lf)
+void AInputHandler::sendHeaderLineToParsing(const Buffer* buffer, char* lf)
 {
-	if (lbuffer != buffers.front())
+	if (buffer != buffers.front())
 	{
 		std::string line;
-		for (std::list<Buffer*>::iterator j = buffers.begin(); *j != lbuffer;)
+		for (std::list<Buffer*>::iterator j = buffers.begin(); *j != buffer;)
 		{
-			line.append((*j)->pos, (*j)->last + 1);
+			line.append((*j)->inputPos, (*j)->last + 1);
 			delete[](*j)->first;
 			delete (*j);
 			++j;
 			buffers.pop_front();
 		}
-		line.append(lbuffer->pos, lf + 1);
+		line.append(buffer->inputPos, lf + 1);
 		// logger.log() << "AInputHandler: stitched line of size " << line.size() << ": ";
 		printBuffer(&line[0], &line[line.size() - 1]);
 		this->isReadingHeader = this->parseLine(&line[0], &line[line.size() - 1]);
 	}
 	else
 	{
-		// logger.log() << "AInputHandler: non-stitched line of size " << lf - lbuffer->pos + 1 << ": ";
-		printBuffer(lbuffer->pos, lf);
-		this->isReadingHeader = this->parseLine(lbuffer->pos, lf);
+		// logger.log() << "AInputHandler: non-stitched line of size " << lf - buffer->inputPos + 1 << ": ";
+		printBuffer(buffer->inputPos, lf);
+		this->isReadingHeader = this->parseLine(buffer->inputPos, lf);
 	}
 }
 
@@ -116,32 +116,33 @@ void AInputHandler::addBodyBytes(size_t bytes)
 
 void AInputHandler::flushHeaderBuffers()
 {
-	Buffer* const lbuffer = buffers.back();
+	Buffer* const backBuffer = buffers.back();
 	char* lf;
-	while ((lf = ws_strchr(lbuffer->pos, lbuffer->last, '\n')))
+	while ((lf = ws_strchr(backBuffer->inputPos, backBuffer->last, '\n')))
 	{
-		sendHeaderLineToParsing(lbuffer, lf);
-		lbuffer->pos = lf + 1;
+		sendHeaderLineToParsing(backBuffer, lf);
+		backBuffer->inputPos = lf + 1;
 		if (!this->isReadingHeader)
 		{
-			if (lf != lbuffer->last)
+			if (lf != backBuffer->last)
 			{
-				this->addBodyBytes(lbuffer->last - lbuffer->pos + 1);
-				// logger.log() << "AInputHandler: copying remains of header buffer in body buffer " << std::endl;
+				this->addBodyBytes(backBuffer->last - backBuffer->inputPos + 1);
+				logger.log() << "AInputHandler: copying remains of header buffer in body buffer " << std::endl;
 				Buffer* bodyBuffer = createBuffer(BODY);
-				std::memcpy(bodyBuffer->first, lbuffer->pos, bodyBytesCount);
+				std::memcpy(bodyBuffer->first, backBuffer->inputPos, bodyBytesCount);
+				bodyBuffer->last = bodyBuffer->first + bodyBytesCount - 1;
 			}
-			delete[] lbuffer->first;
-			delete lbuffer;
+			delete[] backBuffer->first;
+			delete backBuffer;
 			buffers.pop_front();
 			break;
 		}
-		else if (lf == lbuffer->last)
+		else if (lf == backBuffer->last)
 		{
-			if (lbuffer->last == lbuffer->first + lbuffer->capacity - 1)
+			if (backBuffer->last == backBuffer->first + backBuffer->capacity - 1)
 			{
-				delete[] lbuffer->first;
-				delete lbuffer;
+				delete[] backBuffer->first;
+				delete backBuffer;
 				buffers.pop_front();
 			}
 			break;
@@ -168,7 +169,8 @@ AIOHandler::Buffer* AInputHandler::createBuffer(BufferType type)
 		break;
 	}
 	// logger.log() << "AInputHandler: created new buffer of size " << buffer->capacity << std::endl;
-	buffer->pos = buffer->first;
+	buffer->inputPos = buffer->first;
+	buffer->outputPos = buffer->first;
 	buffer->last = buffer->first;
 	buffers.push_back(buffer);
 	return buffer;
@@ -177,6 +179,7 @@ AIOHandler::Buffer* AInputHandler::createBuffer(BufferType type)
 bool AInputHandler::fillBuffer(BufferType type)
 {
 	Buffer* buffer = buffers.back();
+
 	if (buffers.empty() || (size_t)(buffer->last - buffer->first) + 1 == buffer->capacity)
 	{
 		// logger.log() << "AInputHandler: filling new buffer" << std::endl;
@@ -194,7 +197,12 @@ bool AInputHandler::fillBuffer(BufferType type)
 			break;
 		}
 		if (this->bytesInput == 0)
+		{
+			delete[] buffer->first;
+			delete buffer;
+			this->buffers.pop_back();
 			return false;
+		}
 		buffer->last = buffer->first + this->bytesInput - 1;
 	}
 	else

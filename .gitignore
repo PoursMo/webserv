@@ -34,7 +34,6 @@ webserv
 
 # Dev, Log and tests
 logs/*
-*.log
 *.test
 *.diff
 .vscode

@@ -3,6 +3,7 @@
 #include "Poller.hpp"
 #include "http_error.hpp"
 #include "utils.hpp"
+#include "Connection.hpp"
 
 AIOHandler::AIOHandler(Poller& poller, Connection& connection)
 	: poller(poller),
@@ -31,6 +32,8 @@ void AIOHandler::unsubscribeFd(int& fd)
 	logger.log() << "Unsubscribe fd " << fd << std::endl;
 	this->poller.del(fd);
 	this->poller.ioHandlers.erase(fd);
+	if (fd != this->connection.clientFd)
+		close(fd);
 	fd = -1;
 }
 

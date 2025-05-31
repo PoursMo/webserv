@@ -185,6 +185,8 @@ void Poller::loop()
 				}
 				else if (i->revents & POLLOUT)
 					this->handlePollout(i->fd);
+				else if (i->revents & POLLHUP)
+					this->ioHandlers.at(i->fd)->onInputEnd();
 			}
 			catch (const std::runtime_error& e)
 			{

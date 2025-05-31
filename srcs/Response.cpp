@@ -47,7 +47,7 @@ bool Response::parseLine(char* lstart, char* lend)
 
 	if (AIOHandler::isEmptyline(lstart, lend))
 	{
-		// TODO: if no headers : 502
+		// TODO: if no CRLFCRLF : 502
 		int status = 200;
 		try
 		{
@@ -149,6 +149,7 @@ void Response::handleFile(const std::string& path)
 	CgiHandler cgi(this->connection.request);
 	if (cgi.isCgiResource())
 	{
+		this->headers.erase("Content-Length");
 		this->cgiPid = cgi.cgiExecution();
 		this->connection.print("Response: bind CGI process");
 		this->connection.request.subscribeOutputFd(cgi.getFdIn());
@@ -162,8 +163,8 @@ void Response::handleFile(const std::string& path)
 		int fileFd = open(path.c_str(), O_RDONLY);
 		if (fileFd == -1)
 			throw http_error("open: " + std::string(strerror(errno)), 500);
-		this->isReadingHeader = false;
 		this->connection.print("Response: set fileFd on input");
+		this->isReadingHeader = false;
 		this->subscribeInputFd(fileFd);
 		this->set(200);
 	}
