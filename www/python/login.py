@@ -16,9 +16,8 @@ def main():
 	cookie["name"] = name
 	print(cookie)
 	print("Content-Type: text/html")
+	print("Location: /python/app.py")
+	print("Status: 302")
 	print()
-	print("<h2>Connection reussie</h2>")
-	print("<p>Bonjour ", name, "</p>")
-	print('<script>window.onload = () => document.location = "/python/app.py"</script>')
 
 main()

@@ -1,0 +1,6 @@
+POST /python/add.py HTTP/1.1
+Host: webserv.com
+Cookie: name=Patrick_Sebastien
+Content-Length: 28
+
+Faire tourner des serviettes

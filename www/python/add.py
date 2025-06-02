@@ -1,9 +1,7 @@
 import sys
 import os
 import uuid
-import shutil
-
-
+import cgi
 
 # sys.stdin
 # shutil.copyfile(sys.stdin, )
@@ -21,15 +19,38 @@ def getUserDir(username):
 	pathInfo = os.environ.get('PATH_INFO')
 	return pathInfo + '/' + username + '/'
 
+def getTodoContent():
+	if os.environ.get('CONTENT_TYPE') == 'application/x-www-form-urlencoded':
+		form = cgi.FieldStorage()
+		return form.getvalue("todo")
+	return sys.stdin.read()
+
 def main():
+	if os.environ.get("REQUEST_METHOD") != "POST":
+		print("Status: 405")
+		print()
+		return
 	name = getCookie('name')
 	if not name or name == '':
+			print("Content-Type: text/html")
+			print()
 			print('<h1>Connexion requise !</h1>')
 			print('<a href="/python">Login</a>')
 			return
-	file = getUserDir(name) + str(uuid.uuid1())
-	with os.fdopen(sys.stdin.fileno(), 'rb') as input_file, open(file, 'wb') as output_file:
-			shutil.copyfileobj(input_file, output_file)
+	userDir = getUserDir(name) 
+	os.makedirs(userDir, 511, True)
+	todoFile = userDir + str(uuid.uuid1())
+	todoContent = getTodoContent()
+	if not todoContent:
+		print("Location: /python/app.py?error=content_empty")
+		print("Status: 302")
+		print()
+		return
+	with open(todoFile, 'w') as outputFile:
+		outputFile.write(todoContent)
+	print("Location: /python/app.py?success=1")
+	print("Status: 302")
+	print()
 
 main()
 # form = cgi.FieldStorage()

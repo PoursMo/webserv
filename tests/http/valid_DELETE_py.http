@@ -1,0 +1,3 @@
+DELETE /python/del.py?todoId=Patrick_Sebastien/66a6096c-3fba-11f0-9f7f-d6d1c46f30c2 HTTP/1.1
+Host: webserv.com
+

@@ -46,7 +46,11 @@ bool Response::parseLine(char* lstart, char* lend)
 		return false;
 	if (AIOHandler::isEmptyline(lstart, lend))
 	{
-		// TODO: if no CRLFCRLF : 502
+		if (this->headers.size() < 1)
+		{
+			this->setError(502);
+			return false;
+		}
 		int status = 200;
 		try
 		{
@@ -222,7 +226,7 @@ void Response::setError(int status)
 		}
 		catch (const std::exception& e)
 		{
-			std::cerr << e.what() << '\n'; // remove ?
+			// std::cerr << e.what() << '\n'; // remove ?
 		}
 	}
 	std::string body = generateErrorBody(status);
@@ -234,6 +238,8 @@ void Response::set(int status, const std::string& body)
 	this->addHeader("Content-Length", body.size());
 	this->stringContent = this->generateHeader(status) + body;
 	this->connection.request.unsubscribeInputFd();
+	this->connection.request.unsubscribeOutputFd();
+	this->unsubscribeInputFd();
 	this->subscribeOutputFd(this->connection.clientFd);
 	this->connection.print();
 }

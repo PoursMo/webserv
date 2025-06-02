@@ -218,11 +218,11 @@ bool AInputHandler::fillBuffer(BufferType type)
 			return false;
 		buffer->last += bytesInput;
 	}
-	if (buffer)
-	{
-		logger.log() << "AInputHandler: buffer: ";
-		printBuffer(buffer->first, buffer->last);
-	}
+	// if (buffer)
+	// {
+	// 	logger.log() << "AInputHandler: buffer: ";
+	// 	printBuffer(buffer->first, buffer->last);
+	// }
 	this->connection.updateTime();
 	return true;
 }
