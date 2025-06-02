@@ -1,9 +1,10 @@
 #!/bin/bash
-ADDRESS_PORT="$1"
-NUMBER_OF_TEST="$2"
+ADDRESS="$1"
+PORT="$2"
+NUMBER_OF_TEST="$3"
 
-REQUEST_DIR="../http"
+REQUEST_DIR="./http"
 for ((i = 0; i < $NUMBER_OF_TEST; i++)); do
 	REQUEST_FILE=$(find "$REQUEST_DIR" -type f | shuf -n 1);
-	nc $ADDRESS_PORT < "$REQUEST_FILE"
+	(cat $REQUEST_FILE; sleep 0.001) | telnet $ADDRESS $PORT
 done

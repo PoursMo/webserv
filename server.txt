@@ -5,7 +5,7 @@ Socket: 6
     Port: 8000
     VirtualServer Names: 
     Error Pages: 
-    Client Max Body Size: 1048576
+    Client Max Body Size: 104857600
     Locations:
     [
       Path: /
@@ -34,75 +34,4 @@ Socket: 6
 
 [1m[31mpoll loop:[0m
 ADD FD: 6 MODE=1
-Polling...
-New connection on socket 6, created socket fd: 5
-ADD FD: 5 MODE=1
-Polling...
-In operations on fd 5:
-AInputHandler: inputting header
-Request: recving for 8192 bytes on fd 5
-Request: recved 90 bytes
-GET /php/test.php HTTP/1.1\r\n
-Host: 127.0.0.1:8000\r\n
-User-Agent: curl/7.81.0\r\n
-Accept: */*\r\n
-\r\n
-Response: handling path: /app/www/php/test.php
-CgiHandler: Init
-CgiHandler: file:	/php/test.php
-CgiHandler: file absolute:	/app/www/php/test.php
-CgiHandler: query:		
-CgiHandler: content-type:	
-CgiHandler: content-length:	
-CgiHandler: cgi extension:	.php
-CgiHandler: cgi path:	/usr/bin/php-cgi
-CgiHandler: cgi pathinfo:	/app/upload
-CgiHandler: method:	GET
-Response: bind CGI process
-│5├───┤X│ -> │X├───┤X│
-ADD FD: 8 MODE=4
-ADD FD: 9 MODE=1
-│5├───┤8│ -> │9├───┤X│
-InputHandler input end
-│5├───┤8│ -> │9├───┤X│
-Request: On Input end
-│5├───┤8│ -> │9├───┤X│
-Polling...
-Out operations on fd 8:
-AOutputHandler output end
-│5├───┤8│ -> │9├───┤X│
-Unsubscribe fd 8
-DEL FD: 8
-Polling...
-In operations on fd 9:
-AInputHandler: inputting header
-Response: reading 8192 bytes
-Response: read 266 bytes
-Content-type: text/html; charset=UTF-8\r\n
-\r\n
-ADD FD: 5 MODE=4
-│5├───┤X│ -> │9├───┤5│
-AInputHandler: copying remains of header buffer in body buffer 
-Polling...
-Out operations on fd 5:
-AOutputHandler: sending string content
-Response: sending 116 bytes
-Response: bytesSent: 116
-Unsubscribe fd 9
-DEL FD: 9
-Polling...
-Out operations on fd 5:
-AOutputHandler: sending buffer
-Response: sending 224 bytes
-Response: bytesSent: 224
-AOutputHandler: deleting frontBuffer
-AOutputHandler output end
-│5├───┤X│ -> │X├───┤5│
-Terminating socket: 5
-Unsubscribe fd 5
-DEL FD: 5
-Unsubscribe unsetted fd !!
-Unsubscribe unsetted fd !!
-Unsubscribe fd 5
-DEL FD: 5
 Polling...

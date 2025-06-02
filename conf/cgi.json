@@ -1,6 +1,6 @@
 {
   "$schema": "./_schema.json",
-  "debug": true,
+  "debug": false,
   "servers": [
     {
       "client_max_body_size": 104857600,

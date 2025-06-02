@@ -190,7 +190,6 @@ ssize_t Request::handleInputSysCall(void* buf, size_t len)
 
 bool Request::isInputEnd()
 {
-	std::cout << "this->bodyBytesCount: " << this->bodyBytesCount << ", this->contentLength : " << this->contentLength << std::endl;
 	return (this->inputFd == -1 || (!this->isReadingHeader && this->bodyBytesCount == this->contentLength));
 }
 

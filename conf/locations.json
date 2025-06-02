@@ -1,6 +1,6 @@
 {
 	"$schema": "./_schema.json",
-	"debug": true,
+	"debug": false,
 	"servers": [
 		{
 			"client_max_body_size": 10000,
@@ -12,7 +12,10 @@
 			"port": 8000,
 			"locations": [
 				{
-					"method": ["GET", "POST"],
+					"method": [
+						"GET",
+						"POST"
+					],
 					"path": "/",
 					"index": [
 						"index.html"
@@ -54,7 +57,10 @@
 			"port": 8000,
 			"locations": [
 				{
-					"method": ["GET", "POST"],
+					"method": [
+						"GET",
+						"POST"
+					],
 					"path": "/",
 					"index": [
 						"index.html"

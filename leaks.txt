@@ -1,6 +1,66 @@
-==28509== Memcheck, a memory error detector
-==28509== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==28509== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
-==28509== Command: ./webserv conf/cgi.json
-==28509== Parent PID: 28508
-==28509== 
+==84760== Memcheck, a memory error detector
+==84760== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==84760== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==84760== Command: ./webserv conf/cgi.json
+==84760== Parent PID: 84757
+==84760== 
+==84760== 
+==84760== Process terminating with default action of signal 2 (SIGINT)
+==84760==    at 0x4BCBDDC: poll (poll.c:41)
+==84760==    by 0x12B527: Poller::waitEvents(int) (Poller.cpp:54)
+==84760==    by 0x12C0E7: Poller::loop() (Poller.cpp:156)
+==84760==    by 0x13C917: main (main.cpp:55)
+==84760== 
+==84760== FILE DESCRIPTORS: 10 open (3 std) at exit.
+==84760== Open AF_INET socket 6: 0.0.0.0:8000 <-> unbound
+==84760==    at 0x4BD82CC: socket (syscall-template.S:120)
+==84760==    by 0x113BE7: initializeSocket(unsigned short, unsigned int) (config.cpp:7)
+==84760==    by 0x114413: create_servers(ft_json::JsonValue const&, std::map<int, std::vector<VirtualServer*, std::allocator<VirtualServer*> >, std::less<int>, std::allocator<std::pair<int const, std::vector<VirtualServer*, std::allocator<VirtualServer*> > > > >&) (config.cpp:65)
+==84760==    by 0x13C5BF: init(char const*, std::map<int, std::vector<VirtualServer*, std::allocator<VirtualServer*> >, std::less<int>, std::allocator<std::pair<int const, std::vector<VirtualServer*, std::allocator<VirtualServer*> > > > >&) (main.cpp:24)
+==84760==    by 0x13C88B: main (main.cpp:50)
+==84760== 
+==84760== Open file descriptor 4: /dev/null
+==84760==    at 0x4BC7A44: open (open64.c:41)
+==84760==    by 0x4B65AFF: _IO_file_open (fileops.c:188)
+==84760==    by 0x4B65E03: _IO_file_fopen@@GLIBC_2.17 (fileops.c:280)
+==84760==    by 0x4B5937B: __fopen_internal (iofopen.c:75)
+==84760==    by 0x4957033: std::__basic_file<char>::open(char const*, std::_Ios_Openmode, int) (in /usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.30)
+==84760==    by 0x49A1453: std::basic_filebuf<char, std::char_traits<char> >::open(char const*, std::_Ios_Openmode) (in /usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.30)
+==84760==    by 0x49A2167: std::basic_ofstream<char, std::char_traits<char> >::basic_ofstream(char const*, std::_Ios_Openmode) (in /usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.30)
+==84760==    by 0x13BAB3: Logger::Logger() (Logger.cpp:3)
+==84760==    by 0x13C9E7: __static_initialization_and_destruction_0(int, int) (main.cpp:8)
+==84760==    by 0x13CA23: _GLOBAL__sub_I_logger (main.cpp:58)
+==84760==    by 0x4B1754B: call_init (libc-start.c:145)
+==84760==    by 0x4B1754B: __libc_start_main@@GLIBC_2.34 (libc-start.c:379)
+==84760==    by 0x10DB6F: (below main) (in /app/webserv)
+==84760== 
+==84760== Open file descriptor 23: /dev/pts/ptmx
+==84760==    <inherited from parent>
+==84760== 
+==84760== Open file descriptor 21: /root/.vscode-server/data/logs/20250602T123928/remoteagent.log
+==84760==    <inherited from parent>
+==84760== 
+==84760== Open file descriptor 20: /root/.vscode-server/data/logs/20250602T123928/remoteTelemetry.log
+==84760==    <inherited from parent>
+==84760== 
+==84760== Open file descriptor 19: /root/.vscode-server/data/logs/20250602T123928/ptyhost.log
+==84760==    <inherited from parent>
+==84760== 
+==84760== Open file descriptor 3: /app/leaks.txt
+==84760==    <inherited from parent>
+==84760== 
+==84760== 
+==84760== HEAP SUMMARY:
+==84760==     in use at exit: 91,642 bytes in 105 blocks
+==84760==   total heap usage: 593 allocs, 488 frees, 125,774 bytes allocated
+==84760== 
+==84760== LEAK SUMMARY:
+==84760==    definitely lost: 0 bytes in 0 blocks
+==84760==    indirectly lost: 0 bytes in 0 blocks
+==84760==      possibly lost: 0 bytes in 0 blocks
+==84760==    still reachable: 91,642 bytes in 105 blocks
+==84760==         suppressed: 0 bytes in 0 blocks
+==84760== Rerun with --leak-check=full to see details of leaked memory
+==84760== 
+==84760== For lists of detected and suppressed errors, rerun with: -s
+==84760== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

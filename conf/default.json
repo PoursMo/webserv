@@ -1,6 +1,6 @@
 {
 	"$schema": "./_schema.json",
-	"debug": true,
+	"debug": false,
 	"servers": [
 		{
 			"error_page": {
@@ -20,6 +20,12 @@
 					"root": "/app/www",
 					"path": "/",
 					"autoindex": true
+				},
+				{
+					"path": "/my-return",
+					"return": {
+						"415": "hahaha that fail"
+					}
 				}
 			]
 		}
