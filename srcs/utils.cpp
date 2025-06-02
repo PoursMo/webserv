@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include "Logger.hpp"
 
 std::string int_to_str(int num, const std::string base)
 {
@@ -49,15 +50,11 @@ std::string ulong_to_str(unsigned long num)
 
 int extract_status_code(const std::string& s)
 {
-	for (std::string::const_iterator i = s.begin(); i != s.end(); i++)
-	{
-		if (!std::isdigit(*i))
-			throw std::runtime_error("Invalid status code.");
-	}
 	char* end;
 	unsigned long code = std::strtoul(s.c_str(), &end, 10);
-	if (*end != '\0' || code < 300 || code > 599)
+	if ((*end != '\0' && !std::isspace(*end)) || code < 300 || code > 599)
 		throw std::runtime_error("Invalid status code.");
+	logger.log() << "Extracted status: " << code << std::endl;
 	return code;
 }
 

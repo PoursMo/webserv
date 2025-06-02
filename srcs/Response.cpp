@@ -44,7 +44,6 @@ bool Response::parseLine(char* lstart, char* lend)
 {
 	if (lstart == NULL || lend == NULL || *lend != '\n')
 		return false;
-
 	if (AIOHandler::isEmptyline(lstart, lend))
 	{
 		// TODO: if no CRLFCRLF : 502

@@ -110,9 +110,7 @@ void AInputHandler::sendHeaderLineToParsing(const Buffer* buffer, char* lf)
 
 void AInputHandler::addBodyBytes(size_t bytes)
 {
-	logger.log() << "add " << bytes << " to " << this->bodyBytesCount;
 	this->bodyBytesCount += bytes;
-	logger.log() << " = " << this->bodyBytesCount << std::endl;
 	this->onUpdateBodyBytes();
 }
 
@@ -220,11 +218,11 @@ bool AInputHandler::fillBuffer(BufferType type)
 			return false;
 		buffer->last += bytesInput;
 	}
-	// if (buffer)
-	// {
-	// 	logger.log() << "AInputHandler: buffer: ";
-	// 	printBuffer(buffer->first, buffer->last);
-	// }
+	if (buffer)
+	{
+		logger.log() << "AInputHandler: buffer: ";
+		printBuffer(buffer->first, buffer->last);
+	}
 	this->connection.updateTime();
 	return true;
 }
