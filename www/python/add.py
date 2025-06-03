@@ -12,6 +12,8 @@ def getCookie(key):
 		for cookie in cookies.split(';'):
 			(kkey, value ) = cookie.split('=')
 			if kkey == key:
+				if value.startswith('"') and value.endswith('"'):
+					value = value[1:-1]
 				return value
 	return ''
 

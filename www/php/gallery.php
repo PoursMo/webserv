@@ -43,7 +43,7 @@ $onError = isset($_GET['error']);
 				if ($fileType != "") {
 					?>
 					<div class="gallerie_element"><?php
-					if ($fileType == "mov") { ?>
+					if ($fileType == "mov" || $fileType == "mp4") { ?>
 							<video controls type="video/<?php echo $fileType ?>" src="<?php echo "/upload/" . $file ?>"></video>
 						<?php } else { ?>
 							<a href="<?php echo "/upload/" . $file ?>" target="_blank">

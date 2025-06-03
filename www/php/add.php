@@ -32,6 +32,9 @@
 			echo "Fail to load file on " . $targetFile;
 			header('Location: /php/gallery.php?error=1', true, 302);
 		}
+	} else {
+		header("Status: 405");
+		echo "Method not allowed";
 	}
 	?>
 </body>

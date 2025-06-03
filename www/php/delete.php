@@ -7,7 +7,6 @@
 </head>
 <body>
 	<div>
-		<span>Method: <?php echo $_SERVER['REQUEST_METHOD']; ?></span>
 	<?php
 	if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
 		$file = $_GET['file'];
@@ -25,6 +24,9 @@
 		{
 			echo "File does not exist";
 		}
+	} else {
+		header("Status: 405");
+		echo "Method not allowed";
 	}
 	?>
 	</div>
