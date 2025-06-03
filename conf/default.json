@@ -4,7 +4,7 @@
 	"servers": [
 		{
 			"error_page": {
-				"404": "./www/custom_errors/my-error-404.html"
+				"404": "/home/aloubry/cursus/webserv/www/custom_errors/my-error-404.html"
 			},
 			"server_names": [
 				"webserv.com",
@@ -17,7 +17,7 @@
 						"GET",
 						"POST"
 					],
-					"root": "./www",
+					"root": "/home/aloubry/cursus/webserv/www",
 					"path": "/",
 					"autoindex": true
 				},

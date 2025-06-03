@@ -13,7 +13,7 @@ $onError = isset($_GET['error']);
 ?>
 
 <body>
-	<div class="header">Ma gallerie</div>
+	<div class="header">Ma galerie</div>
 
 	<form action="add.php" enctype="multipart/form-data" method="post">
 		<input type="file" name="file"></input>

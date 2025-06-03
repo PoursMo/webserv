@@ -37,7 +37,7 @@ main() {
 
 		# WEBSERV
 		# ./webserv $FILE_CONF &> /dev/null &
-		./webserv $FILE_CONF > /app/logs/webserv.log 2> /app/logs/webserv_err.log &
+		./webserv $FILE_CONF > ./webserv.log 2> ./webserv_err.log &
 		local PID=$!
 		info "[WEBSERV] $FILE_CONF"
 		send_all_request $FILE_CONF "webserv" $REQ_NAME_FILTER

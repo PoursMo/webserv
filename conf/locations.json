@@ -20,17 +20,17 @@
 					"index": [
 						"index.html"
 					],
-					"root": "/app/www",
+					"root": "/home/aloubry/cursus/webserv/www",
 					"autoindex": true
 				},
 				{
 					"path": "/autoindex_on",
 					"autoindex": true,
-					"root": "/app/www"
+					"root": "/home/aloubry/cursus/webserv/www"
 				},
 				{
 					"path": "/autoindex_on/dir",
-					"root": "/app/www",
+					"root": "/home/aloubry/cursus/webserv/www",
 					"index": [
 						"index.html",
 						"file.html"
@@ -38,11 +38,11 @@
 				},
 				{
 					"path": "/autoindex_off",
-					"root": "/app/www"
+					"root": "/home/aloubry/cursus/webserv/www"
 				},
 				{
 					"path": "a",
-					"root": "/app/www",
+					"root": "/home/aloubry/cursus/webserv/www",
 					"autoindex": true
 				}
 			]
@@ -65,17 +65,17 @@
 					"index": [
 						"index.html"
 					],
-					"root": "/app/www",
+					"root": "/home/aloubry/cursus/webserv/www",
 					"autoindex": true
 				},
 				{
 					"path": "/autoindex_on",
 					"autoindex": true,
-					"root": "/app/www"
+					"root": "/home/aloubry/cursus/webserv/www"
 				},
 				{
 					"path": "/autoindex_on/dir",
-					"root": "/app/www",
+					"root": "/home/aloubry/cursus/webserv/www",
 					"index": [
 						"index.html",
 						"file.html"
@@ -83,11 +83,11 @@
 				},
 				{
 					"path": "/autoindex_off",
-					"root": "/app/www"
+					"root": "/home/aloubry/cursus/webserv/www"
 				},
 				{
 					"path": "a",
-					"root": "/app/www",
+					"root": "/home/aloubry/cursus/webserv/www",
 					"autoindex": true
 				}
 			]
