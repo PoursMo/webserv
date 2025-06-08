@@ -7,7 +7,7 @@ std::string generateErrorBody(int status)
 	std::stringstream body;
 	const std::string& statusName = http_status::get(status);
 
-	body << "<!DOCTYPE header>" << CRLF;
+	body << "<!DOCTYPE html>" << CRLF;
 	body << "<header lang=\"en\">" << CRLF;
 	body << "<head>" << CRLF;
 	body << "<meta charset=\"UTF-8\">" << CRLF;

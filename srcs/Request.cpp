@@ -167,8 +167,8 @@ bool Request::parseLine(char* lstart, char* lend)
 		throw http_error("Empty request line", 400);
 	if (AIOHandler::isEmptyline(lstart, lend))
 	{
-		this->processRequest();
 		this->setContentLength();
+		this->processRequest();
 		return false;
 	}
 	if (!this->firstLineParsed)
