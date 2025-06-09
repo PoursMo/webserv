@@ -7,7 +7,7 @@
       "address": "0.0.0.0",
       "locations": [
         {
-          "root": "/home/aloubry/cursus/webserv/www",
+          "root": "/app/www",
           "path": "/",
           "method": [
             "GET",
@@ -19,10 +19,10 @@
             ".php": "/usr/bin/php-cgi",
             ".py": "/usr/bin/python3.10"
           },
-          "upload_store": "/home/aloubry/cursus/webserv/upload"
+          "upload_store": "/app/upload"
         },
         {
-          "root": "/home/aloubry/cursus/webserv/",
+          "root": "/app/",
           "path": "/upload"
         }
       ]
